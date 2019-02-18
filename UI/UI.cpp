@@ -19,7 +19,7 @@ UI::UI(UI *parent)
     backOp.zOp = ZOp_SRC_ADD;
     backOp.pixOp = PixOp_SRC_ALPHA;
 
-    backColor = {0,0,0,0,0 };
+    backColor = ARGBz(0,0,0,0,0.0f);
     backImage = nullptr;
 
     mouseIn = nullptr;

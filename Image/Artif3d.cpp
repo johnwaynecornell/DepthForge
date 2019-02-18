@@ -9,7 +9,6 @@ extern "C"
 #include <cmath>
 #include "Image.h"
 
-
 struct ArtifData
 {
     int Magic;

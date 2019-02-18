@@ -11,6 +11,8 @@ extern "C"
 
 #include <QThread>
 
+
+
 GfxThreadWorker::GfxThreadWorker(void *barrier)
 {
     this->barrier = barrier;
@@ -29,14 +31,35 @@ void gfxWorkerThread(void *data)
     }
 }
 
-//int (SDLCALL * SDL_ThreadFunction) (void *data);
+class MyThread : public QThread
+{
+public:
+    void (*proc)(void *);
+    void *data;
+
+    MyThread(void (*proc)(void *), void *data);
+
+    virtual void run();
+
+};
+
+MyThread::MyThread(void (*proc)(void *), void *data) : QThread(nullptr)
+{
+    this->proc = proc;
+    this->data = data;
+}
+
+void MyThread::run()
+{
+    proc(data);
+}
 
 void GfxThreadWorker::begin()
 {
     /* TODO */ //error handling
 
-    thread = QThread::create(&gfxWorkerThread, this);
-    ((QThread *)thread)->start();
+    thread = new MyThread(&gfxWorkerThread, this);
+    ((MyThread *)thread)->start();
 
     //SDL_CreateThread(gfxWorkerThread, "SliceThread", this);
 

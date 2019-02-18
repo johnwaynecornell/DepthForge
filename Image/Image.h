@@ -31,6 +31,21 @@ struct ImgOp
 struct ARGBz : ARGB
 {
     float z;
+
+    ARGBz()
+    {
+
+    }
+
+
+    ARGBz(int a, int r,int g, int b, float z)
+    {
+        this->a = a;
+        this->r = r;
+        this->g = g;
+        this->b = b;
+        this->z = z;
+    }
 };
 
 class Image {

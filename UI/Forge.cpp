@@ -5,6 +5,8 @@
 #include "MainUI.h"
 #include "Forge.h"
 #include <QtCore>
+#include <QtWidgets/QFileDialog>
+#include <DepthForgeWin.h>
 
 Forge::Forge(UI *parent) : UI(parent)
 {
@@ -12,24 +14,35 @@ Forge::Forge(UI *parent) : UI(parent)
     mouseDown &= Qt::MouseButton::NoButton;
     mouseX = mouseY = 0.0;
 
-    QImage A;
-    A.load(QCoreApplication::tr("/home/jwc/Pictures/Danielle.jpg"));
-    QImage::Format  f = A.format();
+    QString fileName = QFileDialog::getOpenFileName(
+            ((MainUI *)rootElement())->owner, ("Open Image File"),
+                                                    "/home",
+                                                    ("Images (*.png *.jpg)"));
 
-    if (!A.hasAlphaChannel() && A.format() == QImage::Format_RGB32)
+    if (fileName.isNull())
     {
-        QImage B = QImage(A.width(), A.height(), QImage::Format_ARGB32);
+        src = new Image(1,1);
+    } else {
+        QImage A;
+        //A.load(QCoreApplication::tr("/home/jwc/Pictures/Danielle.jpg"));
+        A.load(fileName);
 
-        GfxBlt(PixType_BGRA, A.bits(), 0,0,A.width(),A.height(), A.width(),
-               PixType_ARGB, B.bits(), 0, 0, B.width(), B.height(), B.width());
+        QImage::Format f = A.format();
 
-        A = B;
+        if (!A.hasAlphaChannel() && A.format() == QImage::Format_RGB32) {
+            QImage B = QImage(A.width(), A.height(), QImage::Format_ARGB32);
+
+            GfxBlt(PixType_BGRA, A.bits(), 0, 0, A.width(), A.height(), A.width(),
+                   PixType_ARGB, B.bits(), 0, 0, B.width(), B.height(), B.width());
+
+            A = B;
+        }
+
+        src = new Image(A.width(), A.height());
+
+        GfxBlt(PixType_ARGB, A.bits(), 0, 0, A.width(), A.height(), A.width(),
+               PixType_ARGB, src->imageMemory, 0, 0, src->Width, src->Height, src->stride);
     }
-
-    src = new Image(A.width(), A.height());
-
-    GfxBlt(PixType_ARGB, A.bits(), 0,0,A.width(),A.height(), A.width(),
-           PixType_ARGB, src->imageMemory, 0, 0, src->Width, src->Height, src->stride);
 
 }
 

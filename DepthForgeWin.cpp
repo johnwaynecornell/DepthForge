@@ -30,6 +30,7 @@ DepthForgeWin::DepthForgeWin()
 
 
     ui = new MainUI();
+    ui->owner = this;
 
     /*
     ui = new Fixed(nullptr);

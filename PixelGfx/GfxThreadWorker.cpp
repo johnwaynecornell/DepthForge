@@ -9,6 +9,7 @@ extern "C"
 
 }
 
+#include <QApplication>
 #include <QThread>
 
 
@@ -23,7 +24,7 @@ void gfxWorkerThread(void *data)
 {
     GfxThreadWorker *worker = (GfxThreadWorker *)data;
 
-    while (true)
+    //while ()
     {
         Barrier_wait(worker->barrier);
         worker->WorkerProc(worker);
@@ -37,21 +38,39 @@ public:
     void (*proc)(void *);
     void *data;
 
+    bool doRun;
+
     MyThread(void (*proc)(void *), void *data);
 
     virtual void run();
 
+private slots:
+    void aboutToQuit();
+
 };
+
+extern QApplication *app;
 
 MyThread::MyThread(void (*proc)(void *), void *data) : QThread(nullptr)
 {
+
     this->proc = proc;
     this->data = data;
+    doRun = true;
+
+    QApplication::connect(app, &QApplication::aboutToQuit, this, &MyThread::aboutToQuit);
 }
 
 void MyThread::run()
 {
-    proc(data);
+    while (doRun) {
+        proc(data);
+    }
+}
+
+void MyThread::aboutToQuit()
+{
+    doRun = false;
 }
 
 void GfxThreadWorker::begin()
@@ -59,6 +78,7 @@ void GfxThreadWorker::begin()
     /* TODO */ //error handling
 
     thread = new MyThread(&gfxWorkerThread, this);
+
     ((MyThread *)thread)->start();
 
     //SDL_CreateThread(gfxWorkerThread, "SliceThread", this);

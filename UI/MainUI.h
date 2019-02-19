@@ -21,6 +21,8 @@ public:
     Fixed *tools;
     Forge *forge;
 
+    QWidget *owner;
+
     MainUI();
 
     virtual bool selfLayout();

@@ -18,6 +18,8 @@ public:
 
     virtual void createMenus();
 
+    virtual void closeEvent(QCloseEvent *event);
+
 };
 
 

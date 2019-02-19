@@ -7,14 +7,17 @@
 #include "DepthForgeWin.h"
 #include "MainWnd.h"
 
+QApplication *app;
+
 int main(int argc, char **argv) {
 
     Init_JWC_PixelGfx();
     int Threads = QThread::idealThreadCount();
 
-    GfxInitThreadWorkers(Threads);
-
     QApplication application(argc, argv);
+    app = &application;
+
+    GfxInitThreadWorkers(Threads);
 
     MainWnd Win;
 

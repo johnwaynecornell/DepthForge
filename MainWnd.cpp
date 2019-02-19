@@ -3,13 +3,21 @@
 //
 
 #include "MainWnd.h"
+#include <QApplication>
 
+extern QApplication *app;
 
 MainWnd::MainWnd() : QMainWindow()
 {
     setCentralWidget(new DepthForgeWin());
 
     createMenus();
+}
+
+void MainWnd::closeEvent(QCloseEvent *event)
+{
+    QMainWindow::closeEvent(event);
+    app->quit();
 }
 
 void MainWnd::createMenus()

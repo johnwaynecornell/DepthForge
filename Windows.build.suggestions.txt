@@ -1,0 +1,35 @@
+Conciderations for building for windows:
+ It has been many years since I developed anything for windows but here are some thoughts
+
+Git for windows will have to be installed on the "development" machine
+https://git-scm.com/download/win
+
+
+
+
+Using MinGW
+To build the application run qmake and mingw32-make from the project directory.
+
+> qmake CMakeLists.txt
+> mingw32-make
+
+Using Microsoft Tools
+
+> qmake CMakeLists.txt
+> nmake release
+> cd release
+> mt.exe -manifest DepthForge
+.exe.manifest -outputresource:DepthForge.exe
+
+
+here is some information on deployment the windows os
+https://doc.qt.io/qt-5/deployment.html
+https://doc.qt.io/qt-5/windows-deployment.html
+
+qt will have to be installed on end user machine for the application to work.
+https://www.qt.io/download
+
+This is a software distribution under the GPL Liciense so the open source it will use the free qt
+	not a comercial license
+
+a distributable windows install program should be the end result.

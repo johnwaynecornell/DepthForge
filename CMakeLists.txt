@@ -13,7 +13,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt5Widgets)
 find_package(Qt5OpenGL)
 
-# OpenGL & GLEW library
+# OpenGL
 find_package(OpenGL)
 
 include_directories(QtOpengl5_INCLUDE_DIRS)
@@ -26,4 +26,8 @@ add_executable(DepthForge main.cpp  Threading/Sync.h Threading/Sync.cpp
 
 qt5_use_modules(DepthForge Widgets OpenGL)
 
+if (UNIX OR LINUX)
 target_link_libraries(DepthForge ${QT_LIBRARIES} ${OPENGL_LIBRARIES} pthread)
+else()
+target_link_libraries(DepthForge ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
+endif ()

@@ -7,7 +7,7 @@ color stereographic emersion.
 
 I decided to release it under the GNU GPL (general public license) to support the developing art of Stereography. You are
 free to do most things except take credit for my work. Please read this license before downloading the source or compiling.
-Read https://www.gnu.org/licenses/gpl-3.0.en.html before proceding.
+Read https://www.gnu.org/licenses/gpl-3.0.en.html before proceeding.
 
 The principle of operation is an algorithm I call 2.5d. It works by storing a Z value for every pixel in the image. This Z
 represents depth. I decided to use 32bit float for the Z component (although it is possible to impliment the algorithm in 

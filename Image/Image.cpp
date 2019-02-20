@@ -5,6 +5,8 @@ extern "C"
 {
     #include <Threading/Sync.h>
 }
+
+#include <QtGui/QtGui>
 #include "Image.h"
 
 Image::Image(int Width, int Height)
@@ -16,6 +18,13 @@ Image::Image(int Width, int Height)
 
     this->xLowBound = this->yLowBound = 0;
     this->xHighBound = Width; this->yHighBound = Height;
+
+    this->_preservePath = 0;
+    this->pathIndex = 0;
+
+    pathMax = 1024;
+    pathX = new int[pathMax];
+    pathY = new int[pathMax];
 
     imageMemory = new ARGB[Width * Height];
 
@@ -37,6 +46,164 @@ Image::Image(int Width, int Height)
         z[y] = d2; d2+=stride;
     }
 }
+
+void Image::PreservePath()
+{
+    _preservePath++;
+}
+
+void Image::ClearPath()
+{
+    _preservePath = 0;
+    pathIndex = 0;
+
+}
+
+void Image::PathAdd(int x, int y)
+{
+    Q_ASSERT(pathIndex < pathMax);
+
+    pathX[pathIndex] = x;
+    pathY[pathIndex] = y;
+
+    pathIndex++;
+
+}
+
+void Image::FillPath(PixOp pixOp, ARGB p, ZOp zOp, float z)
+{
+
+    for (int y=0; y<Height; y++) {
+        for (int x = 0; x < Width; x++) {
+
+            int incount = 0;
+            int outcount = 0;
+
+            double oth;
+
+            int inlines = 0;
+
+            for (int i = 1; i < pathIndex; i++) {
+                double x1 = pathX[i - 1];
+                double y1 = pathY[i - 1];
+
+                double x2 = pathX[i];
+                double y2 = pathY[i];
+
+                double th = atan2(y2 - y1, x2 - x1);
+
+                double rth;
+
+                if (i != 1)
+                {
+                    rth = oth - th;
+
+                    if (rth > M_2_PI) rth -= M_2_PI;
+                    else if (rth < -M_2_PI) rth += M_2_PI;
+
+                } else rth = 0;
+
+                oth = th;
+
+                double xx = x - x1;
+                double yy = y - y1;
+
+                double sn = sin(-th);
+                double cs = cos(-th);
+
+                double _x = xx * cs - yy * sn;
+                double _y = yy * cs + xx * sn;
+
+                if (rth < 0) {
+                    inlines++;
+
+                    if ((_y >= 0)) {
+                        incount++;
+                    } else outcount++;
+                } else if (rth > 0)
+                {
+                    if ((_y >= 0)) {
+                        outcount--;
+                    } else incount--;
+
+                }
+
+            }
+
+            bool ok;
+
+            ok = (incount > 0) && (incount > (outcount));
+            if (ok) ok = incount > 0 && (((incount % 2) != (inlines % 2)));
+            //ok = outcount > 0 && outcount > (incount);
+
+            ok = (incount>0)&&(outcount>=0);
+
+            int q = incount-outcount;
+
+            ok = (q > 0) && ((incount%2) == 1);
+
+            //ok=true;
+            //ok = (incount %2) == (pathIndex%2);
+
+            int v = incount;
+
+//            ok = incount > 0;
+
+//            if (ok) ok = (incount %2) != ((incount + outcount) %2);
+
+            if (ok)
+            {
+                if (pixOp == PixOp_SRC) {
+                    //pix[y][x] = p;
+
+                    pix[y][x].r += p.r * v;
+                    pix[y][x].g = 0x80;
+                    pix[y][x].b += p.b * v;
+                    pix[y][x].a = 0xFF;
+
+
+
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = pix[y][x];
+                    dest.r = valValAlpha(dest.r, p.r, p.a);
+                    dest.g = valValAlpha(dest.g, p.g, p.a);
+                    dest.b = valValAlpha(dest.b, p.b, p.a);
+                    dest.a = valValAlpha(dest.a, p.a, p.a);
+                    pix[y][x] = dest;
+                }
+
+                if (zOp == ZOp_SRC) {
+                    this->z[y][x] = z;
+                } else if (zOp == ZOp_SRC_ADD) {
+                    this->z[y][x] += z;
+                }
+            }
+        }
+    }
+
+    bool clear = _preservePath == 0;
+
+    if (_preservePath > 0) _preservePath--;
+    if (clear) ClearPath();
+}
+
+void Image::DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z) {
+    for (int i = 1; i < pathIndex; i++) {
+        int x1 = pathX[i - 1];
+        int y1 = pathY[i - 1];
+
+        int x2 = pathX[i];
+        int y2 = pathY[i];
+
+        Line(x1,y1,x2,y2, pixOp, p, p, zOp, z, z);
+    }
+
+    bool clear = _preservePath == 0;
+
+    if (_preservePath > 0) _preservePath--;
+    if (clear) ClearPath();
+}
+
 
 struct Rational
 {

@@ -11,6 +11,7 @@
 #include <QMouseEvent>
 
 #include <math.h>
+#include <UI/testUI.h>
 
 extern "C"
 {
@@ -28,9 +29,9 @@ DepthForgeWin::DepthForgeWin()
     UI_Image = UI_ImageAnaglyph  = UI_ImageLeft = UI_ImageRight = nullptr;
     rend = nullptr;
 
+    //ui = new testUI(this);
 
-    ui = new MainUI();
-    ui->owner = this;
+    ui = new MainUI(this);
 
     /*
     ui = new Fixed(nullptr);

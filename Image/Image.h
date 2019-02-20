@@ -66,7 +66,24 @@ public:
     int Width;
     int Height;
 
+    int pathMax;
+    int pathIndex;
+    int *pathX;
+    int *pathY;
+
+    int _preservePath;
+
+    void PreservePath();
+
+    void ClearPath();
+    void PathAdd(int x, int y);
+
+
     Image(int Width, int Height);
+
+    void FillPath(PixOp pixOp, ARGB p, ZOp zOp, float z);
+    void DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z);
+
 
     void Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB, ZOp zOp, float zA, float zB);
     void FillRect(int x1,int y1, int x2, int y2, PixOp pixOp, ARGB p, ZOp zOp, float z);

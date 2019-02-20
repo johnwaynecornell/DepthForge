@@ -6,8 +6,9 @@
 #include "Forge.h"
 #include "math.h"
 
-MainUI::MainUI() : Fixed(nullptr)
+MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
 {
+    owner = main;
     width.setResp(Resp_Self);
     height.setResp(Resp_Self);
     xPos.setResp(Resp_Self);
@@ -15,7 +16,7 @@ MainUI::MainUI() : Fixed(nullptr)
 
     toolFrame = new Frame(this);
     toolFrame->width.setResp(Resp_Child);
-    toolFrame->height.setResp(Resp_Parent);
+    toolFrame->height.setResp(Resp_Child);
     toolFrame->xPos.setResp(Resp_Self);
     toolFrame->yPos.setResp(Resp_Self);
 
@@ -25,10 +26,11 @@ MainUI::MainUI() : Fixed(nullptr)
     tools = new Fixed(toolFrame);
 
     tools->width.setResp(Resp_Self);
-    tools->height.setResp(Resp_Parent);
+    tools->height.setResp(Resp_Self);
     tools->xPos.setResp(Resp_Self);
     tools->yPos.setResp(Resp_Self);
 
+    tools->height.set(256+12);
     tools->width.set(256+12);
     tools->xPos.set(0);
     tools->yPos.set(0);
@@ -45,6 +47,31 @@ MainUI::MainUI() : Fixed(nullptr)
     forge->xPos.setResp(Resp_Parent);
     forge->yPos.setResp(Resp_Parent);
 
+    bottomFrame = new Frame(this);
+    bottomFrame->width.setResp(Resp_Child);
+    bottomFrame->height.setResp(Resp_Child);
+    bottomFrame->xPos.setResp(Resp_Self);
+    bottomFrame->yPos.setResp(Resp_Self);
+
+    bottomFrame->xPos.set(0);
+    bottomFrame->yPos.set(0);
+
+    bottom = new Fixed(bottomFrame);
+    bottom->width.setResp(Resp_Self);
+    bottom->height.setResp(Resp_Self);
+    bottom->xPos.setResp(Resp_Self);
+    bottom->yPos.setResp(Resp_Self);
+
+    bottom->height.set(256+12);
+    bottom->width.set(256+12);
+    bottom->xPos.set(0);
+    bottom->yPos.set(0);
+
+}
+
+void MainUI::draw(Image *target, QImage *qImage)
+{
+    UI::draw(target, qImage);
 }
 
 bool MainUI::selfLayout()
@@ -52,6 +79,11 @@ bool MainUI::selfLayout()
     toolFrame->height.set(height.get());
 
     Fixed::selfLayout();
+}
+
+bool MainUI::doLayout()
+{
+    Fixed::doLayout();
 
     int x = toolFrame->width.get();
     int w = width.get()-x;
@@ -63,11 +95,8 @@ bool MainUI::selfLayout()
 
     forge->height.set(height.get());
 
-}
-
-bool MainUI::doLayout()
-{
-    Fixed::doLayout();
+    bottomFrame->xPos.set(0);
+    bottomFrame->yPos.set(height.get()-bottomFrame->height.get());
 }
 
 LenseButton * MainUI::addLenseButton(int x, int y, LenseProc proc)

@@ -7,10 +7,13 @@
 
 
 #include <Lense.h>
+#include <DepthForgeWin.h>
 #include "UI.h"
 
 class Forge;
 class LenseButton;
+class DepthForgeWin;
+
 
 class MainUI : public Fixed
 {
@@ -18,12 +21,17 @@ public:
     Lense *lense;
 
     Frame *toolFrame;
+    Frame *bottomFrame;
     Fixed *tools;
+    Fixed *bottom;
+
     Forge *forge;
 
-    QWidget *owner;
+    DepthForgeWin *owner;
 
-    MainUI();
+    MainUI(DepthForgeWin *win);
+
+    virtual void draw(Image *target, QImage *qImage);
 
     virtual bool selfLayout();
     virtual bool doLayout();

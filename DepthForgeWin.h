@@ -17,6 +17,8 @@ extern "C"
     #include "PixelGfx/JWC_PixelGfx.h"
 }
 
+class MainUI;
+
 class DepthForgeWin : public QGLWidget
 {
     Q_OBJECT
@@ -39,7 +41,7 @@ public:
 
     bool hasMouse;
 
-    MainUI *ui;
+    UI *ui;
 
     virtual void paintGL();
     virtual void resizeGL(int w,int h);

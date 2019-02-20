@@ -16,7 +16,7 @@ Forge::Forge(UI *parent) : UI(parent)
 
     QString fileName = QFileDialog::getOpenFileName(
             ((MainUI *)rootElement())->owner, ("Open Image File"),
-                                                    "/home",
+                                                   "/home/Pictures",
                                                     ("Images (*.png *.jpg)"));
 
     if (fileName.isNull())
@@ -100,6 +100,7 @@ void Forge::draw(Image *target, QImage *qImage)
 
     }
 
+    target->FillPath(PixOp_SRC, {0xFF,0x00,0x00,0xFF}, ZOp_SRC, 0);
 }
 
 void Forge::applyLense()

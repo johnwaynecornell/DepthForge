@@ -12,8 +12,6 @@ extern "C"
 #include <QApplication>
 #include <QThread>
 
-
-
 GfxThreadWorker::GfxThreadWorker(void *barrier)
 {
     this->barrier = barrier;

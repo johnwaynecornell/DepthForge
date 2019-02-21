@@ -20,6 +20,80 @@ bool testUI::mouseMove(int x, int y)
     return true;
 }
 
+bool pixFunc(int index, double y, ARGB &p, float &z, void *arg)
+{
+    if (y>=0 && y<10)
+    {
+        z = 1.0 - abs((y) / 10.0);
+
+        unsigned char v = (unsigned char) (z * 0xFF);
+
+        z = 1.0 - sin((1.0-z)*M_PI/2);
+
+        z *= .125;
+
+        p = {0xFF, v , v , 0};
+
+        return true;
+    }
+
+
+    y -= 10;
+
+    if (y>=0 && y<20)
+    {
+        z = 1.0 - abs((y-10) / 10.0);
+
+        unsigned char v = (unsigned char) (z * 0xFF);
+        z = 1.0 - sin((1.0-z)*M_PI/2);
+
+        z *= .125;
+        z += .125;
+
+        p = {0xFF, v , v , v};
+
+        return true;
+    }
+
+    y -= 20;
+
+    if (y>=0 && y<20)
+    {
+        z = 1.0 - abs((y-10) / 10.0);
+
+        unsigned char v = (unsigned char) (z * 0xFF);
+        z = 1.0 - sin((1.0-z)*M_PI/2);
+
+        z *= .125;
+
+        z += .25;
+
+        p = {0xFF, v , 0 , v};
+
+        return true;
+    }
+
+    y -= 20;
+
+    if (y>=0 && y<20)
+    {
+        z = 1.0 - abs((y-10) / 10.0);
+
+        unsigned char v = (unsigned char) (z * 0xFF);
+        z = 1.0 - sin((1.0-z)*M_PI/2);
+
+        z *= .125;
+
+        z += .375;
+
+        p = {0xFF, v , (unsigned char)(v>>1) , (unsigned char)(v>>1)};
+
+        return true;
+    }
+
+
+    return false;
+}
 
 void testUI::draw(Image *target, QImage *qImage)
 {
@@ -49,11 +123,11 @@ void testUI::draw(Image *target, QImage *qImage)
 
     target->PreservePath();
 
-    target->FillPath(50,101,PixOp_SRC, {0xFF,0xFF,0x00,0xFF}, ZOp_SRC, 0);
-    target->PreservePath();
+    //target->FillPath(50,101,PixOp_SRC, {0xFF,0xFF,0x00,0xFF}, ZOp_SRC, 0);
+    //target->PreservePath();
 
-    target->DrawPath(PixOp_SRC, {0xFF,0xFF,0xFF,0x00}, ZOp_SRC, 0);
-
+    target->DrawPath(PixOp_SRC, ZOp_SRC, 1, &pixFunc, nullptr);
+/*
     int incount = 0;
     int outcount = 0;
 
@@ -153,7 +227,7 @@ void testUI::draw(Image *target, QImage *qImage)
     paint->end();
 
     delete paint;
-
+*/
 
 
     target->ClearPath();

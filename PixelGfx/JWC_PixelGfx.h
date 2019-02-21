@@ -57,7 +57,7 @@ struct BGRA
 extern float *rgb_v;
 extern unsigned char* ValValAlpha_Mix;
 
-#define valValAlpha(V1,V2,A) ValValAlpha_Mix[(A<<16)+(V1<<8)+V2];
+#define valValAlpha(V1,V2,A) ValValAlpha_Mix[(A<<16)+(V1<<8)+V2]
 #define Rgb_v(r,g,b) rgb_v[(r<<16)+(g<<8)+b]
 
 struct PixTypeInfo

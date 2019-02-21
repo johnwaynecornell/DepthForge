@@ -8,16 +8,26 @@
 #include <QtWidgets/QFileDialog>
 #include <DepthForgeWin.h>
 
+extern QApplication *app;
+
 Forge::Forge(UI *parent) : UI(parent)
 {
     hasMouse = false;
     mouseDown &= Qt::MouseButton::NoButton;
     mouseX = mouseY = 0.0;
 
-    QString fileName = QFileDialog::getOpenFileName(
+    QString fileName;
+
+
+    fileName = QFileDialog::getOpenFileName(
             ((MainUI *)rootElement())->owner, ("Open Image File"),
                                                    "/home/Pictures",
-                                                    ("Images (*.png *.jpg)"));
+                                                  ("Images (*.png *.jpg)"));
+
+    //printf("%s\n", fileName.toUtf8().data());
+
+    //fileName = QCoreApplication::tr("/home/jwc/Pictures/02_animalportraitsset2_980x551.jpg");
+
 
     if (fileName.isNull())
     {
@@ -44,6 +54,8 @@ Forge::Forge(UI *parent) : UI(parent)
                PixType_ARGB, src->imageMemory, 0, 0, src->Width, src->Height, src->stride);
     }
 
+    previewLense = false;
+
 }
 
 Forge::~Forge()
@@ -51,9 +63,15 @@ Forge::~Forge()
     delete src;
 }
 
+
 void Forge::draw(Image *target, QImage *qImage)
 {
     UI::draw(target, qImage);
+
+    timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+
+    double time = ts.tv_nsec / 1000000000.0;
 
     _x = xReal;
     _y = yReal;
@@ -71,14 +89,24 @@ void Forge::draw(Image *target, QImage *qImage)
 
     target->DrawImage(_x,_y,_w,_h, PixOp_SRC, ZOp_SRC, src, 0, 0, src->Width, src->Height);
 
-    if (hasMouse)
+    if (hasMouse || previewLense)
     {
-        int xx = mouseX * _w + _x;
-        int yy = mouseY * _h + _y;
+        int xx;
+        int yy;
+
+        if (hasMouse)
+        {
+            xx = (int) (mouseX * _w + _x);
+            yy = (int) (mouseY * _h + _y);
+        } else
+        {
+            xx = (int) (.5 * _w + _x);
+            yy = (int) (.5 * _h + _y);
+        }
 
         Lense *lense = ((MainUI *) rootElement())->lense;
 
-        int sz = lense->size * fmax(_w,_h);
+        int sz = (int) (lense->size * fmax(_w,_h));
 
         for (int y=yy-sz; y<yy+sz; y++) {
             for (int x = xx - sz; x < xx + sz; x++) {
@@ -89,7 +117,9 @@ void Forge::draw(Image *target, QImage *qImage)
 
                         float l = lense->get(lx,ly);
 
-                        ARGB p = {(unsigned char) (0x80*l), 0xFF,0xFF,0xFF };
+                        unsigned char g = (unsigned char)(abs(time-.5)*2 * 0xFF);
+
+                        ARGB p = {(unsigned char) (0x80*l), 0xFF, g ,0xFF };
 
                         ARGB dest = target->pix[y][x];
                         dest.r = valValAlpha(dest.r, p.r, p.a);

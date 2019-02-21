@@ -32,6 +32,7 @@ DepthForgeWin::DepthForgeWin()
     //ui = new testUI(this);
 
     ui = new MainUI(this);
+    mouseCapture = nullptr;
 
     /*
     ui = new Fixed(nullptr);
@@ -243,7 +244,17 @@ void DepthForgeWin::mouseMoveEvent(QMouseEvent *eventMove)
     int x = eventMove->x();
     int y = eventMove->y();
 
-    if (!checkRelinquishMouse(x,y)) ui->mouseMove(x, y);
+    lastMouseX = x;
+    lastMouseY = y;
+
+    if (mouseCapture != nullptr)
+    {
+        x -= mouseCapture->xReal;
+        y -= mouseCapture->yReal;
+
+        mouseCapture->mouseMove(x, y);
+
+    } else if (!checkRelinquishMouse(x,y)) ui->mouseMove(x, y);
 }
 void DepthForgeWin::mousePressEvent(QMouseEvent *eventPress)
 {
@@ -252,7 +263,18 @@ void DepthForgeWin::mousePressEvent(QMouseEvent *eventPress)
     int x = eventPress->x();
     int y = eventPress->y();
 
-    if (!checkRelinquishMouse(x,y)) ui->mouseButtonPress(x, y,
+    lastMouseX = x;
+    lastMouseY = y;
+
+    if (mouseCapture != nullptr)
+    {
+        x -= mouseCapture->xReal;
+        y -= mouseCapture->yReal;
+
+        mouseCapture->mouseButtonPress(x, y,
+                                       eventPress->button());
+
+    } else if (!checkRelinquishMouse(x,y)) ui->mouseButtonPress(x, y,
             eventPress->button());
 }
 void DepthForgeWin::mouseReleaseEvent(QMouseEvent *releaseEvent)
@@ -262,9 +284,33 @@ void DepthForgeWin::mouseReleaseEvent(QMouseEvent *releaseEvent)
     int x = releaseEvent->x();
     int y = releaseEvent->y();
 
-    if (!checkRelinquishMouse(x,y)) ui->mouseButtonRelease(x, y,
+    lastMouseX = x;
+    lastMouseY = y;
+
+    if (mouseCapture != nullptr)
+    {
+        x -= mouseCapture->xReal;
+        y -= mouseCapture->yReal;
+
+        mouseCapture->mouseButtonRelease(x, y,
+                                         releaseEvent->button());
+
+    } else if (!checkRelinquishMouse(x,y)) ui->mouseButtonRelease(x, y,
             releaseEvent->button());
 }
+
+void DepthForgeWin::giveMouse(UI *element)
+{
+    mouseCapture = element;
+}
+
+void DepthForgeWin::freeMouse(UI *element)
+{
+    mouseCapture = nullptr;
+
+    checkRelinquishMouse(lastMouseX, lastMouseY);
+}
+
 
 void DepthForgeWin::takeMouse()
 {
@@ -276,7 +322,7 @@ void DepthForgeWin::takeMouse()
 bool DepthForgeWin::checkRelinquishMouse(int x, int y)
 {
     if (!hasMouse) return false;
-    if (x<0||y<0||x>width()||y>height())
+    if (x<0||y<0||x>width()||y>height() && mouseCapture == nullptr)
     {
         releaseMouse();
         hasMouse = false;

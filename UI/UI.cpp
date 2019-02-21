@@ -23,6 +23,8 @@ UI::UI(UI *parent)
     backImage = nullptr;
 
     mouseIn = nullptr;
+    
+    mouseEnterProc = mouseLeaveProc = {0,0,0} ;
 
     if (parent != nullptr) parent->children.push_back(this);
 }
@@ -99,7 +101,8 @@ bool UI::doLayout()
 
 void UI::mouseEnter()
 {
-
+    if (mouseEnterProc.function != nullptr) 
+        mouseEnterProc.function(mouseEnterProc.element, mouseEnterProc.argument);
 }
 void UI::mouseLeave()
 {
@@ -108,8 +111,19 @@ void UI::mouseLeave()
         mouseIn->mouseLeave();
         mouseIn = nullptr;
     }
+
+    if (mouseLeaveProc.function != nullptr)
+        mouseLeaveProc.function(mouseLeaveProc.element, mouseLeaveProc.argument);
 }
 
+void UI::setMouseEnterProc(void (*proc)(UI *elem, void *arg), UI *elem, void *arg)
+{
+    mouseEnterProc = {elem, proc, arg};
+}
+void UI::setMouseLeaveProc(void (*proc)(UI *elem, void *arg), UI *elem, void *arg)
+{
+    mouseLeaveProc = {elem, proc, arg};
+}
 
 bool UI::mouseMove(int x, int y)
 {
@@ -169,6 +183,35 @@ bool UI::mouseButtonRelease(int x, int y, Qt::MouseButton button)
 
     return false;
 }
+
+void UI::grabMouse()
+{
+    giveMouse(this);
+}
+
+void UI::releaseMouse()
+{
+    freeMouse(this);
+}
+
+void UI::giveMouse(UI *element)
+{
+    UI *p = parent;
+
+    while (p->parent != nullptr) p = p->parent;
+
+    p->giveMouse(element);
+}
+
+void UI::freeMouse(UI *element)
+{
+    UI *p = parent;
+
+    while (p->parent != nullptr) p = p->parent;
+
+    p->freeMouse(element);
+}
+
 
 UI *UI::childAt(int &x, int &y)
 {

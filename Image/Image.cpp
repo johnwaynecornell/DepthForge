@@ -8,6 +8,7 @@ extern "C"
 
 #include <QtGui/QtGui>
 #include "Image.h"
+#include <math.h>
 
 struct Rational
 {
@@ -167,7 +168,7 @@ Image::Image(int Width, int Height)
 
     imageMemory = new ARGB[Width * Height];
 
-    memset(imageMemory, 0, Width*Height);
+    memset(imageMemory, 0, Width*Height* sizeof(ARGB));
 
     pix = new ARGB *[Height];
 
@@ -306,7 +307,6 @@ void ImageMask::FloodFill(int x, int y) {
 
 void Image::FillPath(int x, int y, PixOp pixOp, ARGB p, ZOp zOp, float z)
 {
-
     ImageMask *m = new ImageMask(Width,Height);
 
     for (int i = 1; i < pathIndex; i++) {
@@ -371,6 +371,94 @@ void Image::DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z) {
     if (_preservePath > 0) _preservePath--;
     if (clear) ClearPath();
 }
+
+void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
+              bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg)
+{
+    for (int y=0; y<Height; y++)
+    {
+        for (int x=0; x<Width; x++)
+        {
+            double mv = INFINITY;
+
+            int ind;
+
+            for (int i = 1; i < pathIndex; i++)
+            {
+                double x1 = pathX[i - 1];
+                double y1 = pathY[i - 1];
+
+                double x2 = pathX[i];
+                double y2 = pathY[i];
+
+                double th = atan2(y2 - y1, x2 - x1);
+
+                double sn = sin(-th);
+                double cs = cos(-th);
+
+                double _xD = (x2-x1) * cs - (y2-y1) * sn;
+
+                double xx = x- x1;
+                double yy = y- y1;
+
+                double _x = xx * cs - yy * sn;
+                double _y = yy * cs + xx * sn;
+
+                if (_x >=0 && _x<_xD)
+                {
+                    _x = 0;
+                } else if (_x<0)
+                {
+                    _x = -_x;
+                } else if (_x >= _xD)
+                {
+                    _x -= _xD;
+                }
+
+                double v = sqrt(_x*_x+_y*_y);
+
+                if (_y<0) v *= -1.0;
+
+                if (abs(v)<abs(mv))
+                {
+                    mv = v;
+                    ind = i-1;
+                }
+
+            }
+
+            ARGB p;
+            float _z;
+
+            mv *= yScale;
+
+            if (pixFunc(ind, mv, p, _z, arg))
+            {
+                if (pixOp == PixOp_SRC) {
+                    //pix[y][x] = p;
+                    pix[y][x] = p;
+
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = pix[y][x];
+                    dest.r = valValAlpha(dest.r, p.r, p.a);
+                    dest.g = valValAlpha(dest.g, p.g, p.a);
+                    dest.b = valValAlpha(dest.b, p.b, p.a);
+                    dest.a = valValAlpha(dest.a, p.a, p.a);
+                    pix[y][x] = dest;
+                }
+
+                if (zOp == ZOp_SRC) {
+                    this->z[y][x] = _z;
+                } else if (zOp == ZOp_SRC_ADD) {
+                    this->z[y][x] += _z;
+                }
+
+            }
+
+        }
+    }
+}
+
 
 void Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB,
                     ZOp zOp, float zA, float zB)

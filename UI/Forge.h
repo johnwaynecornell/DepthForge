@@ -25,6 +25,7 @@ public:
     int _w;
     int _h;
 
+    bool previewLense;
 
     Forge(UI *parent);
     virtual ~Forge();

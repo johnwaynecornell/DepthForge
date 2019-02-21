@@ -7,9 +7,10 @@
 Lense::Lense()
 {
     size = .05;
+    intensity = 1.0;
 }
 
 float Lense::get(float x, float y)
 {
-    return proc(x,y);
+    return proc(x,y)*intensity;
 }

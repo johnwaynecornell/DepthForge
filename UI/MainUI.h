@@ -9,6 +9,7 @@
 #include <Lense.h>
 #include <DepthForgeWin.h>
 #include "UI.h"
+#include "Slider.h"
 
 class Forge;
 class LenseButton;
@@ -25,6 +26,9 @@ public:
     Fixed *tools;
     Fixed *bottom;
 
+    Slider *slideA;
+    Slider *slideB;
+
     Forge *forge;
 
     DepthForgeWin *owner;
@@ -36,7 +40,20 @@ public:
     virtual bool selfLayout();
     virtual bool doLayout();
 
+private:
+    virtual void giveMouse(UI *element);
+    virtual void freeMouse(UI *element);
+
+public:
+    void sizeEntered(void *arg);
+    void sizeLeave(void *arg);
+    void sizeChanged(double v, void *arg);
+    void intensityChanged(double v, void *arg);
+
+    void setLense(Lense *lense);
+
     LenseButton * addLenseButton(int x, int y, LenseProc lensProc);
+
 };
 
 class LenseButton : public Button_Image

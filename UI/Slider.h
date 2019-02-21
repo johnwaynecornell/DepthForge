@@ -15,12 +15,23 @@ public:
     class Element;
     Element *element;
 
-    Slider(UI *parent);
+    const char *label;
+    Image *src;
+
+    UICallback<void (*)(UI *, double, void *)> vCallback;
+
+    Slider(UI *parent, const char *label);
+    virtual ~Slider();
+
+    virtual void setV(double val);
+    void setVCallvack(void (*proc)(UI *, double, void *), UI *elem, void *arg);
+
+    void makeSrc();
 
     virtual void drawBackground(UI *member, Image *target, QImage *qImage);
     virtual void draw(Image *target, QImage *qImage);
 
-    void finalLayout();
+    virtual void updateElementPosition();
 
     virtual bool selfLayout();
     virtual bool doLayout();
@@ -32,17 +43,23 @@ public:
     virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
     virtual bool mouseButtonRelease(int x, int y, Qt::MouseButton button);
 
-    virtual ~Slider();
+    bool moveElement(int xd, int yd);
 
     class Element : public UI {
     public:
 
-        Element(Slider *slider);
+        Image *src;
+
+        int mouseX;
+        int mouseY;
+
+        bool mouseDown;
+
+        Element(Slider *slider, int width, int height);
+        virtual ~Element();
 
         virtual void drawBackground(UI *member, Image *target, QImage *qImage);
         virtual void draw(Image *target, QImage *qImage);
-
-        void finalLayout();
 
         virtual bool selfLayout();
         virtual bool doLayout();
@@ -53,8 +70,6 @@ public:
         virtual bool mouseMove(int x, int y);
         virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
         virtual bool mouseButtonRelease(int x, int y, Qt::MouseButton button);
-
-        virtual ~Element();
 
     };
 

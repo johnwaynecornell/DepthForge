@@ -25,8 +25,8 @@ int main(int argc, char **argv) {
 
     app->exec();
 
+    GfxTerminate();
+
     delete Win;
     delete app;
-
-    GfxTerminate();
 }

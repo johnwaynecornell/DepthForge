@@ -43,6 +43,11 @@ public:
 
     UI *ui;
 
+    UI *mouseCapture;
+
+    int lastMouseX;
+    int lastMouseY;
+
     virtual void paintGL();
     virtual void resizeGL(int w,int h);
 
@@ -52,14 +57,18 @@ public:
     virtual void mousePressEvent(QMouseEvent *eventPress);
     virtual void mouseReleaseEvent(QMouseEvent *releaseEvent);
 
+    void giveMouse(UI *element);
+    void freeMouse(UI *element);
+
+    void takeMouse();
+    bool checkRelinquishMouse(int x, int y);
+
     DepthForgeWin();
 
     virtual void MouseButtonDown();
 
     virtual void OnIdle(void);
 
-    void takeMouse();
-    bool checkRelinquishMouse(int x, int y);
 
 private slots:
     void aboutToBlock();

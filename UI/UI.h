@@ -9,6 +9,10 @@
 #include <list>
 
 #include <QImage>
+#include <QApplication>
+#include <QPainter>
+
+#include <math.h>
 
 class UI;
 
@@ -46,6 +50,13 @@ public:
         this->resp = resp;
     }
 
+};
+
+template <class f> struct UICallback
+{
+    UI *element;
+    f function;
+    void *argument;
 };
 
 class UI {
@@ -89,6 +100,14 @@ public:
     virtual bool selfLayout();
     virtual bool doLayout();
 
+private:
+    UICallback<void (*)(UI*, void *)> mouseEnterProc;
+    UICallback<void (*)(UI*, void *)> mouseLeaveProc;
+
+public:
+    void setMouseEnterProc(void (*proc)(UI *elem, void *arg), UI *elem, void *arg);
+    void setMouseLeaveProc(void (*proc)(UI *elem, void *arg), UI *elem, void *arg);
+
     virtual void mouseEnter();
     virtual void mouseLeave();
 
@@ -96,6 +115,13 @@ public:
     virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
     virtual bool mouseButtonRelease(int x, int y, Qt::MouseButton button);
 
+    virtual void grabMouse();
+    virtual void releaseMouse();
+
+private:
+    virtual void giveMouse(UI *element);
+    virtual void freeMouse(UI *element);
+public:
     virtual UI *childAt(int &x, int &y);
 
     virtual ~UI();

@@ -10,6 +10,7 @@ typedef float (*LenseProc)(float x, float y);
 class Lense {
 public:
     float size;
+    float intensity;
     LenseProc proc;
 
     Lense();

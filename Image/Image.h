@@ -48,6 +48,33 @@ struct ARGBz : ARGB
     }
 };
 
+class ImageMask
+{
+public:
+
+    unsigned char *imageMemory;
+    unsigned char **pix;
+
+    int stride;
+
+    int Width;
+    int Height;
+
+    ImageMask(int Width, int Height);
+    virtual ~ImageMask();
+
+    void Line(int xA,int yA, int xB, int yB, unsigned char pA, unsigned char pB);
+    void FloodFill(int x, int y);
+
+    bool Bound(int x, int y)
+    {
+        if (x<0||x>=Width) return false;
+        if (y<0||y>=Height) return false;
+
+        return true;
+    }
+};
+
 class Image {
 public:
     ARGB *imageMemory;
@@ -81,7 +108,16 @@ public:
 
     Image(int Width, int Height);
 
-    void FillPath(PixOp pixOp, ARGB p, ZOp zOp, float z);
+
+    bool Bound(int x, int y)
+    {
+        if (x<0||x>=Width) return false;
+        if (y<0||y>=Height) return false;
+
+        return true;
+    }
+
+    void FillPath(int x, int y, PixOp pixOp, ARGB p, ZOp zOp, float z);
     void DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z);
 
 

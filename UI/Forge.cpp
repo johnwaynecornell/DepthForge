@@ -99,8 +99,6 @@ void Forge::draw(Image *target, QImage *qImage)
         }
 
     }
-
-    target->FillPath(PixOp_SRC, {0xFF,0x00,0x00,0xFF}, ZOp_SRC, 0);
 }
 
 void Forge::applyLense()

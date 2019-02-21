@@ -9,6 +9,145 @@ extern "C"
 #include <QtGui/QtGui>
 #include "Image.h"
 
+struct Rational
+{
+    int integer;
+    int numerator;
+    int denominator;
+};
+
+ImageMask::ImageMask(int Width, int Height)
+{
+    this->Width = Width;
+    this->Height = Height;
+
+    stride = Width;
+
+    imageMemory = new unsigned char[Width * Height];
+
+    memset(imageMemory, 0, Width*Height);
+
+    pix = new unsigned char *[Height];
+
+    unsigned char *d = imageMemory;
+
+    for (int y=0; y<Height; y++)
+    {
+        pix[y] = d; d+=stride;
+        //memset(pix[y], 0, Width);
+    }
+}
+
+ImageMask::~ImageMask()
+{
+    delete pix;
+    delete imageMemory;
+}
+
+void ImageMask::Line(int xA,int yA, int xB, int yB,unsigned char pA, unsigned char pB)
+{
+    int xD = (xB-xA);
+    int yD = (yB-yA);
+
+    int xS = xD<0?-1:1;
+    int yS = yD<0?-1:1;
+
+    xD *= xS;
+    yD *= yS;
+
+    //xD++;
+    //yD++;
+
+    if (xD==0) xS=0;
+    if (yD==0) yS=0;
+
+    int D = pB - pA;
+
+    if (xD <= yD)
+    {
+        if (yD == 0) {
+            pix[yA][xA] = pA;
+            return;
+        }
+
+        Rational r = {xA, 0, yD};
+        Rational s = {xD / yD *xS, xD % yD, yD};
+
+        int y = yA;
+        for (int d=0; d <= yD; d++)
+        {
+            unsigned char p = (unsigned char) (pA + D * d / yD);
+
+            pix[y][r.integer] = p;
+
+            r.integer += s.integer;
+            r.numerator += s.numerator;
+
+            {
+                if (r.numerator >= r.denominator)
+                {
+                    r.numerator -= r.denominator;
+                    r.integer += xS;
+                }
+            }
+
+            y+=yS;
+        }
+    } else
+    {
+        /*
+        if (yD == 0)
+        {
+            if (pixOp == PixOp_SRC) {
+                pix[yA][xA] = pA;
+            } else if (pixOp == PixOp_SRC_ALPHA) {
+                ARGB dest = pix[yA][xA];
+                dest.r = valValAlpha(dest.r, pA.r, pA.a);
+                dest.g = valValAlpha(dest.g, pA.g, pA.a);
+                dest.b = valValAlpha(dest.b, pA.b, pA.a);
+                dest.a = valValAlpha(dest.a, pA.a, pA.a);
+                pix[yA][xA] = dest;
+            }
+
+            if (zOp == ZOp_SRC)
+            {
+                z[yA][xA] = zA;
+            } else if (zOp == ZOp_SRC_ADD)
+            {
+                z[yA][xA] += zA;
+            }
+            return;
+        }*/
+
+
+        Rational r = {yA, 0, xD};
+        Rational s = {yD / xD *yS, yD % xD, xD};
+
+        int x = xA;
+        for (int d=0; d <= xD; d++)
+        {
+            unsigned char p = (unsigned char) (pA + D * d / xD);
+
+            pix[r.integer][x] = p;
+
+            r.integer += s.integer;
+            r.numerator += s.numerator;
+
+            {
+                if (r.numerator >= r.denominator)
+                {
+                    r.numerator -= r.denominator;
+                    r.integer += yS;
+                }
+            }
+
+            x+=xS;
+        }
+    }
+}
+
+
+
 Image::Image(int Width, int Height)
 {
     this->Width = Width;
@@ -70,98 +209,111 @@ void Image::PathAdd(int x, int y)
 
 }
 
-void Image::FillPath(PixOp pixOp, ARGB p, ZOp zOp, float z)
+
+struct scanEntry {
+    int cur;
+    int low;
+    int high;
+    bool up = true;
+
+    int y;
+};
+
+void ImageMask::FloodFill(int x, int y) {
+
+    ImageMask *_this = this;
+
+    unsigned char **m = _this->pix;
+
+    std::list<scanEntry> se;
+
+    int _x = x;
+    int _y = y;
+
+    do {
+        int sx = _x;
+        int sy = _y;
+
+        bool f;
+
+        f = true;
+
+        while ((_x >= 0) && f && (m[_y][_x] == 0)) {
+            m[_y][_x] = 1;
+            _x--;
+        }
+
+        int lx = _x;
+
+        _x = sx + 1;
+        f = true;
+
+        while ((_x < _this->Width) && f && (m[_y][_x] == 0)) {
+            m[_y][_x] = 1;
+            _x++;
+        }
+
+        int hx = _x;
+
+        if (lx + 1 < hx) {
+            scanEntry s;
+            memset(&s,0,sizeof(s));
+            s.low = lx;
+            s.high = hx;
+            s.cur = lx;
+            s.y = _y;
+            s.up = true;
+
+            se.push_back(s);
+        }
+
+        bool r;
+        do {
+
+            scanEntry *s = &se.front();
+
+            s->cur++;
+            _x = s->cur;
+            _y = s->y + (s->up ? -1 : 1);
+
+            r = (_y >= 0 && _y < _this->Height) && _x < s->high;
+
+            if (!r) {
+                if (!se.front().up) se.pop_front();
+                else {
+                    s->up = false;
+                    s->cur = s->low;
+                }
+            } else r = (_this->Bound(_x, _y) && m[_y][_x] == 0);
+        } while ((!r) && (se.empty() == false));
+
+    } while (se.empty() == false);
+}
+
+
+void Image::FillPath(int x, int y, PixOp pixOp, ARGB p, ZOp zOp, float z)
 {
+
+    ImageMask *m = new ImageMask(Width,Height);
+
+    for (int i = 1; i < pathIndex; i++) {
+        int x1 = pathX[i - 1];
+        int y1 = pathY[i - 1];
+
+        int x2 = pathX[i];
+        int y2 = pathY[i];
+
+        m->Line(x1,y1,x2,y2, 1, 1);
+    }
+
+    m->FloodFill(x,y);
 
     for (int y=0; y<Height; y++) {
         for (int x = 0; x < Width; x++) {
-
-            int incount = 0;
-            int outcount = 0;
-
-            double oth;
-
-            int inlines = 0;
-
-            for (int i = 1; i < pathIndex; i++) {
-                double x1 = pathX[i - 1];
-                double y1 = pathY[i - 1];
-
-                double x2 = pathX[i];
-                double y2 = pathY[i];
-
-                double th = atan2(y2 - y1, x2 - x1);
-
-                double rth;
-
-                if (i != 1)
-                {
-                    rth = oth - th;
-
-                    if (rth > M_2_PI) rth -= M_2_PI;
-                    else if (rth < -M_2_PI) rth += M_2_PI;
-
-                } else rth = 0;
-
-                oth = th;
-
-                double xx = x - x1;
-                double yy = y - y1;
-
-                double sn = sin(-th);
-                double cs = cos(-th);
-
-                double _x = xx * cs - yy * sn;
-                double _y = yy * cs + xx * sn;
-
-                if (rth < 0) {
-                    inlines++;
-
-                    if ((_y >= 0)) {
-                        incount++;
-                    } else outcount++;
-                } else if (rth > 0)
-                {
-                    if ((_y >= 0)) {
-                        outcount--;
-                    } else incount--;
-
-                }
-
-            }
-
-            bool ok;
-
-            ok = (incount > 0) && (incount > (outcount));
-            if (ok) ok = incount > 0 && (((incount % 2) != (inlines % 2)));
-            //ok = outcount > 0 && outcount > (incount);
-
-            ok = (incount>0)&&(outcount>=0);
-
-            int q = incount-outcount;
-
-            ok = (q > 0) && ((incount%2) == 1);
-
-            //ok=true;
-            //ok = (incount %2) == (pathIndex%2);
-
-            int v = incount;
-
-//            ok = incount > 0;
-
-//            if (ok) ok = (incount %2) != ((incount + outcount) %2);
-
-            if (ok)
-            {
+            if (m->pix[y][x]) {
                 if (pixOp == PixOp_SRC) {
                     //pix[y][x] = p;
-
-                    pix[y][x].r += p.r * v;
-                    pix[y][x].g = 0x80;
-                    pix[y][x].b += p.b * v;
-                    pix[y][x].a = 0xFF;
-
-
+                    pix[y][x] = p;
 
                 } else if (pixOp == PixOp_SRC_ALPHA) {
                     ARGB dest = pix[y][x];
@@ -185,6 +337,9 @@ void Image::FillPath(PixOp pixOp, ARGB p, ZOp zOp, float z)
 
     if (_preservePath > 0) _preservePath--;
     if (clear) ClearPath();
+
+    delete m;
+
 }
 
 void Image::DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z) {
@@ -203,14 +358,6 @@ void Image::DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z) {
     if (_preservePath > 0) _preservePath--;
     if (clear) ClearPath();
 }
-
-
-struct Rational
-{
-    int integer;
-    int numerator;
-    int denominator;
-};
 
 void Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB,
                     ZOp zOp, float zA, float zB)

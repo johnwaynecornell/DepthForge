@@ -46,6 +46,8 @@ public:
     virtual void paintGL();
     virtual void resizeGL(int w,int h);
 
+    virtual void closeEvent(QCloseEvent *event);
+
     virtual void mouseMoveEvent(QMouseEvent *eventMove);
     virtual void mousePressEvent(QMouseEvent *eventPress);
     virtual void mouseReleaseEvent(QMouseEvent *releaseEvent);

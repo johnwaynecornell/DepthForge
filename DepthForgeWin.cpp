@@ -188,6 +188,7 @@ DepthForgeWin::DepthForgeWin()
 
 void DepthForgeWin::aboutToBlock()
 {
+
     OnIdle();
 }
 
@@ -219,6 +220,17 @@ void DepthForgeWin::resizeGL(int w,int h)
 
     this->Width = w;
     this->Height = h;
+}
+
+void DepthForgeWin::closeEvent(QCloseEvent *event)
+{
+    if (UI_Image != nullptr) delete UI_Image;
+    if (UI_ImageAnaglyph  != nullptr) delete UI_ImageAnaglyph;
+    if (UI_ImageLeft != nullptr) delete UI_ImageLeft;
+    if (UI_ImageRight != nullptr) delete UI_ImageRight;
+    if (rend != nullptr) delete rend;
+
+    delete ui;
 }
 
 void DepthForgeWin::mouseMoveEvent(QMouseEvent *eventMove)

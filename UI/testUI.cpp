@@ -28,10 +28,19 @@ void testUI::draw(Image *target, QImage *qImage)
 
     target->ClearPath();
     target->PathAdd(100,100);
+
+    target->PathAdd(200,150);
+
+    target->PathAdd(300,50);
+
     target->PathAdd(400,100);
     target->PathAdd(400,200);
     target->PathAdd(200,200);
     target->PathAdd(150,200);
+
+    target->PathAdd(125,225);
+
+
     target->PathAdd(150,250);
     target->PathAdd(200,250);
     target->PathAdd(200,400);
@@ -40,7 +49,7 @@ void testUI::draw(Image *target, QImage *qImage)
 
     target->PreservePath();
 
-    target->FillPath(PixOp_SRC, {0xFF,0x10,0x00,0x10}, ZOp_SRC, 0);
+    target->FillPath(50,101,PixOp_SRC, {0xFF,0xFF,0x00,0xFF}, ZOp_SRC, 0);
     target->PreservePath();
 
     target->DrawPath(PixOp_SRC, {0xFF,0xFF,0xFF,0x00}, ZOp_SRC, 0);
@@ -136,10 +145,16 @@ void testUI::draw(Image *target, QImage *qImage)
 
     sprintf(showBuf, "score:=%d lines:=%d inlines:=%d in_a:=%d in_b:=%d", score, lines, inlines, in_a, in_b);
 
-    QPainter paint(qImage);
+    QPainter *paint = new QPainter(qImage);
 
-    paint.setPen(QColor(0xFF,0xFF,0xFF));
-    paint.drawText(16,16, QApplication::tr(showBuf));
+    paint->setPen(QColor(0xFF,0xFF,0xFF));
+    paint->drawText(16,16, QApplication::tr(showBuf));
+
+    paint->end();
+
+    delete paint;
+
+
 
     target->ClearPath();
 }

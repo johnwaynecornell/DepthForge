@@ -81,6 +81,8 @@ bool UI::selfLayout()
     {
         (*i)->selfLayout();
     }
+
+    return false;
 }
 
 bool UI::doLayout()
@@ -293,6 +295,8 @@ bool Frame::selfLayout()
         height.set(child->height.val + 6);
         height.dirty = false;
     }
+
+    return true;
 }
 
 bool Frame::doLayout() {

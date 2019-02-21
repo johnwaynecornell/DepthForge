@@ -30,6 +30,7 @@ public:
     void *p[32];
 
     GfxThreadWorker(void *barrier);
+    virtual ~GfxThreadWorker();
 
     void begin();
 };

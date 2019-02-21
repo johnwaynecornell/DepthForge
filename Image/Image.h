@@ -107,7 +107,7 @@ public:
 
 
     Image(int Width, int Height);
-
+    virtual ~Image();
 
     bool Bound(int x, int y)
     {

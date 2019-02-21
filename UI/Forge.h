@@ -27,6 +27,7 @@ public:
 
 
     Forge(UI *parent);
+    virtual ~Forge();
 
     virtual void draw(Image *target, QImage *qImage);
 

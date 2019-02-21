@@ -45,6 +45,7 @@ public:
     Lense *lense;
 
     LenseButton(UI *parent, LenseProc proc);
+    virtual ~LenseButton();
 
     virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
 

@@ -79,6 +79,7 @@ struct GfxRect
 typedef void *(*GfxWorker_ProcType)(GfxThreadWorker *w);
 
 void GfxInitThreadWorkers(int count);
+void GfxTerminate();
 
 void Init_JWC_PixelGfx();
 void GfxBlt(PixType srcFormat, void *src, int sx,int sy, int sw, int sh, int s_stride, PixType  dstFormat, void *dst, int dx, int dy, int dw, int dh, int d_stride);

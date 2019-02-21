@@ -231,6 +231,9 @@ void DepthForgeWin::closeEvent(QCloseEvent *event)
     if (rend != nullptr) delete rend;
 
     delete ui;
+
+    disconnect(dispatcher, SIGNAL(aboutToBlock()));
+
 }
 
 void DepthForgeWin::mouseMoveEvent(QMouseEvent *eventMove)
@@ -407,7 +410,7 @@ void DepthForgeWin::paintGL()
 
     glDrawPixels(Width,Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
 
-    delete obuf;
+    delete []obuf;
 
 //    SDL_RenderPresent(renderer);
 }

@@ -46,6 +46,11 @@ Forge::Forge(UI *parent) : UI(parent)
 
 }
 
+Forge::~Forge()
+{
+    delete src;
+}
+
 void Forge::draw(Image *target, QImage *qImage)
 {
     UI::draw(target, qImage);

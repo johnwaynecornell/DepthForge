@@ -129,6 +129,7 @@ void DrawImageProc(GfxThreadWorker *worker,
             }
         }
 
+        delete []cols;
 
     }
 

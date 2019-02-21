@@ -29,6 +29,10 @@ UI::UI(UI *parent)
 
 UI::~UI()
 {
+    for (std::list<UI*>::iterator i = children.begin(); i != children.end(); i++)
+    {
+        delete (*i);
+    }
 }
 
 UI * UI::rootElement()

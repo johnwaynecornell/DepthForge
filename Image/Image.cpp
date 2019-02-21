@@ -186,6 +186,19 @@ Image::Image(int Width, int Height)
     }
 }
 
+Image::~Image()
+{
+    delete []pix;
+    delete []imageMemory;
+
+    delete []z;
+    delete []zMemory;
+
+    delete []pathX;
+    delete []pathY;
+}
+
+
 void Image::PreservePath()
 {
     _preservePath++;

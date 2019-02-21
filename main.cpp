@@ -14,16 +14,19 @@ int main(int argc, char **argv) {
     Init_JWC_PixelGfx();
     int Threads = QThread::idealThreadCount();
 
-    QApplication application(argc, argv);
-    app = &application;
+    app = new QApplication(argc, argv);
 
     GfxInitThreadWorkers(Threads);
 
-    MainWnd Win;
+    MainWnd *Win = new MainWnd();
 
-    Win.resize(800,600);
-    Win.show();
+    Win->resize(800,600);
+    Win->show();
 
+    app->exec();
 
-    application.exec();
+    delete Win;
+    delete app;
+
+    GfxTerminate();
 }

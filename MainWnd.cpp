@@ -16,8 +16,12 @@ MainWnd::MainWnd() : QMainWindow()
 
 void MainWnd::closeEvent(QCloseEvent *event)
 {
+    centralWidget()->close();
+
     QMainWindow::closeEvent(event);
     app->quit();
+
+    delete  centralWidget();
 }
 
 void MainWnd::createMenus()

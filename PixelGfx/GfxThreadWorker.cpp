@@ -12,9 +12,33 @@ extern "C"
 #include <QApplication>
 #include <QThread>
 
+class MyThread : public QThread
+{
+public:
+    void (*proc)(void *);
+    void *data;
+
+    bool doRun;
+
+    MyThread(void (*proc)(void *), void *data);
+    virtual ~MyThread();
+
+    virtual void run();
+
+private slots:
+    void aboutToQuit();
+
+};
+
 GfxThreadWorker::GfxThreadWorker(void *barrier)
 {
     this->barrier = barrier;
+}
+
+GfxThreadWorker::~GfxThreadWorker()
+{
+    ((MyThread *)thread)->wait();
+    delete ((MyThread *)thread);
 }
 
 //void gfxWorkerThread(void *data)
@@ -25,27 +49,12 @@ void gfxWorkerThread(void *data)
     //while ()
     {
         Barrier_wait(worker->barrier);
-        worker->WorkerProc(worker);
-        Barrier_wait(worker->barrier);
+        if (((MyThread *)worker->thread)->doRun) {
+            worker->WorkerProc(worker);
+            Barrier_wait(worker->barrier);
+        }
     }
 }
-
-class MyThread : public QThread
-{
-public:
-    void (*proc)(void *);
-    void *data;
-
-    bool doRun;
-
-    MyThread(void (*proc)(void *), void *data);
-
-    virtual void run();
-
-private slots:
-    void aboutToQuit();
-
-};
 
 extern QApplication *app;
 
@@ -57,6 +66,11 @@ MyThread::MyThread(void (*proc)(void *), void *data) : QThread(nullptr)
     doRun = true;
 
     QApplication::connect(app, &QApplication::aboutToQuit, this, &MyThread::aboutToQuit);
+}
+
+MyThread::~MyThread()
+{
+    QApplication::disconnect(app, &QApplication::aboutToQuit, this, &MyThread::aboutToQuit);
 }
 
 void MyThread::run()
@@ -105,4 +119,16 @@ void GfxInitThreadWorkers(int count)
         gfxThreadWorkers[i]->of = count;
         gfxThreadWorkers[i]->begin();
     }
+}
+
+void GfxTerminate()
+{
+    Barrier_wait(gfxThreadWorkerBarrier);
+
+    for (int i=0; i<gfxThreadWorkerCount; i++)
+    {
+        delete gfxThreadWorkers[i];
+    }
+
+    delete [] gfxThreadWorkers;
 }

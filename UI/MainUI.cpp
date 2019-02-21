@@ -182,6 +182,12 @@ LenseButton::LenseButton(UI *parent, LenseProc proc) : Button_Image(parent)
     }
 }
 
+LenseButton::~LenseButton()
+{
+    delete src;
+    delete lense;
+}
+
 bool LenseButton::mouseButtonPress(int x, int y, Qt::MouseButton button)
 {
     bool rc = Button_Image::mouseButtonPress(x,y,button);

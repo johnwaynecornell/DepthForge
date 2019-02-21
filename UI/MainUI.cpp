@@ -79,6 +79,8 @@ bool MainUI::selfLayout()
     toolFrame->height.set(height.get());
 
     Fixed::selfLayout();
+
+    return true;
 }
 
 bool MainUI::doLayout()
@@ -97,6 +99,8 @@ bool MainUI::doLayout()
 
     bottomFrame->xPos.set(0);
     bottomFrame->yPos.set(height.get()-bottomFrame->height.get());
+
+    return true;
 }
 
 LenseButton * MainUI::addLenseButton(int x, int y, LenseProc proc)

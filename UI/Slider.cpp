@@ -72,6 +72,8 @@ bool Slider::mouseButtonPress(int x, int y, Qt::MouseButton button)
 bool Slider::mouseButtonRelease(int x, int y, Qt::MouseButton button)
 {
     bool rc = UI::mouseButtonRelease(x,y,button);
+
+    return rc;
 }
 
 Slider::~Slider()

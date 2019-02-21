@@ -163,7 +163,9 @@ bool Forge::mouseMove(int x, int y)
 
     applyLense();
 
-    UI::mouseMove(x,y);
+    bool rc = UI::mouseMove(x,y);
+
+    return rc;
 }
 
 bool Forge::mouseButtonPress(int x, int y, Qt::MouseButton button)
@@ -175,12 +177,16 @@ bool Forge::mouseButtonPress(int x, int y, Qt::MouseButton button)
 
     applyLense();
 
-    UI::mouseButtonPress(x,y,button);
+    bool rc = UI::mouseButtonPress(x,y,button);
+
+    return rc;
 }
 
 bool Forge::mouseButtonRelease(int x, int y, Qt::MouseButton button)
 {
     mouseDown.setFlag(button, false);
 
-    UI::mouseButtonRelease(x,y,button);
+    bool rc = UI::mouseButtonRelease(x,y,button);
+
+    return rc;
 }

@@ -113,6 +113,8 @@ bool Button_Image::selfLayout()
     }
 
     UI::selfLayout();
+
+    return true;
 }
 
 

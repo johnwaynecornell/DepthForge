@@ -24199,6 +24199,7 @@ GfxBlt_Proc GfxBlt_Selector(PixType srcFormat, void* src, int sx, int sy, int sw
 
     }
 
+    return nullptr;
 }
 
 void GfxBlt(PixType srcFormat, void *src, int sx,int sy, int sw, int sh, int s_stride, PixType  dstFormat, void *dst, int dx, int dy, int dw, int dh, int d_stride) {

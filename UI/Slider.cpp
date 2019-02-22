@@ -170,7 +170,7 @@ void Slider::draw(Image *target, QImage *qImage)
 
 void Slider::updateElementPosition()
 {
-    int y = (int) (v * (height.get()-element->height.get()-1));
+    int y = (int) ((1.0-v) * (height.get()-element->height.get()-1));
 
     element->xPos.set(16);
     element->yPos.set(y);
@@ -239,7 +239,7 @@ bool Slider::moveElement(int xd, int yd)
     if (y<0) y=0;
     if (y>h) y=h;
 
-    setV(y / (double) h);
+    setV(1.0-(y / (double) h));
 
     return _y != y;
 }

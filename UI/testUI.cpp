@@ -22,6 +22,17 @@ bool testUI::mouseMove(int x, int y)
 
 bool pixFunc(int index, double y, ARGB &p, float &z, void *arg)
 {
+    if (y>=0)
+    {
+        /*
+        if (index == 0) p = {0xFF,0xFF,0x00,0x00};
+        else if (index == 1) p = {0xFF,0x00,0xFF,0x00};
+        else */ p = {0xFF,0xFF,0xFF,0xFF};
+        z = 0;
+
+        return true;
+    }
+
     y = abs(y);
 
     if (y>=0 && y<10)

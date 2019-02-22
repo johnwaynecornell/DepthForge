@@ -380,6 +380,8 @@ void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
         for (int x=0; x<Width; x++)
         {
             double mv = INFINITY;
+            double lastth = 0;
+            double lastx;
 
             int ind;
 
@@ -391,12 +393,16 @@ void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
                 double x2 = pathX[i];
                 double y2 = pathY[i];
 
-                double th = atan2(y2 - y1, x2 - x1);
+                double xd = x2 - x1;
+                double yd = y2 - y1;
+
+                double th = atan2(yd, xd);
 
                 double sn = sin(-th);
                 double cs = cos(-th);
 
                 double _xD = (x2-x1) * cs - (y2-y1) * sn;
+                //double _xD = sqrt(pow(x2-x1,2)+pow(y2-y1,2));
 
                 double xx = x- x1;
                 double yy = y- y1;
@@ -404,25 +410,41 @@ void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
                 double _x = xx * cs - yy * sn;
                 double _y = yy * cs + xx * sn;
 
-                if (_x >=0 && _x<_xD)
+                if ((_x >=0) && (_x<=_xD))
                 {
                     _x = 0;
                 } else if (_x<0)
                 {
-                    _x = -_x;
-                } else if (_x >= _xD)
+                    _x = _x;
+                } else if (_x > _xD)
                 {
                     _x -= _xD;
                 }
 
-                double v = sqrt(_x*_x+_y*_y);
+                th = atan2(_y,_x);
+                double v = (_x) * cos(-th) - (_y) * sin(-th);// sqrt(_x*_x+_y*_y);
 
-                if (_y<0) v *= -1.0;
+                if (_y<0) v *= -1;// else if (_x>0) v *= -1;
 
+                //th = atan2(_y,_x);
+                //if (th<=0) v *= -1;
+
+                //th = atan2(_y,_x);
+
+                if (abs(abs(v) - abs(mv))<.01)
+                {
+                    if (abs(_x)<abs(lastx))
+                    {
+                        mv = v;
+                        ind = i-1;
+                        lastx = _x;
+                    }
+                } else
                 if (abs(v)<abs(mv))
                 {
                     mv = v;
                     ind = i-1;
+                    lastx = _x;
                 }
 
             }

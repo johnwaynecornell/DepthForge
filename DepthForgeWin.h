@@ -27,6 +27,9 @@ public:
     int Width;
     int Height;
 
+    int oldWidth=-1;
+    int oldHeight=-1;
+
     PixType RenderBufferType;
 
     QImage *rend;
@@ -69,6 +72,7 @@ public:
 
     virtual void OnIdle(void);
 
+    void checkResize();
 
 private slots:
     void aboutToBlock();

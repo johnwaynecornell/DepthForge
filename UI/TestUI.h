@@ -9,16 +9,23 @@
 #include <DepthForgeWin.h>
 #include "UI.h"
 
-class testUI : public UI {
+class TestUI : public UI {
 
 public:
+    std::chrono::high_resolution_clock clk;
+    std::chrono::time_point<std::chrono::high_resolution_clock> timeUp;
+
+    FpsMonitor fps;
+
     int mouseX;
     int mouseY;
 
-    testUI(DepthForgeWin *win);
+    TestUI(DepthForgeWin *win);
 
     virtual void draw(Image *target, QImage *qImage);
     virtual bool mouseMove(int x, int y);
+
+    virtual double getTimeInSeconds();
 };
 
 

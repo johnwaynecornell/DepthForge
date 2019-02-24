@@ -23,10 +23,8 @@ Button::~Button()
 
 void Button::drawBackground(UI *member, Image *target, QImage *qImage)
 {
-    timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
+    drawTime = getTimeInSeconds();
 
-    drawTime = ts.tv_sec + ts.tv_nsec / 1000000000.0;
     if (qIsInf(lastDrawTime))
     {
         zTarg = z;

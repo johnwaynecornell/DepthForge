@@ -7,7 +7,9 @@ extern "C"
 }
 
 #include <QtGui/QtGui>
+
 #include "Image.h"
+#include "TrigCache.h"
 #include <math.h>
 
 struct Rational
@@ -372,89 +374,196 @@ void Image::DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z) {
     if (clear) ClearPath();
 }
 
-void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
-              bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg)
+TrigCellCache cache;
+
+struct pdata
 {
-    for (int y=0; y<Height; y++)
-    {
-        for (int x=0; x<Width; x++)
-        {
-            double mv = INFINITY;
-            double lastth = 0;
-            double lastx;
+    int i;
+    double mv;
+    int x;
+};
 
-            int ind;
+struct PathProcParams
+{
+    Image *img;
+    pdata *data;
+    int i;
+    int x1;
+    int y1;
 
-            for (int i = 1; i < pathIndex; i++)
+    double th;
+    double sqr;
+
+    TrigEntry *E;
+
+};
+
+double sinTab[65536];
+double cosTab[65536];
+
+void *pathProcSlice(GfxThreadWorker *worker)
+{
+    PathProcParams *p = (PathProcParams *) worker->p[17];
+
+    Image *img = p->img;
+    pdata *data = p->data;
+
+    int ly = img->Height * worker->index / worker->of;
+    int hy = img->Height * (worker->index+1) / worker->of;
+
+    int Width = img->Width;
+
+    int i = p->i;
+    int x1 = p->x1;
+    int y1 = p->y1;
+    TrigEntry *E = p->E;
+
+    double th = p->th;
+    if (th<0) th += M_PI*2;
+
+
+    int q = (int) ((th/(M_PI*2))*65536);
+
+    double _sqrt = p->sqr;
+
+    double cs = cos(th);//cosTab[q];
+    double sn = sin(th);//sinTab[q];
+
+    for (int y=ly; y<hy; y++) {
+        for (int x = 0; x < Width; x++) {
+
+            pdata *d = data + y * Width + x;
+
+            double xx = x - x1;
+            double yy = y - y1;
+
+
+            //if (absmvsqr +10> (xx*xx+yy*yy))
             {
-                double x1 = pathX[i - 1];
-                double y1 = pathY[i - 1];
+                //Q_ASSERT(E->x == xd && E->y == yd);
 
-                double x2 = pathX[i];
-                double y2 = pathY[i];
+                /*
+                double cs = E->rCos;
+                double sn = E->rSin;
+                double _sqrt = E->sqrt;
+                */
 
-                double xd = x2 - x1;
-                double yd = y2 - y1;
 
-                double th = atan2(yd, xd);
+                double __x = xx * cs - yy * sn;
+                double __y = yy * cs + xx * sn;
 
-                double sn = sin(-th);
-                double cs = cos(-th);
+                double _x = __x;
+                double _y = __y;
 
-                double _xD = (x2-x1) * cs - (y2-y1) * sn;
-                //double _xD = sqrt(pow(x2-x1,2)+pow(y2-y1,2));
-
-                double xx = x- x1;
-                double yy = y- y1;
-
-                double _x = xx * cs - yy * sn;
-                double _y = yy * cs + xx * sn;
-
-                if ((_x >=0) && (_x<=_xD))
-                {
+                if ((_x >= 0) && (_x <= _sqrt)) {
                     _x = 0;
-                } else if (_x<0)
-                {
+                } else if (_x < 0) {
                     _x = _x;
-                } else if (_x > _xD)
-                {
-                    _x -= _xD;
+                } else if (_x > _sqrt) {
+                    _x -= _sqrt;
                 }
 
-                th = atan2(_y,_x);
-                double v = (_x) * cos(-th) - (_y) * sin(-th);// sqrt(_x*_x+_y*_y);
+                //E = cache.get((int)_x, (int)_y);
 
-                if (_y<0) v *= -1;// else if (_x>0) v *= -1;
+                //th = atan2(_y,_x);
+                //double v = (_x) * cos(-th) - (_y) * sin(-th);
+                double v = (_x == 0) ? abs(_y) : sqrt(_x * _x + _y * _y);
+
+                if (_y < 0) v *= -1;// else if (_x>0) v *= -1;
 
                 //th = atan2(_y,_x);
                 //if (th<=0) v *= -1;
 
                 //th = atan2(_y,_x);
 
-                if (abs(abs(v) - abs(mv))<.01)
-                {
-                    if (abs(_x)<abs(lastx))
-                    {
-                        mv = v;
-                        ind = i-1;
-                        lastx = _x;
+                if (abs(abs(v) - abs(d->mv)) < .00001) {
+                    if (abs(_x) < abs(d->x)) {
+                        d->mv = v;
+                        d->i = i - 1;
+                        d->x = _x;
                     }
-                } else
-                if (abs(v)<abs(mv))
-                {
-                    mv = v;
-                    ind = i-1;
-                    lastx = _x;
+                } else if (abs(v) < abs(d->mv)) {
+                    d->mv = v;
+                    d->i = i - 1;
+                    d->x = _x;
                 }
-
             }
+        }
+    }
+}
+
+void *pathProc(Image *img, pdata *pathdata, int i, int x1, int y1, TrigEntry *E, double th, double sqr)
+{
+    int count = gfxThreadWorkerCount;
+    GfxThreadWorker **workers = gfxThreadWorkers;
+
+    PathProcParams params;
+
+    params.img= img;
+    params.data = pathdata;
+    params.i = i;
+    params.x1 = x1;
+    params.y1 = y1;
+    params.E = E;
+    params.th = th;
+    params.sqr = sqr;
+
+    GfxWorker_ProcType func;
+
+    func = pathProcSlice;
+
+    for (int i = 0; i < count; i++) {
+        GfxThreadWorker *w = gfxThreadWorkers[i];
+
+        w->p[17] = &params;
+
+        w->WorkerProc = func;
+    }
+
+    Barrier_wait(gfxThreadWorkerBarrier);
+    Barrier_wait(gfxThreadWorkerBarrier);
+}
+
+
+struct PathMergeParams
+{
+    Image *img;
+    pdata *data;
+    double yScale;
+    PixOp pixOp;
+    ZOp zOp;
+
+    bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg);
+    void *arg;
+};
+
+void *pathMergeSlice(GfxThreadWorker *worker)
+{
+    PathMergeParams *p = (PathMergeParams *) worker->p[17];
+
+    Image *img = p->img;
+    double yScale = p->yScale;
+    PixOp pixOp = p->pixOp;
+    ZOp zOp = p->zOp;
+    void *arg = p->arg;
+    ARGB **pix = img->pix;
+    bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg) = p->pixFunc;
+
+    int ly = img->Height * worker->index / worker->of;
+    int hy = img->Height * (worker->index+1) / worker->of;
+
+    for (int y=ly; y<hy; y++)
+    {
+        for (int x=0; x<img->Width; x++)
+        {
+            pdata *d = p->data + y*img->Width+x;
 
             ARGB p;
             float _z;
 
-            mv *= yScale;
+            d->mv *= yScale;
 
-            if (pixFunc(ind, mv, p, _z, arg))
+            if (pixFunc(d->i, d->mv, p, _z, arg))
             {
                 if (pixOp == PixOp_SRC) {
                     //pix[y][x] = p;
@@ -470,15 +579,85 @@ void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
                 }
 
                 if (zOp == ZOp_SRC) {
-                    this->z[y][x] = _z;
+                    img->z[y][x] = _z;
                 } else if (zOp == ZOp_SRC_ADD) {
-                    this->z[y][x] += _z;
+                    img->z[y][x] += _z;
                 }
 
             }
 
         }
     }
+
+    return nullptr;
+}
+
+void *pathMerge(Image *img, pdata *pathdata, double yScale, PixOp pixOp, ZOp zOp,
+                bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg) {
+
+    int count = gfxThreadWorkerCount;
+    GfxThreadWorker **workers = gfxThreadWorkers;
+
+    PathMergeParams params;
+
+    params.img= img;
+    params.data = pathdata;
+    params.yScale = yScale;
+    params.pixOp = pixOp;
+    params.zOp = zOp;
+
+    params.pixFunc = pixFunc;
+    params.arg = arg;
+
+    GfxWorker_ProcType func;
+
+    func = pathMergeSlice;
+
+    for (int i = 0; i < count; i++) {
+        GfxThreadWorker *w = gfxThreadWorkers[i];
+
+        w->p[17] = &params;
+
+        w->WorkerProc = func;
+    }
+
+    Barrier_wait(gfxThreadWorkerBarrier);
+    Barrier_wait(gfxThreadWorkerBarrier);
+}
+void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
+              bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg)
+{
+    pdata *data = new pdata[Width*Height];
+
+    for (int y=0; y<Height; y++) {
+        for (int x = 0; x < Width; x++) {
+            data[y*Width+x] = {-1,INFINITY, 0};
+        }
+    }
+
+    for (int i = 1; i < pathIndex; i++) {
+
+        double x1 = pathX[i - 1];
+        double y1 = pathY[i - 1];
+
+        double x2 = pathX[i];
+        double y2 = pathY[i];
+
+        int xd = x2 - x1;
+        int yd = y2 - y1;
+
+        int xKey = (xd < 0 ? ((-xd) >> 8) : (xd >> 8));
+        int yKey = (yd < 0 ? ((-yd) >> 8) : (yd >> 8));
+
+        //TrigCell *C = ((TrigCell *) *cache.get(xKey, yKey, xd < 0 ? -1 : 1, yd < 0 ? -1 : 1));
+        //TrigEntry *E = &C->data[((((yd < 0) ? -yd : yd) & 0xFF) << 8) + ((xd < 0 ? -xd : xd) & 0xFF)];
+        TrigEntry *E = nullptr;
+
+        pathProc(this, data,i, x1, y1, E, -atan2(yd,xd), sqrt(xd*xd+yd*yd));
+    }
+
+    pathMerge(this, data,yScale,pixOp,zOp,pixFunc, arg);
+    delete []data;
 }
 
 

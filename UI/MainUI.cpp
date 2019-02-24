@@ -8,6 +8,8 @@
 
 MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
 {
+    timeUp = clk.now();
+
     owner = main;
     width.setResp(Resp_Self);
     height.setResp(Resp_Self);
@@ -127,8 +129,18 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
 
 }
 
+double MainUI::getTimeInSeconds()
+{
+    std::chrono::time_point<std::chrono::high_resolution_clock> time = clk.now();
+
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(time-timeUp).count()
+                / 1000000000.0;
+}
+
 void MainUI::draw(Image *target, QImage *qImage)
 {
+    fps.mark(getTimeInSeconds());
+
     UI::draw(target, qImage);
 }
 

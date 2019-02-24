@@ -11,7 +11,7 @@
 #include <QMouseEvent>
 
 #include <math.h>
-#include <UI/testUI.h>
+#include <UI/TestUI.h>
 
 extern "C"
 {
@@ -29,7 +29,7 @@ DepthForgeWin::DepthForgeWin()
     UI_Image = UI_ImageAnaglyph  = UI_ImageLeft = UI_ImageRight = nullptr;
     rend = nullptr;
 
-    //ui = new testUI(this);
+    //ui = new TestUI(this);
 
     ui = new MainUI(this);
     mouseCapture = nullptr;
@@ -196,6 +196,21 @@ void DepthForgeWin::aboutToBlock()
 void DepthForgeWin::resizeGL(int w,int h)
 {
     QGLWidget::resizeGL(w,h);
+}
+
+void DepthForgeWin::checkResize()
+{
+    Width = width();
+    Height = height();
+
+    if (Width != oldWidth || Height != oldHeight)
+    {
+        oldWidth = Width;
+        oldHeight = Height;
+    }
+
+    int w = Width;
+    int h = Height;
 
     if (UI_Image != nullptr) delete UI_Image;
     if (UI_ImageAnaglyph  != nullptr) delete UI_ImageAnaglyph;
@@ -337,6 +352,8 @@ bool DepthForgeWin::checkRelinquishMouse(int x, int y)
 
 void DepthForgeWin::paintGL()
 {
+    checkResize();
+
     BGRA *obuf = new BGRA[Width*Height];
 
     RGBA DrawColor = { (uchar) rand(),(uchar) rand(),(uchar) rand(),0xFF};
@@ -345,21 +362,7 @@ void DepthForgeWin::paintGL()
 
     ui->draw(UI_Image,rend);
 
-    //UI_Image->Line(0,0,Width-1,Height-1, {0xFF,0xFF,0xFF,0xFF}, {0xFF,0xFF,0x00,0xFF}, 0, 1);
 
-    /*
-    Frame *frame = new Frame(nullptr);
-
-    frame->height=50;
-    frame->width=50;
-
-    frame->xReal = 50;
-    frame->yReal = 50;
-
-    frame->draw(UI_Image, rend);
-
-    delete frame;
-*/
     /*
     QImage A;
     A.load(tr("/home/jwc/Pictures/Danielle.jpg"));

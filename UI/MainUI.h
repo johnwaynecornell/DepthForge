@@ -5,11 +5,13 @@
 #ifndef DEPTHFORGE_MAINUI_H
 #define DEPTHFORGE_MAINUI_H
 
+#include <chrono>
 
-#include <Lense.h>
-#include <DepthForgeWin.h>
+#include "Lense.h"
+#include "DepthForgeWin.h"
 #include "UI.h"
 #include "Slider.h"
+#include "../FpsMonitor.h"
 
 class Forge;
 class LenseButton;
@@ -19,6 +21,10 @@ class DepthForgeWin;
 class MainUI : public Fixed
 {
 public:
+    FpsMonitor fps;
+    std::chrono::high_resolution_clock clk;
+    std::chrono::time_point<std::chrono::high_resolution_clock> timeUp;
+
     Lense *lense;
 
     Frame *toolFrame;
@@ -39,6 +45,7 @@ public:
 
     virtual bool selfLayout();
     virtual bool doLayout();
+    virtual double getTimeInSeconds();
 
 private:
     virtual void giveMouse(UI *element);

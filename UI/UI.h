@@ -123,6 +123,7 @@ private:
     virtual void freeMouse(UI *element);
 public:
     virtual UI *childAt(int &x, int &y);
+    virtual double getTimeInSeconds();
 
     virtual ~UI();
 };

@@ -68,10 +68,7 @@ void Forge::draw(Image *target, QImage *qImage)
 {
     UI::draw(target, qImage);
 
-    timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-
-    double time = ts.tv_nsec / 1000000000.0;
+    double time = trunc(getTimeInSeconds());
 
     _x = xReal;
     _y = yReal;

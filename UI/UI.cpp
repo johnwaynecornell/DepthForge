@@ -266,6 +266,20 @@ void UI::draw(Image *target, QImage *qImage)
     }
 }
 
+double UI::getTimeInSeconds()
+{
+    UI *p = this->parent;
+    while (p->parent != nullptr) p = p->parent;
+
+    if (p == nullptr)
+    {
+        fprintf(stderr, "ERROR root UI must override getTimeInSeconds");
+        QApplication::exit(-1);
+    }
+
+    return p->getTimeInSeconds();
+}
+
 Frame::Frame(UI *parent) : UI(parent)
 {
     childOriginX.set(3);

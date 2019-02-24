@@ -68,7 +68,8 @@ void Forge::draw(Image *target, QImage *qImage)
 {
     UI::draw(target, qImage);
 
-    double time = trunc(getTimeInSeconds());
+    double time = getTimeInSeconds();
+    time = time - trunc(time);
 
     _x = xReal;
     _y = yReal;

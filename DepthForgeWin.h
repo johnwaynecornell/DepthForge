@@ -7,8 +7,10 @@
 
 #include <QOpenGLWindow>
 #include <QAbstractEventDispatcher>
-#include <Image/Image.h>
 #include <QtOpenGL/QGLWidget>
+#include <QMainWindow>
+
+#include "Image/Image.h"
 #include <UI/UI.h>
 #include <UI/MainUI.h>
 
@@ -31,6 +33,8 @@ public:
     int oldHeight=-1;
 
     PixType RenderBufferType;
+
+    QMainWindow *parent;
 
     QImage *rend;
     Image *UI_Image;
@@ -66,7 +70,7 @@ public:
     void takeMouse();
     bool checkRelinquishMouse(int x, int y);
 
-    DepthForgeWin();
+    DepthForgeWin(QMainWindow *parent);
 
     virtual void MouseButtonDown();
 

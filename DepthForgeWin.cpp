@@ -20,7 +20,7 @@ extern "C"
 
 #include "UI/UI.h"
 
-DepthForgeWin::DepthForgeWin()
+DepthForgeWin::DepthForgeWin(QMainWindow *parent)
 {
     hasMouse = false;
     dispatcher = QAbstractEventDispatcher::instance();
@@ -28,6 +28,8 @@ DepthForgeWin::DepthForgeWin()
 
     UI_Image = UI_ImageAnaglyph  = UI_ImageLeft = UI_ImageRight = nullptr;
     rend = nullptr;
+
+    this->parent = parent;
 
     //ui = new TestUI(this);
 

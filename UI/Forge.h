@@ -41,6 +41,10 @@ public:
 
     void applyLense();
 
+    void import(void *arg);
+    void export_anaglyph(void *arg);
+    void export_jps(void *arg);
+
 };
 
 

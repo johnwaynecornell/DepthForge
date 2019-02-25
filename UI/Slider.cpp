@@ -102,8 +102,7 @@ void Slider::makeSrc()
 
     int xc = _w / 2;
 
-    src->PathAdd(xc+(xc>>1), 6);
-    src->PathAdd(xc+(xc>>1), _h-6);
+    src->Line(xc+(xc>>1), 6, xc+(xc>>1), _h-6);
 
     src->DrawPath(PixOp_SRC_ALPHA,ZOp_SRC_ADD, 1, sliderPixFunc, &xc);
 
@@ -285,11 +284,11 @@ Slider::Element::Element(Slider *slider, int width, int height) : UI(slider)
 
     int w = 3;
 
-    src->PathAdd(xc, height-w);
-    src->PathAdd(width-w, yc);
-    src->PathAdd(xc, w);
-    src->PathAdd(w, yc);
-    src->PathAdd(xc, height-w);
+    src->MoveTo(xc, height-w);
+    src->LineTo(width-w, yc);
+    src->LineTo(xc, w);
+    src->LineTo(w, yc);
+    src->LineTo(xc, height-w);
 
     src->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC_ADD, 1.0 / w, elementPixFunc, nullptr);
 

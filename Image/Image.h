@@ -75,6 +75,19 @@ public:
     }
 };
 
+struct PathEntry
+{
+    int x1;
+    int y1;
+    int x2;
+    int y2;
+    int r;
+
+    bool point;
+    bool invert;
+
+};
+
 class Image {
 public:
     ARGB *imageMemory;
@@ -93,17 +106,23 @@ public:
     int Width;
     int Height;
 
+    int pathLastX;
+    int pathLastY;
+
     int pathMax;
     int pathIndex;
-    int *pathX;
-    int *pathY;
+    PathEntry *path;
 
     int _preservePath;
 
     void PreservePath();
-
     void ClearPath();
-    void PathAdd(int x, int y);
+
+    void MoveTo(int x1, int y1);
+    void Circle(int r, bool Invert);
+    void Circle(int x, int y, int r, bool Invert);
+    void LineTo(int x2, int y2);
+    void Line(int x1, int y1, int x2, int y2);
 
 
     Image(int Width, int Height);
@@ -117,7 +136,7 @@ public:
         return true;
     }
 
-    void FillPath(int x, int y, PixOp pixOp, ARGB p, ZOp zOp, float z);
+    //void FillPath(int x, int y, PixOp pixOp, ARGB p, ZOp zOp, float z);
     void DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z);
     void DrawPath(PixOp pixOp, ZOp zOp, double yScale,
             bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg);

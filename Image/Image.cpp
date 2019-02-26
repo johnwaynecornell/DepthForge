@@ -165,8 +165,7 @@ Image::Image(int Width, int Height)
     this->pathIndex = 0;
 
     pathMax = 1024;
-    pathX = new int[pathMax];
-    pathY = new int[pathMax];
+    path = new PathEntry[pathMax];
 
     imageMemory = new ARGB[Width * Height];
 
@@ -197,8 +196,7 @@ Image::~Image()
     delete []z;
     delete []zMemory;
 
-    delete []pathX;
-    delete []pathY;
+    delete []path;
 }
 
 
@@ -214,14 +212,50 @@ void Image::ClearPath()
 
 }
 
-void Image::PathAdd(int x, int y)
+void Image::MoveTo(int x1, int y1)
+{
+    pathLastX = x1;
+    pathLastY = y1;
+}
+void Image::Circle(int r, bool Invert)
 {
     Q_ASSERT(pathIndex < pathMax);
 
-    pathX[pathIndex] = x;
-    pathY[pathIndex] = y;
-
+    path[pathIndex] = {pathLastX, pathLastY, pathLastX, pathLastY, r, true, Invert};
     pathIndex++;
+
+}
+void Image::Circle(int x, int y, int r, bool Invert)
+{
+    Q_ASSERT(pathIndex < pathMax);
+
+    path[pathIndex] = {x, y, x, y, r, true, Invert};
+    pathIndex++;
+
+    pathLastX = x;
+    pathLastY = y;
+}
+
+void Image::Line(int x1, int y1, int x2, int y2)
+{
+    Q_ASSERT(pathIndex < pathMax);
+
+    path[pathIndex] = {x1, y1, x2, y2, 0, false, false};
+    pathIndex++;
+
+    pathLastX = x2;
+    pathLastY = y2;
+
+}
+void Image::LineTo(int x2, int y2)
+{
+    Q_ASSERT(pathIndex < pathMax);
+
+    path[pathIndex] = {pathLastX, pathLastY, x2, y2, 0, false, false};
+    pathIndex++;
+
+    pathLastX = x2;
+    pathLastY = y2;
 
 }
 
@@ -306,7 +340,7 @@ void ImageMask::FloodFill(int x, int y) {
     } while (se.empty() == false);
 }
 
-
+/*
 void Image::FillPath(int x, int y, PixOp pixOp, ARGB p, ZOp zOp, float z)
 {
     ImageMask *m = new ImageMask(Width,Height);
@@ -355,17 +389,70 @@ void Image::FillPath(int x, int y, PixOp pixOp, ARGB p, ZOp zOp, float z)
 
     delete m;
 
-}
+}*/
 
 void Image::DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z) {
-    for (int i = 1; i < pathIndex; i++) {
-        int x1 = pathX[i - 1];
-        int y1 = pathY[i - 1];
+    for (int i = 0; i < pathIndex; i++) {
+        PathEntry &pe = path[i];
 
-        int x2 = pathX[i];
-        int y2 = pathY[i];
+        if (pe.point)
+        {
+            int x1 = pe.x1;
+            int y1 = pe.y1;
 
-        Line(x1,y1,x2,y2, pixOp, p, p, zOp, z, z);
+            if (pe.r==0)
+            {
+                if (pixOp == PixOp_SRC) {
+                    //pix[y][x] = p;
+                    pix[y1][x1] = p;
+
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = pix[y1][x1];
+                    dest.r = valValAlpha(dest.r, p.r, p.a);
+                    dest.g = valValAlpha(dest.g, p.g, p.a);
+                    dest.b = valValAlpha(dest.b, p.b, p.a);
+                    dest.a = valValAlpha(dest.a, p.a, p.a);
+                    pix[y1][x1] = dest;
+                }
+
+                if (zOp == ZOp_SRC) {
+                    this->z[y1][x1] = z;
+                } else if (zOp == ZOp_SRC_ADD) {
+                    this->z[y1][x1] += z;
+                }
+            } else
+            {
+                int lx, ly;
+
+                int x = (int) (x1 + cos(0.0)*pe.r);
+                int y = (int) (y1 + sin(0.0)*pe.r);
+
+                double thd =M_PI*2/16;
+
+                for (double th = thd; th <= M_PI*2; th += M_PI*2/16)
+                {
+                    int nx =(int) (x1 + cos(th)*pe.r);
+                    int ny = (int) (x1 + sin(th)*pe.r);
+
+                    if (nx != x || ny != y)
+                        Line(x, y, nx, ny, pixOp, p, p, zOp, z, z);
+
+                    x = nx;
+                    y = ny;
+
+                }
+            }
+
+        } else{
+
+            int x1 = pe.x1;
+            int y1 = pe.y1;
+
+            int x2 = pe.x2;
+            int y2 = pe.y2;
+
+            Line(x1, y1, x2, y2, pixOp, p, p, zOp, z, z);
+        }
     }
 
     bool clear = _preservePath == 0;
@@ -388,11 +475,6 @@ struct PathProcParams
     Image *img;
     pdata *data;
     int i;
-    int x1;
-    int y1;
-
-    double th;
-    double sqr;
 
     TrigEntry *E;
 
@@ -401,98 +483,160 @@ struct PathProcParams
 double sinTab[65536];
 double cosTab[65536];
 
-void *pathProcSlice(GfxThreadWorker *worker)
+void _pathApply(double v, double _x, pdata *d, int i)
 {
+    if (abs(abs(v) - abs(d->mv)) < .00001) {
+        if (abs(_x) < abs(d->x)) {
+            //if (v<d->mv)
+            {
+                d->mv = v;
+                d->i = i;
+                d->x = _x;
+            }
+        }
+    } else if (abs(v) < abs(d->mv)) {
+        d->mv = v;
+        d->i = i;
+        d->x = _x;
+    }
+}
+
+#define pathApply(v, _x, d, i) \
+{\
+    if (abs(abs(v) - abs(d->mv)) < .00001) {\
+        if (abs(_x) < abs(d->x)) {\
+            {\
+                d->mv = v;\
+                d->i = i;\
+                d->x = _x;\
+            }\
+        }\
+    } else if (abs(v) < abs(d->mv)) {\
+        d->mv = v;\
+        d->i = i;\
+        d->x = _x;\
+    }\
+}
+
+void *pathProcSlice(GfxThreadWorker *worker) {
     PathProcParams *p = (PathProcParams *) worker->p[17];
 
     Image *img = p->img;
     pdata *data = p->data;
 
     int ly = img->Height * worker->index / worker->of;
-    int hy = img->Height * (worker->index+1) / worker->of;
+    int hy = img->Height * (worker->index + 1) / worker->of;
 
     int Width = img->Width;
 
     int i = p->i;
-    int x1 = p->x1;
-    int y1 = p->y1;
     TrigEntry *E = p->E;
 
-    double th = p->th;
-    if (th<0) th += M_PI*2;
+    PathEntry *pe = img->path + i;
+
+    if (!pe->point) {
+
+        int x1 = pe->x1;
+        int y1 = pe->y1;
+
+        int xd = pe->x2 - x1;
+        int yd = pe->y2 - y1;
+
+        double th = -atan2(yd, xd);
+
+        if (th < 0) th += M_PI * 2;
+
+        double cs = cos(th);
+        double sn = sin(th);
+
+//    int q = (int) ((th/(M_PI*2))*65536);
+
+        double _sqrt = sqrt(xd*xd+yd*yd);
+
+        for (int y = ly; y < hy; y++) {
+            for (int x = 0; x < Width; x++) {
+
+                pdata *d = data + y * Width + x;
+
+                double xx = x - x1;
+                double yy = y - y1;
 
 
-    int q = (int) ((th/(M_PI*2))*65536);
+                //if (absmvsqr +10> (xx*xx+yy*yy))
+                {
+                    //Q_ASSERT(E->x == xd && E->y == yd);
 
-    double _sqrt = p->sqr;
-
-    double cs = cos(th);//cosTab[q];
-    double sn = sin(th);//sinTab[q];
-
-    for (int y=ly; y<hy; y++) {
-        for (int x = 0; x < Width; x++) {
-
-            pdata *d = data + y * Width + x;
-
-            double xx = x - x1;
-            double yy = y - y1;
+                    /*
+                    double cs = E->rCos;
+                    double sn = E->rSin;
+                    double _sqrt = E->sqrt;
+                    */
 
 
-            //if (absmvsqr +10> (xx*xx+yy*yy))
-            {
-                //Q_ASSERT(E->x == xd && E->y == yd);
+                    double __x = xx * cs - yy * sn;
+                    double __y = yy * cs + xx * sn;
 
-                /*
-                double cs = E->rCos;
-                double sn = E->rSin;
-                double _sqrt = E->sqrt;
-                */
+                    double _x = __x;
+                    double _y = __y;
 
+                    if ((_x >= 0) && (_x <= _sqrt)) {
+                        _x = 0;
+                    } else if (_x < 0) {
+                        _x = _x;
+                    } else if (_x > _sqrt) {
+                        _x -= _sqrt;
+                    }
 
-                double __x = xx * cs - yy * sn;
-                double __y = yy * cs + xx * sn;
+                    //E = cache.get((int)_x, (int)_y);
 
-                double _x = __x;
-                double _y = __y;
+                    //th = atan2(_y,_x);
+                    //double v = (_x) * cos(-th) - (_y) * sin(-th);
+                    double v = (_x == 0) ? abs(_y) : sqrt(_x * _x + _y * _y);
 
-                if ((_x >= 0) && (_x <= _sqrt)) {
-                    _x = 0;
-                } else if (_x < 0) {
-                    _x = _x;
-                } else if (_x > _sqrt) {
-                    _x -= _sqrt;
+                    if (_y < 0) v *= -1;// else if (_x>0) v *= -1;
+
+                    //th = atan2(_y,_x);
+                    //if (th<=0) v *= -1;
+
+                    //th = atan2(_y,_x);
+
+                    pathApply(v,_x,d,i);
                 }
+            }
+        }
+    } else {
+        int x1 = pe->x1;
+        int y1 = pe->y1;
 
-                //E = cache.get((int)_x, (int)_y);
+        for (int y = ly; y < hy; y++) {
+            for (int x = 0; x < Width; x++) {
 
-                //th = atan2(_y,_x);
-                //double v = (_x) * cos(-th) - (_y) * sin(-th);
-                double v = (_x == 0) ? abs(_y) : sqrt(_x * _x + _y * _y);
+                pdata *d = data + y * Width + x;
 
-                if (_y < 0) v *= -1;// else if (_x>0) v *= -1;
+                double xx = x - x1;
+                double yy = y - y1;
 
-                //th = atan2(_y,_x);
-                //if (th<=0) v *= -1;
+                double v = (pe->r-sqrt(xx * xx + yy * yy)) * (pe->invert ? -1 : 1);
 
-                //th = atan2(_y,_x);
+                double _x = 0.0;
 
-                if (abs(abs(v) - abs(d->mv)) < .00001) {
+                pathApply(v,_x,d,i);
+
+                /*if (abs(abs(v) - abs(d->mv)) < .00001) {
                     if (abs(_x) < abs(d->x)) {
                         d->mv = v;
-                        d->i = i - 1;
+                        d->i = i;
                         d->x = _x;
                     }
-                } else if (abs(v) < abs(d->mv)) {
-                    d->mv = v;
-                    d->i = i - 1;
-                    d->x = _x;
-                }
+                } else*/
+
+
             }
         }
     }
 }
 
-void *pathProc(Image *img, pdata *pathdata, int i, int x1, int y1, TrigEntry *E, double th, double sqr)
+void *pathProc(Image *img, pdata *pathdata, int i, TrigEntry *E)
 {
     int count = gfxThreadWorkerCount;
     GfxThreadWorker **workers = gfxThreadWorkers;
@@ -502,11 +646,7 @@ void *pathProc(Image *img, pdata *pathdata, int i, int x1, int y1, TrigEntry *E,
     params.img= img;
     params.data = pathdata;
     params.i = i;
-    params.x1 = x1;
-    params.y1 = y1;
     params.E = E;
-    params.th = th;
-    params.sqr = sqr;
 
     GfxWorker_ProcType func;
 
@@ -635,8 +775,8 @@ void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
         }
     }
 
-    for (int i = 1; i < pathIndex; i++) {
-
+    for (int i = 0; i < pathIndex; i++) {
+/*
         double x1 = pathX[i - 1];
         double y1 = pathY[i - 1];
 
@@ -651,9 +791,10 @@ void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
 
         //TrigCell *C = ((TrigCell *) *cache.get(xKey, yKey, xd < 0 ? -1 : 1, yd < 0 ? -1 : 1));
         //TrigEntry *E = &C->data[((((yd < 0) ? -yd : yd) & 0xFF) << 8) + ((xd < 0 ? -xd : xd) & 0xFF)];
-        TrigEntry *E = nullptr;
+*/
+TrigEntry *E = nullptr;
 
-        pathProc(this, data,i, x1, y1, E, -atan2(yd,xd), sqrt(xd*xd+yd*yd));
+        pathProc(this, data,i, E);
     }
 
     pathMerge(this, data,yScale,pixOp,zOp,pixFunc, arg);

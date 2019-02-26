@@ -24,6 +24,7 @@ bool TestUI::mouseMove(int x, int y)
 
 bool pixFunc(int index, double y, ARGB &p, float &z, void *arg)
 {
+    //y=-y;
     if (y>=0)
     {
         if (index == 0) p = {0xFF,0xFF,0x00,0x00};
@@ -117,25 +118,29 @@ void TestUI::draw(Image *target, QImage *qImage)
             PixOp_SRC, {0xFF,0x00,0x00,0x00}, ZOp_SRC, 0);
 
     target->ClearPath();
-    target->PathAdd(100,100);
+    target->MoveTo(100,100);
 
-    target->PathAdd(200,150);
+    target->LineTo(200,150);
 
-    target->PathAdd(300,50);
+    target->LineTo(300,50);
 
-    target->PathAdd(400,100);
-    target->PathAdd(400,200);
-    target->PathAdd(200,200);
-    target->PathAdd(150,200);
+    target->LineTo(400,100);
+    target->LineTo(400,200);
+    target->LineTo(200,200);
+    target->LineTo(150,200);
 
-    target->PathAdd(125,225);
+    target->LineTo(125,225);
 
 
-    target->PathAdd(150,250);
-    target->PathAdd(200,250);
-    target->PathAdd(200,400);
-    target->PathAdd(100,400);
-    target->PathAdd(100,100);
+    target->LineTo(150,250);
+    target->LineTo(200,250);
+    target->LineTo(200,400);
+    target->LineTo(100,400);
+    target->LineTo(100,100);
+
+    target->Circle(145,300, 40, true);
+
+    target->Circle(500,200, 10, false);
 
     target->PreservePath();
 

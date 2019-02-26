@@ -31,9 +31,9 @@ DepthForgeWin::DepthForgeWin(QMainWindow *parent)
 
     this->parent = parent;
 
-    ui = new TestUI(this);
+    //ui = new TestUI(this);
 
-    //ui = new MainUI(this);
+    ui = new MainUI(this);
     mouseCapture = nullptr;
 
     /*

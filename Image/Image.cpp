@@ -634,6 +634,8 @@ void *pathProcSlice(GfxThreadWorker *worker) {
             }
         }
     }
+
+    return nullptr;
 }
 
 void *pathProc(Image *img, pdata *pathdata, int i, TrigEntry *E)
@@ -662,6 +664,8 @@ void *pathProc(Image *img, pdata *pathdata, int i, TrigEntry *E)
 
     Barrier_wait(gfxThreadWorkerBarrier);
     Barrier_wait(gfxThreadWorkerBarrier);
+
+    return nullptr;
 }
 
 
@@ -763,6 +767,8 @@ void *pathMerge(Image *img, pdata *pathdata, double yScale, PixOp pixOp, ZOp zOp
 
     Barrier_wait(gfxThreadWorkerBarrier);
     Barrier_wait(gfxThreadWorkerBarrier);
+
+    return nullptr;
 }
 void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
               bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg)

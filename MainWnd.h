@@ -5,18 +5,18 @@
 #ifndef DEPTHFORGE_MAINWND_H
 #define DEPTHFORGE_MAINWND_H
 
+#include "DepthForgeWin.h"
 
 #include <QtWidgets/QMainWindow>
 #include <QMenuBar>
-#include "DepthForgeWin.h"
 
 class MainWnd : public QMainWindow{
 
 public:
+    QAction *action_toggle_fps;
     QAction *action_import;
     QAction *action_export_anaglyph;
     QAction *action_export_jps;
-
 
     MainWnd();
 
@@ -33,6 +33,7 @@ private slots:
     void import();
     void export_anaglyph();
     void export_jps();
+    void toggle_fps();
 };
 
 

@@ -11,8 +11,10 @@
 #include <QMainWindow>
 
 #include "Image/Image.h"
-#include <UI/UI.h>
-#include <UI/MainUI.h>
+#include "UI/UI.h"
+#include "UI/MainUI.h"
+
+#include "FpsMonitor.h"
 
 extern "C"
 {
@@ -32,6 +34,8 @@ public:
     int oldWidth=-1;
     int oldHeight=-1;
 
+    FpsMonitor fps;
+
     PixType RenderBufferType;
 
     QMainWindow *parent;
@@ -43,6 +47,8 @@ public:
     Image *UI_ImageLeft;
     Image *UI_ImageRight;
     bool StereoPresent;
+
+    bool showFPS;
 
     QAbstractEventDispatcher *dispatcher;
 
@@ -77,6 +83,8 @@ public:
     virtual void OnIdle(void);
 
     void checkResize();
+
+    void setShowFPS(bool state);
 
 private slots:
     void aboutToBlock();

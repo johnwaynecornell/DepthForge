@@ -15,8 +15,6 @@ public:
     std::chrono::high_resolution_clock clk;
     std::chrono::time_point<std::chrono::high_resolution_clock> timeUp;
 
-    FpsMonitor fps;
-
     int mouseX;
     int mouseY;
 

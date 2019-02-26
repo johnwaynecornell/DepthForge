@@ -39,6 +39,11 @@ void MainWnd::createActions() {
     action_export_jps = new QAction(tr("Export &Jps"), this);
     action_export_jps->setStatusTip(tr("Export Jpeg stereo image file"));
     connect(action_export_jps, &QAction::triggered, this, &MainWnd::export_jps);
+
+    action_toggle_fps = new QAction(tr("Toggle show &FPS"), this);
+    action_toggle_fps->setStatusTip(tr("Show &Frames per second"));
+    action_toggle_fps->setCheckable(true);
+    connect(action_toggle_fps, &QAction::triggered, this, &MainWnd::toggle_fps);
 }
 
 void MainWnd::createMenus()
@@ -53,6 +58,9 @@ void MainWnd::createMenus()
 
     Export->addAction(action_export_anaglyph);
     Export->addAction(action_export_jps);
+
+    QMenu *Settings = mb->addMenu("&Settings");
+    Settings->addAction(action_toggle_fps);
 }
 
 
@@ -73,4 +81,9 @@ void MainWnd::export_jps()
 {
     if (export_jps_proc.function != nullptr) export_jps_proc.function(
             export_jps_proc.element, export_jps_proc.argument);
+}
+
+void MainWnd::toggle_fps()
+{
+    ((DepthForgeWin *)centralWidget())->setShowFPS(action_toggle_fps->isChecked());
 }

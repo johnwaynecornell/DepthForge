@@ -442,6 +442,38 @@ void DepthForgeWin::paintGL()
 
     P.end();
 */
+    if (showFPS)
+    {
+        fps.mark(ui->getTimeInSeconds());
+
+        char disp[1024];
+
+        sprintf(disp, "%lf fps", fps.fps());
+
+        QPainter *p = new QPainter(rend);
+
+        QFont f = p->font();
+        f.setPointSizeF(10);
+        p->setFont(f);
+        p->setPen(QColor(0xFF,0xFF,0xFF,0xFF));
+
+        QFontMetrics m = p->fontMetrics();
+
+        //QRect r = m.boundingRect(tr(disp));
+
+        QSize s = m.size(0, tr(disp));
+
+        QRect r = QRect(10,10,s.width(), s.height());
+
+        UI_Image->FillRect(r.x(), r.y(), r.x()+r.width(), r.y()+r.height(), PixOp_SRC, {0xFF,0x00,0x00,0x00}, ZOp_SRC, 0);
+
+        p->drawText(r.x(), r.y()+m.ascent(), QApplication::tr(disp));
+
+        p->end();
+        delete  p;
+
+    }
+
 
     UI_Image->Artif3d(UI_Image->Width/30, UI_ImageLeft, UI_ImageRight);
     UI_ImageAnaglyph->AnaglyphFrom(UI_ImageLeft, UI_ImageRight);
@@ -473,4 +505,9 @@ void DepthForgeWin::MouseButtonDown()
 void DepthForgeWin::OnIdle(void)
 {
     this->update();
+}
+
+void DepthForgeWin::setShowFPS(bool state)
+{
+    showFPS = state;
 }

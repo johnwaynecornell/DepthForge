@@ -112,8 +112,6 @@ bool pixFunc(int index, double y, ARGB &p, float &z, void *arg)
 
 void TestUI::draw(Image *target, QImage *qImage)
 {
-    fps.mark(getTimeInSeconds());
-
     target->FillRect(xReal, yReal, xReal+width.get(), yReal+height.get(),
             PixOp_SRC, {0xFF,0x00,0x00,0x00}, ZOp_SRC, 0);
 
@@ -149,26 +147,6 @@ void TestUI::draw(Image *target, QImage *qImage)
 
     target->DrawPath(PixOp_SRC, ZOp_SRC, 1, &pixFunc, nullptr);
 
-    char disp[1024];
-
-    sprintf(disp, "%lf fps", fps.fps());
-
-    QPainter *p = new QPainter(qImage);
-
-    QFont f = p->font();
-    f.setPointSizeF(10);
-    p->setFont(f);
-
-    QRect r = p->fontMetrics().boundingRect(QApplication::tr(disp));
-    r.translate(16, p->fontMetrics().height());
-
-    target->FillRect(r.x(), r.y(), r.x()+r.width(), r.y()+r.height(), PixOp_SRC, {0xFF,0x00,0x00,0x00}, ZOp_SRC, 0);
-
-    p->setPen(QColor(0xFF,0xFF,0xFF,0xFF));
-    p->drawText(r.x(), r.y()+r.height(), QApplication::tr(disp));
-
-    p->end();
-    delete  p;
 
 /*
     int incount = 0;

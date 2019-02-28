@@ -186,6 +186,8 @@ Image::Image(int Width, int Height)
         pix[y] = d; d+=stride;
         z[y] = d2; d2+=stride;
     }
+
+    needUpdate = true;
 }
 
 Image::~Image()

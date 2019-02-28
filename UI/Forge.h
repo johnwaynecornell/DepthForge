@@ -27,9 +27,14 @@ public:
 
     bool previewLense;
 
+    Image *bkgImage;
+
     Forge(UI *parent);
     virtual ~Forge();
 
+    Image *bkgTile;
+
+    virtual void drawBackground(UI *member, Image *target, QImage *qImage);
     virtual void draw(Image *target, QImage *qImage);
 
     virtual void mouseEnter();

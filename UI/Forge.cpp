@@ -23,6 +23,22 @@ extern QApplication *app;
         *((void **)&Recipient) = c.b;   \
     }
 
+bool bkgTilePixFunc(int index, double y, ARGB &p, float &z, void *arg)
+{
+        y = 1.0 - abs(y);
+
+        if (y<0) y = 0;
+
+        //if (y<0) y = 0;
+        z = (1.0f- sinf((1.0f-(float) y) * M_PIf32 / 2.0f))*.125f;
+
+        unsigned char v = (unsigned char) (y*0x80);
+
+        p = {0xFF,v,v,v};
+
+        return true;
+}
+
 Forge::Forge(UI *parent) : UI(parent)
 {
     hasMouse = false;
@@ -34,6 +50,17 @@ Forge::Forge(UI *parent) : UI(parent)
     src = new Image(1,1);
 
     previewLense = false;
+
+    bkgTile = new Image(32,32);
+
+    bkgTile->Line(8,8,24,8);
+    bkgTile->LineTo(24,24);
+    bkgTile->LineTo(8,24);
+    bkgTile->LineTo(8,8);
+
+    bkgTile->DrawPath(PixOp_SRC, ZOp_SRC, 1.0f / 8, bkgTilePixFunc, nullptr);
+
+    bkgImage = nullptr;
 
     void *tmp;
 /*
@@ -64,6 +91,39 @@ Forge::~Forge()
     delete src;
 }
 
+struct LenseData
+{
+    float **map;
+    Image *lenseImage[10];
+};
+
+void Forge::drawBackground(UI *member, Image *target, QImage *qImage)
+{
+    int w = width.get();
+    int h = height.get();
+
+    if (bkgImage == nullptr || bkgImage->Width < w || bkgImage->Height < h)
+    {
+        if (bkgImage != nullptr) delete  bkgImage;
+
+        bkgImage = new Image(w+256,h+256);
+
+        for (int y=0; y<bkgImage->Height; y++)
+        {
+            int yy = y % bkgTile->Height;
+            for (int x=0; x<bkgImage->Width; x++)
+            {
+                int xx = x % bkgTile->Height;
+
+                bkgImage->pix[y][x] = bkgTile->pix[yy][xx];
+                bkgImage->z[y][x] = bkgTile->z[yy][xx];
+            }
+        }
+    }
+
+    target->DrawImage(xReal,yReal, w, h, PixOp_SRC, ZOp_SRC_ADD,
+            bkgImage, 0, 0, w, h);
+}
 
 void Forge::draw(Image *target, QImage *qImage)
 {
@@ -107,30 +167,94 @@ void Forge::draw(Image *target, QImage *qImage)
 
         int sz = (int) (lense->size * fmax(_w,_h));
 
-        for (int y=yy-sz; y<yy+sz; y++) {
-            for (int x = xx - sz; x < xx + sz; x++) {
-                if (y>=_y1 && y < (_y1+_h1)) {
-                    if (x >= _x1 && x < (_x1 + _w1)) {
-                        double lx = (y-yy) / (double) sz;
-                        double ly = (x-xx) / (double) sz;
+        Lense::Cache * dta;
 
-                        float l = lense->get(lx,ly);
+        LenseData *d;
 
-                        unsigned char g = (unsigned char)(abs(time-.5)*2 * 0xFF);
+        if (!lense->getData(0, sz, &dta))
+        {
+            if (dta->dta != nullptr)
+            {
+                d = (LenseData *)dta->dta;
 
-                        ARGB p = {(unsigned char) (0x80*l), 0xFF, g ,0xFF };
+                lense->freeMap(d->map, dta->s);
 
-                        ARGB dest = target->pix[y][x];
-                        dest.r = valValAlpha(dest.r, p.r, p.a);
-                        dest.g = valValAlpha(dest.g, p.g, p.a);
-                        dest.b = valValAlpha(dest.b, p.b, p.a);
-                        dest.a = valValAlpha(dest.a, p.a, p.a);
-                        target->pix[y][x] = dest;
-
+                for (int i =0; i<10; i++) {
+                    if (d->lenseImage[i] != nullptr) {
+                        delete d->lenseImage[i];
+                        d->lenseImage[i] = nullptr;
                     }
                 }
+            } else
+            {
+                dta->dta = d = new LenseData();
+                for (int i =0; i<10; i++)
+                {
+                    d->lenseImage[i] = nullptr;
+                }
             }
+
+            d->map = lense->map(sz);
+            dta->s = sz;
+
+            dta->needUpdate = true;
         }
+
+        d = ((LenseData *)dta->dta);
+
+        float **map = d->map;
+
+        if (dta->needUpdate)
+        {
+            lense->updateMap(map, sz);
+
+            for (int i=0; i<10; i++)
+            {
+                if (d->lenseImage[i] != nullptr)
+                {
+                    d->lenseImage[i]->needUpdate = true;
+                }
+            }
+            
+            dta->needUpdate = false;
+        }
+
+        int i = (int) (abs(time-.5)*2*9);
+
+        int q = (sz << 1) + 1;
+
+        if (d->lenseImage[i] == nullptr) {
+
+            d->lenseImage[i] = new Image(q, q);
+        }
+
+        Image *img = d->lenseImage[i];
+
+        if (img->needUpdate)
+        {
+
+            for (int yp = -sz; yp <= sz; yp++) {
+                int y = sz + yp;
+
+                for (int xp = -sz; xp <= sz; xp++) {
+                    int x = sz + xp;
+
+                    float l = map[yp][xp];
+
+                    unsigned char g = (unsigned char) (i * 0xFF / 9);
+
+                    ARGB p = {(unsigned char) (0x80 * l), 0xFF, g, 0xFF};
+
+                    img->pix[y][x] = p;
+                }
+            }
+            img->needUpdate = false;
+        }
+
+        target->DrawImage(_x1, _y1, _w1, _h1,
+                xx-sz, yy-sz, q, q, PixOp_SRC_ALPHA, ZOp_SRC_ADD,
+                img, 0,0, q, q);
+
 
     }
 }

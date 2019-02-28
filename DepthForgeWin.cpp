@@ -22,6 +22,16 @@ extern "C"
 
 DepthForgeWin::DepthForgeWin(QMainWindow *parent)
 {
+    Image *A = new Image(1024,768);
+    Image *B = new Image(200,200);
+
+    A->DrawImage(0,100,1024,768, 0, 0, 200,200, PixOp_SRC, ZOp_SRC,
+            B,0,0,200,200);
+
+    A->DrawImage(0,0,1024,768, 0, 0, 200,200, PixOp_SRC, ZOp_SRC,
+                 B,0,100,200,100);
+
+
     hasMouse = false;
     dispatcher = QAbstractEventDispatcher::instance();
     connect(dispatcher, SIGNAL(aboutToBlock()), SLOT(aboutToBlock()));

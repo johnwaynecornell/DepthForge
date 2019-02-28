@@ -39,8 +39,8 @@ void DrawImageProc(GfxThreadWorker *worker,
     int ly=dy+dh*worker->index/worker->of;
     int hy=dy+dh*(worker->index+1)/worker->of;
     {
-        int lyy=(sy+sh*worker->index)/worker->of;
-        int yerr=(sy+sh*worker->index)%worker->of;
+        int lyy=sy+(sh*worker->index)/worker->of;
+        int yerr=(sh*worker->index)%worker->of;
         int yy_plus=sh/dh;
         int ye_plus=sh%dh;
 
@@ -150,8 +150,8 @@ void DrawImageProc_PixOp_SRC_ZOp_SRC(GfxThreadWorker *worker,
     int ly=dy+dh*worker->index/worker->of;
     int hy=dy+dh*(worker->index+1)/worker->of;
     {
-        int lyy=(sy+sh*worker->index)/worker->of;
-        int yerr=(sy+sh*worker->index)%worker->of;
+        int lyy=sy+(sh*worker->index)/worker->of;
+        int yerr=(sh*worker->index)%worker->of;
         int yy_plus=sh/dh;
         int ye_plus=sh%dh;
 
@@ -243,8 +243,8 @@ void DrawImageProc_PixOp_SRC_ZOp_SRC_ADD(GfxThreadWorker *worker,
     int ly=dy+dh*worker->index/worker->of;
     int hy=dy+dh*(worker->index+1)/worker->of;
     {
-        int lyy=(sy+sh*worker->index)/worker->of;
-        int yerr=(sy+sh*worker->index)%worker->of;
+        int lyy=sy+(sh*worker->index)/worker->of;
+        int yerr=(sh*worker->index)%worker->of;
         int yy_plus=sh/dh;
         int ye_plus=sh%dh;
 
@@ -336,8 +336,8 @@ void DrawImageProc_PixOp_SRC_ALPHA_ZOp_SRC(GfxThreadWorker *worker,
     int ly=dy+dh*worker->index/worker->of;
     int hy=dy+dh*(worker->index+1)/worker->of;
     {
-        int lyy=(sy+sh*worker->index)/worker->of;
-        int yerr=(sy+sh*worker->index)%worker->of;
+        int lyy=sy+(sh*worker->index)/worker->of;
+        int yerr=(sh*worker->index)%worker->of;
         int yy_plus=sh/dh;
         int ye_plus=sh%dh;
 
@@ -435,8 +435,8 @@ void DrawImageProc_PixOp_SRC_ALPHA_ZOp_SRC_ADD(GfxThreadWorker *worker,
     int ly=dy+dh*worker->index/worker->of;
     int hy=dy+dh*(worker->index+1)/worker->of;
     {
-        int lyy=(sy+sh*worker->index)/worker->of;
-        int yerr=(sy+sh*worker->index)%worker->of;
+        int lyy=sy+(sh*worker->index)/worker->of;
+        int yerr=(sh*worker->index)%worker->of;
         int yy_plus=sh/dh;
         int ye_plus=sh%dh;
 
@@ -580,6 +580,8 @@ void Image::DrawImage(int dx,int dy, int dw, int dh, PixOp pixOp, ZOp zOp,
         } else fptr = DrawImageProc;
     } else fptr = DrawImageProc;
 
+    //fptr = DrawImageProc;
+    
     for (int i = 0; i < count; i++) {
         GfxThreadWorker *w = gfxThreadWorkers[i];
 
@@ -591,6 +593,79 @@ void Image::DrawImage(int dx,int dy, int dw, int dh, PixOp pixOp, ZOp zOp,
 
     Barrier_wait(gfxThreadWorkerBarrier);
     Barrier_wait(gfxThreadWorkerBarrier);
+}
 
+void Image::DrawImage(int boundX, int boundY, int boundW, int boundH,
+               int dx,int dy, int dw, int dh,
+               PixOp pixOp, ZOp zOp,
+               Image *src, int sx,int sy, int sw, int sh)
+{
+    if (dy >= boundY +boundH) return;
+    if (dy + dh <= boundY) return;
 
+    if (dx >= boundX +boundW) return;
+    if (dx + dw <= boundX) return;
+
+    int x1;
+    int y1;
+
+    int ndx = dx;
+    int ndy = dy;
+    int ndw = dw;
+    int ndh = dh;
+
+    int nsx = sx;
+    int nsy = sy;
+    int nsw = sw;
+    int nsh = sh;
+
+    x1 = dx - boundX;
+    y1 = dy - boundY;
+
+    if (x1<0)
+    {
+        int adj = -x1;
+        int sadj = adj * sw / dw;
+
+        ndx+=adj;
+        ndw-=adj;
+
+        nsx+=sadj;
+        nsw-=sadj;
+    }
+
+    if (y1<0)
+    {
+        int adj = -y1;
+        int sadj = adj * sh / dh;
+
+        ndy+=adj;
+        ndh-=adj;
+
+        nsy+=sadj;
+        nsh-=sadj;
+    }
+
+    x1 = (dx+dw)-(boundX+boundW);
+    y1 = (dy+dh)-(boundY+boundH);
+
+    if (x1>=0)
+    {
+        int adj = x1;
+        int sadj = adj * sw / dw;
+
+        ndw-=adj;
+        nsw-=sadj;
+    }
+
+    if (y1>0)
+    {
+        int adj = y1;
+        int sadj = adj * sh / dh;
+
+        ndh-=adj;
+        nsh-=sadj;
+    }
+
+    DrawImage(ndx,ndy, ndw,ndh, pixOp, zOp, src, nsx,nsy,nsw,nsh);
 }

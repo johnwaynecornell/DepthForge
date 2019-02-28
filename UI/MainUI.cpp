@@ -195,12 +195,12 @@ void MainUI::sizeLeave(void *arg)
 
 void MainUI::sizeChanged(double v, void *arg)
 {
-    lense->size = v / 2.0;
+    lense->setSize(v / 2.0);
 }
 
 void MainUI::intensityChanged(double v, void *arg)
 {
-    lense->intensity = v * 2.0;
+    lense->setIntensity(v * 2.0);
 }
 
 
@@ -216,8 +216,8 @@ void MainUI::setLense(Lense *lense)
         s = this->lense->size;
     } else { v = .5; s = .1; }
 
-    lense->intensity = v;
-    lense->size = s;
+    lense->setIntensity(v);
+    lense->setSize(s);
 
     this->lense = lense;
 

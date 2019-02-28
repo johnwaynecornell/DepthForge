@@ -115,6 +115,8 @@ public:
 
     int _preservePath;
 
+    bool needUpdate;
+
     void PreservePath();
     void ClearPath();
 
@@ -145,6 +147,11 @@ public:
     void FillRect(int x1,int y1, int x2, int y2, PixOp pixOp, ARGB p, ZOp zOp, float z);
     void DrawImage(int dx,int dy, int dw, int dh, PixOp pixOp, ZOp zOp,
                    Image *src, int sx,int sy, int sw, int sh);
+
+    void DrawImage(int boundX, int boundY, int boundW, int boundH, int dx,int dy, int dw, int dh,
+                    PixOp pixOp, ZOp zOp,
+                    Image *src, int sx,int sy, int sw, int sh);
+
 
     void CalcZ();
 

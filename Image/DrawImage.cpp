@@ -140,6 +140,63 @@ void DrawImageProc(GfxThreadWorker *worker,
 
 }
 
+void BltImageProc(GfxThreadWorker *worker,
+                   Image *dst,int dx,int dy,int dw,int dh,
+                   PixOp pixOp,ZOp zOp,
+                   Image *src,int sx,int sy, int dummy1, int dummy2)
+{
+
+    int ly=dy+dh*worker->index/worker->of;
+    int hy=dy+dh*(worker->index+1)/worker->of;
+    {
+        int lyy=sy+(dh*worker->index)/worker->of;
+        
+        float zv;
+        ARGB sp;
+
+        int s = lyy;
+
+        for (int y=ly;y<hy;y=y+1)
+        {
+            ARGB *srcPix = src->pix[s];
+            float *srcZ = src->z[s];
+
+            int xx = sx;
+
+            for (int x=0;x<dw;x=x+1)
+            {
+                sp= srcPix[xx];
+                zv = srcZ[xx];
+
+                if (pixOp == PixOp_SRC) {
+                    dst->pix[y][dx+x]=sp;
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = dst->pix[y][dx+x];
+                    dest.r = valValAlpha(dest.r, sp.r, sp.a);
+                    dest.g = valValAlpha(dest.g, sp.g, sp.a);
+                    dest.b = valValAlpha(dest.b, sp.b, sp.a);
+                    dest.a = valValAlpha(dest.a, sp.a, sp.a);
+                    dst->pix[y][dx+x] = dest;
+                }
+
+                if (zOp == ZOp_SRC)
+                {
+                    dst->z[y][dx+x] = zv;
+                } else if (zOp == ZOp_SRC_ADD)
+                {
+                    dst->z[y][dx+x] += zv;
+                }
+
+                xx++;
+            }
+
+
+            s++;
+        }
+
+    }
+
+}
 
 void DrawImageProc_PixOp_SRC_ZOp_SRC(GfxThreadWorker *worker,
                    Image *dst,int dx,int dy,int dw,int dh,
@@ -228,6 +285,48 @@ void DrawImageProc_PixOp_SRC_ZOp_SRC(GfxThreadWorker *worker,
         }
 
         delete []cols;
+
+    }
+
+}
+
+void BltImageProc_PixOp_SRC_ZOp_SRC(GfxThreadWorker *worker,
+                  Image *dst,int dx,int dy,int dw,int dh,
+                  PixOp pixOp,ZOp zOp,
+                  Image *src,int sx,int sy, int dummy1, int dummy2)
+{
+
+    int ly=dy+dh*worker->index/worker->of;
+    int hy=dy+dh*(worker->index+1)/worker->of;
+    {
+        int lyy=sy+(dh*worker->index)/worker->of;
+
+        float zv;
+        ARGB sp;
+
+        int s = lyy;
+
+        for (int y=ly;y<hy;y=y+1)
+        {
+            ARGB *srcPix = src->pix[s];
+            float *srcZ = src->z[s];
+
+            int xx = sx;
+
+            for (int x=0;x<dw;x=x+1)
+            {
+                sp= srcPix[xx];
+                zv = srcZ[xx];
+
+                dst->pix[y][dx+x]=sp;
+                dst->z[y][dx+x] = zv;
+
+                xx++;
+            }
+
+
+            s++;
+        }
 
     }
 
@@ -323,8 +422,50 @@ void DrawImageProc_PixOp_SRC_ZOp_SRC_ADD(GfxThreadWorker *worker,
         delete []cols;
 
     }
+}
+
+void BltImageProc_PixOp_SRC_ZOp_SRC_ADD(GfxThreadWorker *worker,
+                  Image *dst,int dx,int dy,int dw,int dh,
+                  PixOp pixOp,ZOp zOp,
+                  Image *src,int sx,int sy, int dummy1, int dummy2)
+{
+
+    int ly=dy+dh*worker->index/worker->of;
+    int hy=dy+dh*(worker->index+1)/worker->of;
+    {
+        int lyy=sy+(dh*worker->index)/worker->of;
+
+        float zv;
+        ARGB sp;
+
+        int s = lyy;
+
+        for (int y=ly;y<hy;y=y+1)
+        {
+            ARGB *srcPix = src->pix[s];
+            float *srcZ = src->z[s];
+
+            int xx = sx;
+
+            for (int x=0;x<dw;x=x+1)
+            {
+                sp= srcPix[xx];
+                zv = srcZ[xx];
+
+                dst->pix[y][dx+x]=sp;
+                dst->z[y][dx+x] += zv;
+
+                xx++;
+            }
+
+
+            s++;
+        }
+
+    }
 
 }
+
 
 
 void DrawImageProc_PixOp_SRC_ALPHA_ZOp_SRC(GfxThreadWorker *worker,
@@ -420,6 +561,53 @@ void DrawImageProc_PixOp_SRC_ALPHA_ZOp_SRC(GfxThreadWorker *worker,
         }
 
         delete []cols;
+
+    }
+
+}
+
+void BltImageProc_PixOp_SRC_ALPHA_ZOp_SRC(GfxThreadWorker *worker,
+                  Image *dst,int dx,int dy,int dw,int dh,
+                  PixOp pixOp,ZOp zOp,
+                  Image *src,int sx,int sy, int dummy1, int dummy2)
+{
+
+    int ly=dy+dh*worker->index/worker->of;
+    int hy=dy+dh*(worker->index+1)/worker->of;
+    {
+        int lyy=sy+(dh*worker->index)/worker->of;
+
+        float zv;
+        ARGB sp;
+
+        int s = lyy;
+
+        for (int y=ly;y<hy;y=y+1)
+        {
+            ARGB *srcPix = src->pix[s];
+            float *srcZ = src->z[s];
+
+            int xx = sx;
+
+            for (int x=0;x<dw;x=x+1)
+            {
+                sp= srcPix[xx];
+                zv = srcZ[xx];
+
+                ARGB dest = dst->pix[y][dx+x];
+                dest.r = valValAlpha(dest.r, sp.r, sp.a);
+                dest.g = valValAlpha(dest.g, sp.g, sp.a);
+                dest.b = valValAlpha(dest.b, sp.b, sp.a);
+                dest.a = valValAlpha(dest.a, sp.a, sp.a);
+                dst->pix[y][dx+x] = dest;
+                dst->z[y][dx+x] = zv;
+
+                xx++;
+            }
+
+
+            s++;
+        }
 
     }
 
@@ -526,6 +714,53 @@ void DrawImageProc_PixOp_SRC_ALPHA_ZOp_SRC_ADD(GfxThreadWorker *worker,
 
 }
 
+void BltImageProc_PixOp_SRC_ALPHA_ZOp_SRC_ADD(GfxThreadWorker *worker,
+                  Image *dst,int dx,int dy,int dw,int dh,
+                  PixOp pixOp,ZOp zOp,
+                  Image *src,int sx,int sy, int dummy1, int dummy2)
+{
+
+    int ly=dy+dh*worker->index/worker->of;
+    int hy=dy+dh*(worker->index+1)/worker->of;
+    {
+        int lyy=sy+(dh*worker->index)/worker->of;
+
+        float zv;
+        ARGB sp;
+
+        int s = lyy;
+
+        for (int y=ly;y<hy;y=y+1)
+        {
+            ARGB *srcPix = src->pix[s];
+            float *srcZ = src->z[s];
+
+            int xx = sx;
+
+            for (int x=0;x<dw;x=x+1)
+            {
+                sp= srcPix[xx];
+                zv = srcZ[xx];
+
+                ARGB dest = dst->pix[y][dx+x];
+                dest.r = valValAlpha(dest.r, sp.r, sp.a);
+                dest.g = valValAlpha(dest.g, sp.g, sp.a);
+                dest.b = valValAlpha(dest.b, sp.b, sp.a);
+                dest.a = valValAlpha(dest.a, sp.a, sp.a);
+                dst->pix[y][dx+x] = dest;
+                dst->z[y][dx+x] += zv;
+
+                xx++;
+            }
+
+
+            s++;
+        }
+
+    }
+
+}
+
 void *DrawImageSlice(GfxThreadWorker *w)
 {
     DrawImage_Params *p = (DrawImage_Params *)w->p[17];
@@ -560,25 +795,37 @@ void Image::DrawImage(int dx,int dy, int dw, int dh, PixOp pixOp, ZOp zOp,
 
     procDrawImage fptr;
 
-    if (pixOp == PixOp_SRC)
-    {
-        if (zOp == ZOp_SRC)
-        {
-            fptr = DrawImageProc_PixOp_SRC_ZOp_SRC;
-        } else if (zOp == ZOp_SRC_ADD)
-        {
-            fptr = DrawImageProc_PixOp_SRC_ZOp_SRC_ADD;
+    if (sw == dw && sh == dh) {
+
+        if (pixOp == PixOp_SRC) {
+            if (zOp == ZOp_SRC) {
+                fptr = BltImageProc_PixOp_SRC_ZOp_SRC;
+            } else if (zOp == ZOp_SRC_ADD) {
+                fptr = BltImageProc_PixOp_SRC_ZOp_SRC_ADD;
+            } else fptr = BltImageProc;
+        } else if (pixOp == PixOp_SRC_ALPHA) {
+            if (zOp == ZOp_SRC) {
+                fptr = BltImageProc_PixOp_SRC_ALPHA_ZOp_SRC;
+            } else if (zOp == ZOp_SRC_ADD) {
+                fptr = BltImageProc_PixOp_SRC_ALPHA_ZOp_SRC_ADD;
+            } else fptr = BltImageProc;
+        } else fptr = BltImageProc;
+    } else {
+
+        if (pixOp == PixOp_SRC) {
+            if (zOp == ZOp_SRC) {
+                fptr = DrawImageProc_PixOp_SRC_ZOp_SRC;
+            } else if (zOp == ZOp_SRC_ADD) {
+                fptr = DrawImageProc_PixOp_SRC_ZOp_SRC_ADD;
+            } else fptr = DrawImageProc;
+        } else if (pixOp == PixOp_SRC_ALPHA) {
+            if (zOp == ZOp_SRC) {
+                fptr = DrawImageProc_PixOp_SRC_ALPHA_ZOp_SRC;
+            } else if (zOp == ZOp_SRC_ADD) {
+                fptr = DrawImageProc_PixOp_SRC_ALPHA_ZOp_SRC_ADD;
+            } else fptr = DrawImageProc;
         } else fptr = DrawImageProc;
-    } else if (pixOp == PixOp_SRC_ALPHA)
-    {
-        if (zOp == ZOp_SRC)
-        {
-            fptr = DrawImageProc_PixOp_SRC_ALPHA_ZOp_SRC;
-        } else if (zOp == ZOp_SRC_ADD)
-        {
-            fptr = DrawImageProc_PixOp_SRC_ALPHA_ZOp_SRC_ADD;
-        } else fptr = DrawImageProc;
-    } else fptr = DrawImageProc;
+    }
 
     //fptr = DrawImageProc;
     

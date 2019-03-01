@@ -458,16 +458,39 @@ void Forge::export_jps(void *arg)
 
     ImageLeft = new Image(w, h);
     ImageRight = new Image(w, h);
-    ImageOut = new Image(w<<1, h);
+
+    const bool SideBySide = true;
 
     src->Artif3d(src->Width / 30, ImageLeft, ImageRight);
-    GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0,0,w,h,w,
-            PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w<<1);
-    GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0,0,w,h,w,
-           PixType_RGBA, ImageOut->imageMemory, w, 0, w, h, w<<1);
 
-    QImage *tmp = new QImage((uchar *)
-            ImageOut->imageMemory, w<<1,h, QImage::Format_RGBA8888);
+    QImage *tmp;
+
+    if (SideBySide) {
+
+        ImageOut = new Image(w << 1, h);
+
+        GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0, 0, w, h, w,
+               PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w << 1);
+        GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
+               PixType_RGBA, ImageOut->imageMemory, w, 0, w, h, w << 1);
+
+        tmp = new QImage((uchar *)
+                                 ImageOut->imageMemory, w << 1, h, QImage::Format_RGBA8888);
+
+    } else
+    {
+
+        ImageOut = new Image(w, h << 1);
+
+        GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0, 0, w, h, w,
+               PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w);
+        GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
+               PixType_RGBA, ImageOut->imageMemory, 0, h, w, h, w);
+
+        tmp = new QImage((uchar *)
+                                 ImageOut->imageMemory, w, h << 1, QImage::Format_RGBA8888);
+
+    }
 
     QString path = QStandardPaths::locate(QStandardPaths::PicturesLocation, QString::null,
                                           QStandardPaths::LocateOption::LocateDirectory);
@@ -490,7 +513,7 @@ void Forge::export_jps(void *arg)
         const unsigned char * m = (const unsigned char *) b->data().data();
         int l = b->data().length();
 
-        printf("jpeg length = %d\n", l);
+        //printf("jpeg length = %d\n", l);
 
         int p = 0;
 
@@ -538,8 +561,16 @@ void Forge::export_jps(void *arg)
 
         f->write((const char *) tmp, 2);
 
-        unsigned int descriptor = SD_MTYPE_STEREOSCOPIC_IMAGE + SD_LAYOUT_SIDEBYSIDE +
-                SD_HALF_WIDTH + SD_RIGHT_FIELD_FIRST;
+        unsigned int descriptor;
+
+        if (SideBySide) {
+            descriptor = SD_MTYPE_STEREOSCOPIC_IMAGE + SD_LAYOUT_SIDEBYSIDE +
+                         SD_HALF_WIDTH + SD_RIGHT_FIELD_FIRST;
+        } else
+        {
+            descriptor = SD_MTYPE_STEREOSCOPIC_IMAGE + SD_LAYOUT_OVERUNDER+
+                         SD_HALF_HEIGHT + SD_RIGHT_FIELD_FIRST;
+        }
 
         for (int i=0; i<4; i++)
         {

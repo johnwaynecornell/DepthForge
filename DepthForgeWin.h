@@ -76,7 +76,9 @@ public:
     void takeMouse();
     bool checkRelinquishMouse(int x, int y);
 
-    DepthForgeWin(QMainWindow *parent);
+    bool Anaglyph;
+
+    DepthForgeWin(QGLFormat &format, QMainWindow *parent);
 
     virtual void MouseButtonDown();
 

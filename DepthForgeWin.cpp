@@ -20,7 +20,7 @@ extern "C"
 
 #include "UI/UI.h"
 
-DepthForgeWin::DepthForgeWin(QMainWindow *parent)
+DepthForgeWin::DepthForgeWin(QGLFormat &format, QMainWindow *parent) : QGLWidget(format, parent)
 {
     Image *A = new Image(1024,768);
     Image *B = new Image(200,200);
@@ -45,6 +45,8 @@ DepthForgeWin::DepthForgeWin(QMainWindow *parent)
 
     ui = new MainUI(this);
     mouseCapture = nullptr;
+
+    Anaglyph = !this->format().stereo();
 
     /*
     ui = new Fixed(nullptr);
@@ -486,22 +488,38 @@ void DepthForgeWin::paintGL()
 
 
     UI_Image->Artif3d(UI_Image->Width/30, UI_ImageLeft, UI_ImageRight);
-    UI_ImageAnaglyph->AnaglyphFrom(UI_ImageLeft, UI_ImageRight);
+    if (Anaglyph) UI_ImageAnaglyph->AnaglyphFrom(UI_ImageLeft, UI_ImageRight);
 
-
-    GfxBlt(PixType_ARGB, UI_ImageAnaglyph->imageMemory, 0,0,Width,Height, Width, PixType_ABGR, obuf, 0, 0, Width, -Height, Width);
-    //GfxBlt(PixType_ARGB, UI_Image->imageMemory, 0,0,Width,Height, Width, RenderBufferType, obuf, 0, 0, Width, -Height, Width);
-    //GfxBlt(PixType_ARGB, UI_ImageLeft->imageMemory, 0,0,Width,Height, Width, RenderBufferType, obuf, 0, 0, Width, -Height, Width);
-
-    glDrawBuffer(GL_BACK_LEFT);
-
-    if (glGetError() != GL_NO_ERROR)
+    if (format().stereo())
     {
-        int q = 1;
-        q+=2;
-    }
+        glDrawBuffer(GL_BACK_LEFT);
 
-    glDrawPixels(Width,Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
+        GfxBlt(PixType_ARGB, Anaglyph ? UI_ImageAnaglyph->imageMemory : UI_ImageLeft->imageMemory,
+                0, 0, Width, Height, Width, PixType_ABGR, obuf,
+                0, 0, Width, -Height, Width);
+
+        glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
+
+        glDrawBuffer(GL_BACK_RIGHT);
+
+        GfxBlt(PixType_ARGB, Anaglyph ? UI_ImageAnaglyph->imageMemory : UI_ImageRight->imageMemory,
+               0, 0, Width, Height, Width, PixType_ABGR, obuf,
+               0, 0, Width, -Height, Width);
+
+        glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
+
+    } else {
+
+        glDrawBuffer(GL_BACK);
+
+        GfxBlt(PixType_ARGB, UI_ImageAnaglyph->imageMemory, 0, 0, Width, Height, Width, PixType_ABGR, obuf, 0, 0, Width,
+               -Height, Width);
+        //GfxBlt(PixType_ARGB, UI_Image->imageMemory, 0,0,Width,Height, Width, RenderBufferType, obuf, 0, 0, Width, -Height, Width);
+        //GfxBlt(PixType_ARGB, UI_ImageLeft->imageMemory, 0,0,Width,Height, Width, RenderBufferType, obuf, 0, 0, Width, -Height, Width);
+
+        glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
+
+    }
 
     delete []obuf;
 

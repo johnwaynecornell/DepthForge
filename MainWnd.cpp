@@ -9,7 +9,16 @@ extern QApplication *app;
 
 MainWnd::MainWnd() : QMainWindow()
 {
-    setCentralWidget(new DepthForgeWin(this));
+    QGLFormat fmt;
+
+    fmt.setAlpha(true);
+    fmt.setAlphaBufferSize(8);
+    fmt.setRedBufferSize(8);
+    fmt.setGreenBufferSize(8);
+    fmt.setBlueBufferSize(8);
+    fmt.setStereo(true);
+
+    setCentralWidget(new DepthForgeWin(fmt, this));
 
     createActions();
     createMenus();

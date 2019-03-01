@@ -399,7 +399,7 @@ void DrawImageProc_PixOp_SRC_ZOp_SRC_ADD(GfxThreadWorker *worker,
 
                         {
                             sp=src->pix[s][xx];
-                            zv = src->z[s][xx];
+                            zv += src->z[s][xx];
                         }
 
                     }

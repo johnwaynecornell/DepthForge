@@ -3,8 +3,10 @@
 //
 #include <QtCore>
 #include <QtWidgets/QFileDialog>
+#include <QFile>
 #include <QImageWriter>
 #include <QStandardPaths>
+
 
 #include "MainUI.h"
 #include "Forge.h"
@@ -426,6 +428,25 @@ void Forge::export_anaglyph(void *arg) {
 
 }
 
+/* Media Types */
+#define SD_MTYPE_MONOSCOPIC_IMAGE 0x00
+#define SD_MTYPE_STEREOSCOPIC_IMAGE 0x01
+
+/* layout Options */
+#define SD_LAYOUT_INTERLEAVED 0x0100
+#define SD_LAYOUT_SIDEBYSIDE 0x0200
+#define SD_LAYOUT_OVERUNDER 0x0300
+#define SD_LAYOUT_ANAGLYPH 0x0400
+
+/* Misc Flags Bits */
+#define SD_FULL_HEIGHT 0x000000
+#define SD_HALF_HEIGHT 0x010000
+#define SD_FULL_WIDTH 0x000000
+#define SD_HALF_WIDTH 0x020000
+#define SD_RIGHT_FIELD_FIRST 0x000000
+#define SD_LEFT_FIELD_FIRST 0x040000
+
+
 void Forge::export_jps(void *arg)
 {
     Image *ImageLeft;
@@ -442,8 +463,8 @@ void Forge::export_jps(void *arg)
     src->Artif3d(src->Width / 30, ImageLeft, ImageRight);
     GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0,0,w,h,w,
             PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w<<1);
-    GfxBlt(PixType_ARGB, ImageRight->imageMemory, w,0,w,h,w,
-           PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w<<1);
+    GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0,0,w,h,w,
+           PixType_RGBA, ImageOut->imageMemory, w, 0, w, h, w<<1);
 
     QImage *tmp = new QImage((uchar *)
             ImageOut->imageMemory, w<<1,h, QImage::Format_RGBA8888);
@@ -460,10 +481,84 @@ void Forge::export_jps(void *arg)
         goto cleanup;
     } else
     {
-        QImageWriter W(fileName, "JPG");
 
+        QBuffer *b = new QBuffer();
+        b->open(QBuffer::ReadWrite);
 
-        tmp->save(fileName, "JPG");
+        tmp->save(b, "JPG");
+
+        const unsigned char * m = (const unsigned char *) b->data().data();
+        int l = b->data().length();
+
+        printf("jpeg length = %d\n", l);
+
+        int p = 0;
+
+        int x = -1;
+
+        int size;
+
+        while (p<l)
+        {
+            Q_ASSERT(m[p] == 0xFF);
+
+            unsigned char code = m[p+1];
+
+            if (code == 0xD8 || code == 0xD9 || code == 0xDA) size = 0;
+            else size = (m[p+2]<<8)+m[p+3];
+
+            printf("\tCode %02X len=%d\n", code, size);
+
+            p+=size+2;
+
+            if (code == 0xE0) { x = p; break; }
+
+        }
+
+        Q_ASSERT(x != -1);
+
+        unsigned char head[] = {0xFF, 0xE3, 0x00,0x00};
+
+        QFile *f = new QFile(fileName);
+        f->open(QFile::WriteOnly);
+
+        f->write((const char *) m, x);
+
+        head[2] = (unsigned char ) ((2 + 8 + 2 + 4 + 2) >> 8);
+        head[3] = (unsigned char ) (2 + 8 + 2 + 4 + 2);
+
+        f->write((const char *) head, 4);
+
+        f->write("_JPSJPS_", 8);
+
+        unsigned char tmp[4];
+
+        tmp[0] = 0;
+        tmp[1] = 4;
+
+        f->write((const char *) tmp, 2);
+
+        unsigned int descriptor = SD_MTYPE_STEREOSCOPIC_IMAGE + SD_LAYOUT_SIDEBYSIDE +
+                SD_HALF_WIDTH + SD_RIGHT_FIELD_FIRST;
+
+        for (int i=0; i<4; i++)
+        {
+            tmp[i] = descriptor>>24;
+            descriptor<<=8;
+        }
+
+        f->write((const char *) tmp, 4);
+
+        tmp[0] = 0;
+        tmp[1] = 0;
+
+        f->write((const char *) tmp, 2);
+
+        f->write(((const char *) m) + x, l - x);
+
+        f->close();
+        delete f;
+        delete b;
     }
 
     cleanup:

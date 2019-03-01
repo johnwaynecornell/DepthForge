@@ -87,8 +87,6 @@ void MyThread::aboutToQuit()
 
 void GfxThreadWorker::begin()
 {
-    /* TODO */ //error handling
-
     thread = new MyThread(&gfxWorkerThread, this);
 
     ((MyThread *)thread)->start();

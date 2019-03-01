@@ -4,6 +4,7 @@
 #include <QtCore>
 #include <QtWidgets/QFileDialog>
 #include <QImageWriter>
+#include <QStandardPaths>
 
 #include "MainUI.h"
 #include "Forge.h"
@@ -346,9 +347,12 @@ void Forge::applyLense()
 
 void Forge::import(void *arg)
 {
+    QString path = QStandardPaths::locate(QStandardPaths::PicturesLocation, QString::null,
+            QStandardPaths::LocateOption::LocateDirectory);
+
     QString fileName = QFileDialog::getOpenFileName(
             ((MainUI *)rootElement())->owner, ("Open Image File"),
-            "/home/Pictures",
+            path,
             ("Images (*.png *.jpg)"));
 
     if (fileName.isNull())
@@ -398,9 +402,12 @@ void Forge::export_anaglyph(void *arg) {
     GfxBlt(PixType_ARGB, ImageOut->imageMemory, 0, 0, w, h, w,
            PixType_RGBA, tmp->bits(), 0, 0, w, h, w);
 
+    QString path = QStandardPaths::locate(QStandardPaths::PicturesLocation, QString::null,
+                                          QStandardPaths::LocateOption::LocateDirectory);
+
     QString fileName = QFileDialog::getSaveFileName(
             ((MainUI *) rootElement())->owner, ("Save Image File"),
-            "/home",
+            path,
             ("Images (*.png *.jpg)"));
 
     if (fileName.isNull()) {
@@ -441,9 +448,12 @@ void Forge::export_jps(void *arg)
     QImage *tmp = new QImage((uchar *)
             ImageOut->imageMemory, w<<1,h, QImage::Format_RGBA8888);
 
+    QString path = QStandardPaths::locate(QStandardPaths::PicturesLocation, QString::null,
+                                          QStandardPaths::LocateOption::LocateDirectory);
+
     QString fileName = QFileDialog::getSaveFileName(
             ((MainUI *) rootElement())->owner, ("Save Image File"),
-            "/home",
+            path,
             ("Images (*.jps)"));
 
     if (fileName.isNull()) {

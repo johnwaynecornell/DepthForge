@@ -429,22 +429,42 @@ void Forge::export_anaglyph(void *arg) {
 }
 
 /* Media Types */
-#define SD_MTYPE_MONOSCOPIC_IMAGE 0x00
 #define SD_MTYPE_STEREOSCOPIC_IMAGE 0x01
 
 /* layout Options */
-#define SD_LAYOUT_INTERLEAVED 0x0100
-#define SD_LAYOUT_SIDEBYSIDE 0x0200
-#define SD_LAYOUT_OVERUNDER 0x0300
-#define SD_LAYOUT_ANAGLYPH 0x0400
+#define SD_LAYOUT_INTERLEAVED 0x01
+#define SD_LAYOUT_SIDEBYSIDE 0x02
+#define SD_LAYOUT_OVERUNDER 0x03
+#define SD_LAYOUT_ANAGLYPH 0x04
 
 /* Misc Flags Bits */
-#define SD_FULL_HEIGHT 0x000000
-#define SD_HALF_HEIGHT 0x010000
-#define SD_FULL_WIDTH 0x000000
-#define SD_HALF_WIDTH 0x020000
-#define SD_RIGHT_FIELD_FIRST 0x000000
-#define SD_LEFT_FIELD_FIRST 0x040000
+#define SD_HALF_HEIGHT 0x01
+#define SD_HALF_WIDTH 0x02
+#define SD_LEFT_FIELD_FIRST 0x04
+
+struct StereoDescriptor
+{
+    unsigned char ID[4];
+
+    unsigned char sizeHigh;
+    unsigned char sizeLow;
+
+    unsigned char dummy;
+    unsigned char flags;
+    unsigned char layout;
+    unsigned char type;
+};
+
+struct SDApp3
+{
+    unsigned char FF;
+    unsigned char APP3;
+    unsigned char sizeHigh;
+    unsigned char sizeLow;
+    unsigned char ID[4];
+
+    StereoDescriptor desc;
+};
 
 
 void Forge::export_jps(void *arg)
@@ -469,10 +489,10 @@ void Forge::export_jps(void *arg)
 
         ImageOut = new Image(w << 1, h);
 
-        GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0, 0, w, h, w,
+        GfxBlt(PixType_ARGB, ImageLeft->imageMemory, w, 0, w, h, w,
                PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w << 1);
         GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
-               PixType_RGBA, ImageOut->imageMemory, w, 0, w, h, w << 1);
+               PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w << 1);
 
         tmp = new QImage((uchar *)
                                  ImageOut->imageMemory, w << 1, h, QImage::Format_RGBA8888);
@@ -483,9 +503,9 @@ void Forge::export_jps(void *arg)
         ImageOut = new Image(w, h << 1);
 
         GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0, 0, w, h, w,
-               PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w);
-        GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
                PixType_RGBA, ImageOut->imageMemory, 0, h, w, h, w);
+        GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
+               PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w);
 
         tmp = new QImage((uchar *)
                                  ImageOut->imageMemory, w, h << 1, QImage::Format_RGBA8888);
@@ -547,49 +567,40 @@ void Forge::export_jps(void *arg)
 
         f->write((const char *) m, x);
 
-        head[2] = (unsigned char ) ((2 + 8 + 2 + 4 + 2) >> 8);
-        head[3] = (unsigned char ) (2 + 8 + 2 + 4 + 2);
+        SDApp3 desc;
 
-        f->write((const char *) head, 4);
+        desc.FF = 0xFF;
+        desc.APP3 = 0xE3;
 
-        f->write("_JPSJPS_", 8);
+        desc.sizeHigh = (unsigned char) ((sizeof(desc)-2) >> 8);
+        desc.sizeLow = (unsigned char) ((sizeof(desc)-2));
 
-        unsigned char tmp[4];
+        desc.ID[0] = '_'; desc.ID[1] = 'J'; desc.ID[2] = 'P'; desc.ID[3] = 'S';
 
-        tmp[0] = 0;
-        tmp[1] = 4;
+        desc.desc.ID[0] = 'J'; desc.desc.ID[1] = 'P'; desc.desc.ID[2] = 'S'; desc.desc.ID[3]='_';
 
-        f->write((const char *) tmp, 2);
+        desc.desc.sizeHigh = (unsigned char) ((sizeof(desc.desc)-4) >> 8);
+        desc.desc.sizeLow = (unsigned char) ((sizeof(desc.desc))-4);
 
-        unsigned int descriptor;
+        desc.desc.dummy = 0;
+        desc.desc.type = SD_MTYPE_STEREOSCOPIC_IMAGE;
 
-        if (SideBySide) {
-            descriptor = SD_MTYPE_STEREOSCOPIC_IMAGE + SD_LAYOUT_SIDEBYSIDE +
-                         SD_HALF_WIDTH + SD_RIGHT_FIELD_FIRST;
+        if (SideBySide)
+        {
+            desc.desc.layout = SD_LAYOUT_SIDEBYSIDE;
+            desc.desc.flags = SD_HALF_WIDTH;
+
         } else
         {
-            descriptor = SD_MTYPE_STEREOSCOPIC_IMAGE + SD_LAYOUT_OVERUNDER+
-                         SD_HALF_HEIGHT + SD_RIGHT_FIELD_FIRST;
+            desc.desc.layout = SD_LAYOUT_OVERUNDER;
+            desc.desc.flags = SD_HALF_HEIGHT;
         }
 
-        for (int i=0; i<4; i++)
-        {
-            tmp[i] = descriptor>>24;
-            descriptor<<=8;
-        }
-
-        f->write((const char *) tmp, 4);
-
-        tmp[0] = 0;
-        tmp[1] = 0;
-
-        f->write((const char *) tmp, 2);
-
-        f->write(((const char *) m) + x, l - x);
+        f->write((const char *) &desc,sizeof(desc));
+        f->write((const char *)(m+x), l-x);
 
         f->close();
-        delete f;
-        delete b;
+        delete  f;
     }
 
     cleanup:

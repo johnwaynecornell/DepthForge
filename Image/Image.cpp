@@ -813,7 +813,6 @@ TrigEntry *E = nullptr;
 void Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB,
                     ZOp zOp, float zA, float zB)
 {
-    /* TODO */ //boil up specialized code
     int xD = (xB-xA);
     int yD = (yB-yA);
 

@@ -4,21 +4,38 @@
 
 #include "MainWnd.h"
 #include <QApplication>
+#include <QMouseEvent>
 
 extern QApplication *app;
 
 MainWnd::MainWnd() : QMainWindow()
 {
-    QGLFormat fmt;
+    QSurfaceFormat format;
 
-    fmt.setAlpha(true);
-    fmt.setAlphaBufferSize(8);
-    fmt.setRedBufferSize(8);
-    fmt.setGreenBufferSize(8);
-    fmt.setBlueBufferSize(8);
-    fmt.setStereo(true);
+    //format.setVersion(3,3);
+    format.setOption(QSurfaceFormat::FormatOption::StereoBuffers);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+    format.setStereo(true);
 
-    setCentralWidget(new DepthForgeWin(fmt, this));
+
+//    format.setAlphaBufferSize(8);
+//    format.setRedBufferSize(8);
+//    format.setGreenBufferSize(8);
+//    format.setBlueBufferSize(8);
+
+
+    QSurfaceFormat::setDefaultFormat(format);
+
+    depthForge = new DepthForgeWin(this, nullptr);
+
+    setCentralWidget(createWindowContainer(depthForge));
+
+    centralWidget()->setAttribute( Qt::WA_TransparentForMouseEvents );
+    //depthForge->setAttribute( Qt::WA_TransparentForMouseEvents );
+
+    //centralWidget()->setMouseTracking(true);
+    setMouseTracking(true);
 
     createActions();
     createMenus();
@@ -28,11 +45,20 @@ void MainWnd::closeEvent(QCloseEvent *event)
 {
     centralWidget()->close();
 
+    delete depthForge;
+
     QMainWindow::closeEvent(event);
     app->quit();
 
     delete  centralWidget();
 }
+
+void MainWnd::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+    //depthForge->show();
+}
+
 
 void MainWnd::createActions() {
 
@@ -72,8 +98,6 @@ void MainWnd::createMenus()
     Settings->addAction(action_toggle_fps);
 }
 
-
-
 void MainWnd::import()
 {
     if (import_proc.function != nullptr) import_proc.function(import_proc.element,
@@ -94,5 +118,5 @@ void MainWnd::export_jps()
 
 void MainWnd::toggle_fps()
 {
-    ((DepthForgeWin *)centralWidget())->setShowFPS(action_toggle_fps->isChecked());
+    depthForge->setShowFPS(action_toggle_fps->isChecked());
 }

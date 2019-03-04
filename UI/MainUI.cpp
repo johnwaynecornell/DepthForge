@@ -98,7 +98,7 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
     union
     {
         void (MainUI::*a)(void *);
-        void (*b)(UI *, void *);
+        void (*b)(void *, void *);
     } test;
 
     test.a = &MainUI::sizeEntered;
@@ -114,7 +114,7 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
     union
     {
         void (MainUI::*a)(double, void *);
-        void (*b)(UI *, double, void *);
+        void (*b)(void *, double, void *);
     } testb;
 
     testb.a = &MainUI::sizeChanged;

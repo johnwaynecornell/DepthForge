@@ -15,17 +15,6 @@
 
 extern QApplication *app;
 
-#define get_member_pointer(Type, Member, Recipient) \
-    {\
-      union \
-        {   Type; \
-            void *b;    \
-        } c; \
-                \
-        c.a = Member; \
-        *((void **)&Recipient) = c.b;   \
-    }
-
 bool bkgTilePixFunc(int index, double y, ARGB &p, float &z, void *arg)
 {
         y = 1.0 - abs(y);
@@ -80,13 +69,13 @@ Forge::Forge(UI *parent) : UI(parent)
     MainWnd *w = (MainWnd *) ((MainUI *) rootElement())->owner->parent;
 
     get_member_pointer(void (Forge::*a)(void *), &Forge::import, tmp);
-    w->import_proc = {this, (void (*)(UI *,void *))tmp, nullptr};
+    w->import_proc = {this, (void (*)(void *,void *))tmp, nullptr};
 
     get_member_pointer(void (Forge::*a)(void *), &Forge::export_jps, tmp);
-    w->export_jps_proc = {this, (void (*)(UI *,void *))tmp, nullptr};
+    w->export_jps_proc = {this, (void (*)(void *,void *))tmp, nullptr};
 
     get_member_pointer(void (Forge::*a)(void *), &Forge::export_anaglyph, tmp);
-    w->export_anaglyph_proc = {this, (void (*)(UI *,void *))tmp, nullptr};
+    w->export_anaglyph_proc = {this, (void (*)(void *,void *))tmp, nullptr};
 }
 
 Forge::~Forge()
@@ -386,23 +375,14 @@ void Forge::import(void *arg)
 void Forge::export_anaglyph(void *arg) {
     Image *ImageLeft;
     Image *ImageRight;
-    Image *ImageOut;
 
     int w = src->Width;
     int h = src->Height;
 
     ImageLeft = new Image(w, h);
     ImageRight = new Image(w, h);
-    ImageOut = new Image(w, h);
 
     src->Artif3d(src->Width / 30, ImageLeft, ImageRight);
-    ImageOut->AnaglyphFrom(ImageLeft, ImageRight);
-
-
-    QImage *tmp = new QImage(w,h, QImage::Format_RGBA8888);
-
-    GfxBlt(PixType_ARGB, ImageOut->imageMemory, 0, 0, w, h, w,
-           PixType_RGBA, tmp->bits(), 0, 0, w, h, w);
 
     QString path = QStandardPaths::locate(QStandardPaths::PicturesLocation, QString::null,
                                           QStandardPaths::LocateOption::LocateDirectory);
@@ -416,62 +396,19 @@ void Forge::export_anaglyph(void *arg) {
         goto cleanup;
     } else
     {
-        tmp->save(fileName);
+        save_ana(fileName, ImageLeft, ImageRight);
     }
 
     cleanup:
     delete ImageLeft;
     delete ImageRight;
-    delete ImageOut;
-    //delete qImageOut;
-    delete tmp;
 
 }
-
-/* Media Types */
-#define SD_MTYPE_STEREOSCOPIC_IMAGE 0x01
-
-/* layout Options */
-#define SD_LAYOUT_INTERLEAVED 0x01
-#define SD_LAYOUT_SIDEBYSIDE 0x02
-#define SD_LAYOUT_OVERUNDER 0x03
-#define SD_LAYOUT_ANAGLYPH 0x04
-
-/* Misc Flags Bits */
-#define SD_HALF_HEIGHT 0x01
-#define SD_HALF_WIDTH 0x02
-#define SD_LEFT_FIELD_FIRST 0x04
-
-struct StereoDescriptor
-{
-    unsigned char ID[4];
-
-    unsigned char sizeHigh;
-    unsigned char sizeLow;
-
-    unsigned char dummy;
-    unsigned char flags;
-    unsigned char layout;
-    unsigned char type;
-};
-
-struct SDApp3
-{
-    unsigned char FF;
-    unsigned char APP3;
-    unsigned char sizeHigh;
-    unsigned char sizeLow;
-    unsigned char ID[4];
-
-    StereoDescriptor desc;
-};
-
 
 void Forge::export_jps(void *arg)
 {
     Image *ImageLeft;
     Image *ImageRight;
-    Image *ImageOut;
 
     int w = src->Width;
     int h = src->Height;
@@ -482,35 +419,6 @@ void Forge::export_jps(void *arg)
     const bool SideBySide = true;
 
     src->Artif3d(src->Width / 30, ImageLeft, ImageRight);
-
-    QImage *tmp;
-
-    if (SideBySide) {
-
-        ImageOut = new Image(w << 1, h);
-
-        GfxBlt(PixType_ARGB, ImageLeft->imageMemory, w, 0, w, h, w,
-               PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w << 1);
-        GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
-               PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w << 1);
-
-        tmp = new QImage((uchar *)
-                                 ImageOut->imageMemory, w << 1, h, QImage::Format_RGBA8888);
-
-    } else
-    {
-
-        ImageOut = new Image(w, h << 1);
-
-        GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0, 0, w, h, w,
-               PixType_RGBA, ImageOut->imageMemory, 0, h, w, h, w);
-        GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
-               PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, w);
-
-        tmp = new QImage((uchar *)
-                                 ImageOut->imageMemory, w, h << 1, QImage::Format_RGBA8888);
-
-    }
 
     QString path = QStandardPaths::locate(QStandardPaths::PicturesLocation, QString::null,
                                           QStandardPaths::LocateOption::LocateDirectory);
@@ -524,91 +432,10 @@ void Forge::export_jps(void *arg)
         goto cleanup;
     } else
     {
-
-        QBuffer *b = new QBuffer();
-        b->open(QBuffer::ReadWrite);
-
-        tmp->save(b, "JPG");
-
-        const unsigned char * m = (const unsigned char *) b->data().data();
-        int l = b->data().length();
-
-        //printf("jpeg length = %d\n", l);
-
-        int p = 0;
-
-        int x = -1;
-
-        int size;
-
-        while (p<l)
-        {
-            Q_ASSERT(m[p] == 0xFF);
-
-            unsigned char code = m[p+1];
-
-            if (code == 0xD8 || code == 0xD9 || code == 0xDA) size = 0;
-            else size = (m[p+2]<<8)+m[p+3];
-
-            printf("\tCode %02X len=%d\n", code, size);
-
-            p+=size+2;
-
-            if (code == 0xE0) { x = p; break; }
-
-        }
-
-        Q_ASSERT(x != -1);
-
-        unsigned char head[] = {0xFF, 0xE3, 0x00,0x00};
-
-        QFile *f = new QFile(fileName);
-        f->open(QFile::WriteOnly);
-
-        f->write((const char *) m, x);
-
-        SDApp3 desc;
-
-        desc.FF = 0xFF;
-        desc.APP3 = 0xE3;
-
-        desc.sizeHigh = (unsigned char) ((sizeof(desc)-2) >> 8);
-        desc.sizeLow = (unsigned char) ((sizeof(desc)-2));
-
-        desc.ID[0] = '_'; desc.ID[1] = 'J'; desc.ID[2] = 'P'; desc.ID[3] = 'S';
-
-        desc.desc.ID[0] = 'J'; desc.desc.ID[1] = 'P'; desc.desc.ID[2] = 'S'; desc.desc.ID[3]='_';
-
-        desc.desc.sizeHigh = (unsigned char) ((sizeof(desc.desc)-4) >> 8);
-        desc.desc.sizeLow = (unsigned char) ((sizeof(desc.desc))-4);
-
-        desc.desc.dummy = 0;
-        desc.desc.type = SD_MTYPE_STEREOSCOPIC_IMAGE;
-
-        if (SideBySide)
-        {
-            desc.desc.layout = SD_LAYOUT_SIDEBYSIDE;
-            desc.desc.flags = SD_HALF_WIDTH;
-
-        } else
-        {
-            desc.desc.layout = SD_LAYOUT_OVERUNDER;
-            desc.desc.flags = SD_HALF_HEIGHT;
-        }
-
-        f->write((const char *) &desc,sizeof(desc));
-        f->write((const char *)(m+x), l-x);
-
-        f->close();
-        delete  f;
+        save_jps(fileName, ImageLeft, ImageRight);
     }
 
     cleanup:
     delete ImageLeft;
     delete ImageRight;
-    delete ImageOut;
-    //delete qImageOut;
-    delete tmp;
-
-
 }

@@ -44,7 +44,7 @@ void Slider::setV(double val)
     }
 }
 
-void Slider::setVCallvack(void (*proc)(UI *, double, void *), UI *elem, void *arg)
+void Slider::setVCallvack(void (*proc)(void *, double, void *), void *elem, void *arg)
 {
     vCallback = { elem, proc, arg };
 }

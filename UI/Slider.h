@@ -18,13 +18,13 @@ public:
     const char *label;
     Image *src;
 
-    UICallback<void (*)(UI *, double, void *)> vCallback;
+    UICallback<void (*)(void *, double, void *)> vCallback;
 
     Slider(UI *parent, const char *label);
     virtual ~Slider();
 
     virtual void setV(double val);
-    void setVCallvack(void (*proc)(UI *, double, void *), UI *elem, void *arg);
+    void setVCallvack(void (*proc)(void *, double, void *), void *elem, void *arg);
 
     void makeSrc();
 

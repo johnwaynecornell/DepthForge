@@ -10,6 +10,9 @@
 
 #include <QMouseEvent>
 
+#include <QStandardPaths>
+#include <QFileDialog>
+
 #include <math.h>
 #include <UI/TestUI.h>
 
@@ -19,6 +22,7 @@ extern "C"
 }
 
 #include "UI/UI.h"
+#include "MainWnd.h"
 
 DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLWindow(NoPartialUpdate, parent)
 {
@@ -45,162 +49,24 @@ DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLW
 
     this->parent = appWindow;
 
-    //ui = new TestUI(this);
-
-    ui = new MainUI(this);
     mouseCapture = nullptr;
 
     Anaglyph = !this->format().stereo();
 
-    /*
-    ui = new Fixed(nullptr);
 
-    ui->width.setResp(Resp_Self);
-    ui->height.setResp(Resp_Self);
-    ui->xPos.setResp(Resp_Self);
-    ui->yPos.setResp(Resp_Self);
+    void *tmp;
 
-    Frame *f = new Frame(ui);
-    ui->children.push_back(f);
+    MainWnd *w = (MainWnd *) appWindow;
 
-    f->xPos.set(0);
-    f->yPos.set(0);
+    get_member_pointer(void (DepthForgeWin::*a)(void *), &DepthForgeWin::take_picture_jps, tmp);
+    w->export_jps_proc = {this, (void (*)(void *,void *))tmp, nullptr};
 
-    f->width.setResp(Resp_Child);
-    f->height.setResp(Resp_Child);
+    get_member_pointer(void (DepthForgeWin::*a)(void *), &DepthForgeWin::take_picture_ana, tmp);
+    w->export_anaglyph_proc = {this, (void (*)(void *,void *))tmp, nullptr};
 
-    f->backgroundResp = Resp_Child;
+    //ui = new TestUI(this);
 
-    Button_Image *t = new Button_Image(f);
-    f->children.push_back(t);
-
-    t->width.setResp(Resp_Self);
-    t->height.setResp(Resp_Self);
-
-    t->xPos.set(0);
-    t->yPos.set(0);
-
-    t->z = -0;
-
-    t->backColor = {0xFF, 0x40,0x00,0x80, .25};
-
-    t->backgroundResp = Resp_Self;
-
-//    Image *bg = new Image(128,128);
-//    Image *_bg = new Image(128,128);
-
-    QImage A;
-    A.load(tr("/home/jwc/Pictures/Danielle.jpg"));
-
-    if (!A.hasAlphaChannel() && A.format() == QImage::Format_RGB32)
-    {
-        QImage B = QImage(A.width(), A.height(), QImage::Format_ARGB32);
-
-        GfxBlt(PixType_BGRA, A.bits(), 0,0,A.width(),A.height(), A.width(),
-               PixType_ARGB, B.bits(), 0, 0, B.width(), B.height(), B.width());
-
-        A = B;
-    }
-
-    UI_Image = UI_ImageAnaglyph  = UI_ImageLeft = UI_ImageRight = nullptr;
-    rend = nullptr;
-
-    Image *Q = new Image(128,128);
-
-    int xc = Q->Height/2;
-    int yc = Q->Width/2;
-
-    for (int y=0; y<Q->Height; y++)
-    {
-        for (int x=0; x<Q->Width; x++)
-        {
-            unsigned char v;
-
-  //          v = (unsigned char) (rand()%80);
-
-  //          _bg->pix[y][x]={0xFF,
-  //                         (unsigned char) (v+rand()%0x80), (unsigned char)(v+rand()%0x80),0};
-
-            int xx = x-xc;
-            int yy = y-yc;
-
-            float d = 1 - sqrtf(xx*xx+yy*yy)/xc;
-            if (d<0) d = 0;
-
-            d = sin(d*M_PI/2);
-//d=0;
-            unsigned char r;
-            unsigned char b;
-
-            if (x%0x10 == 0 || y%0x10 == 0)
-            {
-                b=0x80;
-                r=0x80;
-            } else {
-                b=0xFF;
-                r=0xFF;
-            }
-
-            v = (unsigned char) (d*0xFF);
-            Q->pix[y][x] = {v,r,b,b};
-            Q->z[y][x] = -d * .25;
-
-        }
-    }
-/*
-    for (int y=0; y<Q->Height; y++) {
-        for (int x = 0; x < Q->Width; x++) {
-            int r=0;
-            int g=0;
-            int b=0;
-            int a=0;
-            int d=0;
-
-            const int gr=2;
-
-            for (int yy=y-gr;yy<=y+gr; yy++)
-            {
-                for (int xx=x-gr;xx<x+gr; xx++)
-                {
-                    if (xx>=0&&xx<bg->Width&&yy>=0&&yy<bg->Height)
-                    {
-                        ARGB p = _bg->pix[yy][xx];
-                        r+=p.r;
-                        g+=p.g;
-                        b+=p.b;
-                        a+=p.a;
-
-                        d++;
-
-                    }
-                }
-            }
-
-            bg->pix[y][x] = {(unsigned char)(a/d),(unsigned char)(r/d),
-                             (unsigned char)(g/d),(unsigned char)(b/d)};
-
-        }
-    }
-
-
-            t->src = Q;
-*/
-
-    //Q->CalcZ();
-
-    /*
-    ARGB C1 = {0,0,0,0};
-    ARGB C2 = C1;
-    float z1 = -.05;
-    float z2 = z1;
-
-    for (int i=0; i<24; i++)
-    {
-        int x1 = i; int y1=i;
-        int x2 = 127-i; int y2 = 127-i;
-
-        Q->FillRect(x1, y1, x2-1, y1, PixOp_SRC_ALPHA, C1, ZOp_SRC_ADD, z1);
-    }*/
+    ui = new MainUI(this);
 
 }
 
@@ -554,4 +420,74 @@ void DepthForgeWin::OnIdle(void)
 void DepthForgeWin::setShowFPS(bool state)
 {
     showFPS = state;
+}
+
+void DepthForgeWin::take_picture_ana(void *arg) {
+    Image *ImageLeft;
+    Image *ImageRight;
+    Image *src = UI_Image;
+
+    int w = src->Width;
+    int h = src->Height;
+
+    ImageLeft = new Image(w, h);
+    ImageRight = new Image(w, h);
+
+    src->Artif3d(src->Width / 30, ImageLeft, ImageRight);
+
+    QString path = QStandardPaths::locate(QStandardPaths::PicturesLocation, QString::null,
+                                          QStandardPaths::LocateOption::LocateDirectory);
+
+    QString fileName = QFileDialog::getSaveFileName(
+            parent, ("Save Image File"),
+            path,
+            ("Images (*.png *.jpg)"));
+
+    if (fileName.isNull()) {
+        goto cleanup;
+    } else
+    {
+        save_ana(fileName, ImageLeft, ImageRight);
+    }
+
+    cleanup:
+    delete ImageLeft;
+    delete ImageRight;
+
+}
+
+void DepthForgeWin::take_picture_jps(void *arg)
+{
+    Image *ImageLeft;
+    Image *ImageRight;
+    Image *src = UI_Image;
+
+    int w = src->Width;
+    int h = src->Height;
+
+    ImageLeft = new Image(w, h);
+    ImageRight = new Image(w, h);
+
+    const bool SideBySide = true;
+
+    src->Artif3d(src->Width / 30, ImageLeft, ImageRight);
+
+    QString path = QStandardPaths::locate(QStandardPaths::PicturesLocation, QString::null,
+                                          QStandardPaths::LocateOption::LocateDirectory);
+
+    QString fileName = QFileDialog::getSaveFileName(
+            parent, ("Save Image File"),
+            path,
+            ("Images (*.jps)"));
+
+    if (fileName.isNull()) {
+        goto cleanup;
+    } else
+    {
+        save_jps(fileName, ImageLeft, ImageRight);
+    }
+
+    cleanup:
+    delete ImageLeft;
+    delete ImageRight;
 }

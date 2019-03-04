@@ -54,7 +54,7 @@ public:
 
 template <class f> struct UICallback
 {
-    UI *element;
+    void *element;
     f function;
     void *argument;
 };
@@ -101,12 +101,12 @@ public:
     virtual bool doLayout();
 
 private:
-    UICallback<void (*)(UI*, void *)> mouseEnterProc;
-    UICallback<void (*)(UI*, void *)> mouseLeaveProc;
+    UICallback<void (*)(void*, void *)> mouseEnterProc;
+    UICallback<void (*)(void*, void *)> mouseLeaveProc;
 
 public:
-    void setMouseEnterProc(void (*proc)(UI *elem, void *arg), UI *elem, void *arg);
-    void setMouseLeaveProc(void (*proc)(UI *elem, void *arg), UI *elem, void *arg);
+    void setMouseEnterProc(void (*proc)(void *elem, void *arg), void *elem, void *arg);
+    void setMouseLeaveProc(void (*proc)(void *elem, void *arg), void *elem, void *arg);
 
     virtual void mouseEnter();
     virtual void mouseLeave();
@@ -196,5 +196,18 @@ public:
     virtual bool doLayout();
 };
 
+#define get_member_pointer(Type, Member, Recipient) \
+    {\
+      union \
+        {   Type; \
+            void *b;    \
+        } c; \
+                \
+        c.a = Member; \
+        *((void **)&Recipient) = c.b;   \
+    }
 
 #endif //DEPTHFORGE_UI_H
+
+extern void save_jps(QString fileName, Image *ImageLeft, Image *ImageRight);
+extern void save_ana(QString fileName, Image *ImageLeft, Image *ImageRight);

@@ -30,9 +30,9 @@ public:
     virtual void showEvent(QShowEvent *event);
 
 
-    UICallback<void (*)(UI *elem, void *arg)> import_proc = {};
-    UICallback<void (*)(UI *elem, void *arg)> export_anaglyph_proc = {};
-    UICallback<void (*)(UI *elem, void *arg)> export_jps_proc = {};
+    UICallback<void (*)(void *elem, void *arg)> import_proc = {};
+    UICallback<void (*)(void *elem, void *arg)> export_anaglyph_proc = {};
+    UICallback<void (*)(void *elem, void *arg)> export_jps_proc = {};
 
 
 

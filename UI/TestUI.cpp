@@ -5,6 +5,7 @@
 #include <cmath>
 #include "TestUI.h"
 #include <QApplication>
+#include <MainWnd.h>
 
 TestUI::TestUI(DepthForgeWin *win) : UI(nullptr)
 {

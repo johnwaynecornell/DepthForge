@@ -89,6 +89,9 @@ public:
 
     void setShowFPS(bool state);
 
+    void take_picture_jps(void *arg);
+    void take_picture_ana(void *arg);
+
 private slots:
     void aboutToBlock();
 };

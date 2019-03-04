@@ -1,9 +1,20 @@
-sudo apt-get install git g++-7 cmake libqt5opengl5-dev
+#Ubuntu build
+
+sudo apt-get install git g++ cmake libqt5opengl5-dev
 
 git clone https://github.com/johnwaynecornell/DepthForge
 cd DepthForge
-export CXX=/usr/bin/g++-7
 cmake .
+cmake CMakeLists.txt
 make
 
+#to update(as desired) after first build
 
+cd DepthForge
+git pull
+cmake .
+cmake CMakeLists.txt
+make
+
+#to run the application from DepthForge directory
+./DepthForge

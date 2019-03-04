@@ -51,9 +51,6 @@ DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLW
 
     mouseCapture = nullptr;
 
-    Anaglyph = !this->format().stereo();
-
-
     void *tmp;
 
     MainWnd *w = (MainWnd *) appWindow;
@@ -67,6 +64,7 @@ DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLW
     //ui = new TestUI(this);
 
     ui = new MainUI(this);
+    forceAnaglyph = false;
 
 }
 
@@ -237,6 +235,7 @@ bool DepthForgeWin::checkRelinquishMouse(int x, int y)
 
 void DepthForgeWin::initializeGL()
 {
+    anaglyph = !format().stereo();
 }
 
 void DepthForgeWin::paintGL()
@@ -365,7 +364,8 @@ void DepthForgeWin::paintGL()
 
 
     UI_Image->Artif3d(UI_Image->Width/30, UI_ImageLeft, UI_ImageRight);
-    if (Anaglyph) UI_ImageAnaglyph->AnaglyphFrom(UI_ImageLeft, UI_ImageRight);
+    if (anaglyph || forceAnaglyph)
+        UI_ImageAnaglyph->AnaglyphFrom(UI_ImageLeft, UI_ImageRight);
 
     if (format().stereo())
     {
@@ -373,7 +373,8 @@ void DepthForgeWin::paintGL()
 
         Q_ASSERT(glGetError() == GL_NO_ERROR);
 
-        GfxBlt(PixType_ARGB, Anaglyph ? UI_ImageAnaglyph->imageMemory : UI_ImageLeft->imageMemory,
+        GfxBlt(PixType_ARGB, (anaglyph || forceAnaglyph) ?
+        UI_ImageAnaglyph->imageMemory : UI_ImageLeft->imageMemory,
                 0, 0, Width, Height, Width, PixType_ABGR, obuf,
                 0, 0, Width, -Height, Width);
 
@@ -383,7 +384,8 @@ void DepthForgeWin::paintGL()
         Q_ASSERT(glGetError() == GL_NO_ERROR);
         glFinish();
 
-        GfxBlt(PixType_ARGB, Anaglyph ? UI_ImageAnaglyph->imageMemory : UI_ImageRight->imageMemory,
+        GfxBlt(PixType_ARGB, (anaglyph || forceAnaglyph)
+        ? UI_ImageAnaglyph->imageMemory : UI_ImageRight->imageMemory,
                0, 0, Width, Height, Width, PixType_ABGR, obuf,
                0, 0, Width, -Height, Width);
 

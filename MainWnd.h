@@ -13,10 +13,12 @@
 class MainWnd : public QMainWindow{
 
 public:
-    QAction *action_toggle_fps;
     QAction *action_import;
     QAction *action_export_anaglyph;
     QAction *action_export_jps;
+
+    QAction *action_toggle_fps;
+    QAction *action_toggle_forceAnaglyph;
 
     DepthForgeWin *depthForge;
 
@@ -41,6 +43,7 @@ private slots:
     void export_anaglyph();
     void export_jps();
     void toggle_fps();
+    void toggle_forceAnaglyph();
 };
 
 

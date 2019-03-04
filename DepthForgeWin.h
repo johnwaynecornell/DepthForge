@@ -43,10 +43,13 @@ public:
     QImage *rend;
     Image *UI_Image;
 
+    bool anaglyph;
+    bool forceAnaglyph;
+
+
     Image *UI_ImageAnaglyph;
     Image *UI_ImageLeft;
     Image *UI_ImageRight;
-    bool StereoPresent;
 
     bool showFPS;
 
@@ -76,8 +79,6 @@ public:
 
     void takeMouse();
     bool checkRelinquishMouse(int x, int y);
-
-    bool Anaglyph;
 
     DepthForgeWin(QMainWindow *appWindow, QWindow *parent);
 

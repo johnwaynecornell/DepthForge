@@ -1,7 +1,7 @@
 # DepthForge
 Stereographic depth editor.
 
-DepthForge is a depth editor for Stereography, it currently outputs Anaglyph(red/cyan) which may be seen with standard
+DepthForge is a depth editor for Stereography, it currently outputs anaglyph(red/cyan) which may be seen with standard
 (red/cyan) '3d' glasses and Quad buffer support ie NVIDIA Quadro/3dvision for full color stereographic emersion.
 
 I decided to release it under the GNU GPL (general public license) to support the developing art of Stereography. You are

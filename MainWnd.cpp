@@ -67,8 +67,8 @@ void MainWnd::createActions() {
     action_import->setStatusTip(tr("Import image file"));
     connect(action_import, &QAction::triggered, this, &MainWnd::import);
 
-    action_export_anaglyph = new QAction(tr("Export &Anaglyph"), this);
-    action_export_anaglyph->setStatusTip(tr("Export Anaglyph image file"));
+    action_export_anaglyph = new QAction(tr("Export &anaglyph"), this);
+    action_export_anaglyph->setStatusTip(tr("Export anaglyph image file"));
     connect(action_export_anaglyph, &QAction::triggered, this, &MainWnd::export_anaglyph);
 
     action_export_jps = new QAction(tr("Export &Jps"), this);
@@ -79,6 +79,11 @@ void MainWnd::createActions() {
     action_toggle_fps->setStatusTip(tr("Show &Frames per second"));
     action_toggle_fps->setCheckable(true);
     connect(action_toggle_fps, &QAction::triggered, this, &MainWnd::toggle_fps);
+
+    action_toggle_forceAnaglyph = new QAction(tr("Toggle force &Aanaglyph"), this);
+    action_toggle_forceAnaglyph->setStatusTip(tr("force to anaglyph mode"));
+    action_toggle_forceAnaglyph->setCheckable(true);
+    connect(action_toggle_forceAnaglyph, &QAction::triggered, this, &MainWnd::toggle_forceAnaglyph);
 }
 
 void MainWnd::createMenus()
@@ -96,6 +101,7 @@ void MainWnd::createMenus()
 
     QMenu *Settings = mb->addMenu("&Settings");
     Settings->addAction(action_toggle_fps);
+    Settings->addAction(action_toggle_forceAnaglyph);
 }
 
 void MainWnd::import()
@@ -119,4 +125,9 @@ void MainWnd::export_jps()
 void MainWnd::toggle_fps()
 {
     depthForge->setShowFPS(action_toggle_fps->isChecked());
+}
+
+void MainWnd::toggle_forceAnaglyph()
+{
+    depthForge->forceAnaglyph = action_toggle_forceAnaglyph->isChecked();
 }

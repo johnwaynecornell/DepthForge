@@ -572,6 +572,9 @@ void save_jps(QString fileName, Image *ImageLeft, Image *ImageRight)
 
 void save_ana(QString fileName, Image *ImageLeft, Image *ImageRight)
 {
+    //save_sample(fileName, ImageLeft, ImageRight);
+    //return;
+
     Image *ImageOut;
 
     int w = ImageLeft->Width;
@@ -596,6 +599,50 @@ void save_ana(QString fileName, Image *ImageLeft, Image *ImageRight)
 
     cleanup:
     delete ImageOut;
+    delete tmp;
+
+}
+
+void save_sample(QString fileName, Image *ImageLeft, Image *ImageRight)
+{
+    Image *ana;
+
+    int w = ImageLeft->Width;
+    int h = ImageRight->Height;
+
+    ana = new Image(w, h);
+
+    ana->AnaglyphFrom(ImageLeft, ImageRight);
+
+
+    QImage *tmp = new QImage(800,1200, QImage::Format_RGBA8888);
+    tmp->fill(QColor(0xFF,0xFF,0xFF,0xFF));
+
+    GfxBlt(PixType_ARGB, ana->imageMemory, 0, 0, w, h, w,
+           PixType_RGBA, tmp->bits(), 2, 2, 800-2, 600-2, 800);
+
+    GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0, 0, w, h, w,
+           PixType_RGBA, tmp->bits(), 2, 600+2, 400-4, 300-4, 800);
+
+    GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
+           PixType_RGBA, tmp->bits(), 400+2, 600+2, 400-4, 300-4, 800);
+
+    GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
+           PixType_RGBA, tmp->bits(), 2, 900+2, 400-4, 300-4, 800);
+
+    GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0, 0, w, h, w,
+           PixType_RGBA, tmp->bits(), 400+2, 900+2, 400-4, 300-4, 800);
+
+
+    if (fileName.isNull()) {
+        goto cleanup;
+    } else
+    {
+        tmp->save(fileName);
+    }
+
+    cleanup:
+    delete ana;
     delete tmp;
 
 }

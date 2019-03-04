@@ -20,8 +20,12 @@ extern "C"
 
 #include "UI/UI.h"
 
-DepthForgeWin::DepthForgeWin(QGLFormat &format, QMainWindow *parent) : QGLWidget(format, parent)
+DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLWindow(NoPartialUpdate, parent)
 {
+    glEnable(GL_STEREO);
+
+
+
     Image *A = new Image(1024,768);
     Image *B = new Image(200,200);
 
@@ -39,7 +43,7 @@ DepthForgeWin::DepthForgeWin(QGLFormat &format, QMainWindow *parent) : QGLWidget
     UI_Image = UI_ImageAnaglyph  = UI_ImageLeft = UI_ImageRight = nullptr;
     rend = nullptr;
 
-    this->parent = parent;
+    this->parent = appWindow;
 
     //ui = new TestUI(this);
 
@@ -181,7 +185,6 @@ DepthForgeWin::DepthForgeWin(QGLFormat &format, QMainWindow *parent) : QGLWidget
 
             t->src = Q;
 */
-    setMouseTracking(true);
 
     //Q->CalcZ();
 
@@ -209,7 +212,7 @@ void DepthForgeWin::aboutToBlock()
 
 void DepthForgeWin::resizeGL(int w,int h)
 {
-    QGLWidget::resizeGL(w,h);
+    QOpenGLWindow::resizeGL(w,h);
 }
 
 void DepthForgeWin::checkResize()
@@ -254,6 +257,7 @@ void DepthForgeWin::checkResize()
 
 void DepthForgeWin::closeEvent(QCloseEvent *event)
 {
+
     if (UI_Image != nullptr) delete UI_Image;
     if (UI_ImageAnaglyph  != nullptr) delete UI_ImageAnaglyph;
     if (UI_ImageLeft != nullptr) delete UI_ImageLeft;
@@ -287,6 +291,7 @@ void DepthForgeWin::mouseMoveEvent(QMouseEvent *eventMove)
 }
 void DepthForgeWin::mousePressEvent(QMouseEvent *eventPress)
 {
+    //eventPress->
     if (!hasMouse) takeMouse();
 
     int x = eventPress->x();
@@ -343,7 +348,7 @@ void DepthForgeWin::freeMouse(UI *element)
 
 void DepthForgeWin::takeMouse()
 {
-    grabMouse();
+    setMouseGrabEnabled(true);
     hasMouse = true;
     ui->mouseEnter();
 }
@@ -353,7 +358,7 @@ bool DepthForgeWin::checkRelinquishMouse(int x, int y)
     if (!hasMouse) return false;
     if (x<0||y<0||x>width()||y>height() && mouseCapture == nullptr)
     {
-        releaseMouse();
+        setMouseGrabEnabled(false);
         hasMouse = false;
 
         ui->mouseLeave();
@@ -364,8 +369,14 @@ bool DepthForgeWin::checkRelinquishMouse(int x, int y)
     return false;
 }
 
+void DepthForgeWin::initializeGL()
+{
+}
+
 void DepthForgeWin::paintGL()
 {
+
+
     checkResize();
 
     BGRA *obuf = new BGRA[Width*Height];
@@ -494,6 +505,8 @@ void DepthForgeWin::paintGL()
     {
         glDrawBuffer(GL_BACK_LEFT);
 
+        Q_ASSERT(glGetError() == GL_NO_ERROR);
+
         GfxBlt(PixType_ARGB, Anaglyph ? UI_ImageAnaglyph->imageMemory : UI_ImageLeft->imageMemory,
                 0, 0, Width, Height, Width, PixType_ABGR, obuf,
                 0, 0, Width, -Height, Width);
@@ -501,12 +514,15 @@ void DepthForgeWin::paintGL()
         glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
 
         glDrawBuffer(GL_BACK_RIGHT);
+        Q_ASSERT(glGetError() == GL_NO_ERROR);
+        glFinish();
 
         GfxBlt(PixType_ARGB, Anaglyph ? UI_ImageAnaglyph->imageMemory : UI_ImageRight->imageMemory,
                0, 0, Width, Height, Width, PixType_ABGR, obuf,
                0, 0, Width, -Height, Width);
 
         glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
+        glFinish();
 
     } else {
 

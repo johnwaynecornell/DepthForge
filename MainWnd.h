@@ -18,16 +18,23 @@ public:
     QAction *action_export_anaglyph;
     QAction *action_export_jps;
 
+    DepthForgeWin *depthForge;
+
+
     MainWnd();
 
     virtual void createActions();
     virtual void createMenus();
 
     virtual void closeEvent(QCloseEvent *event);
+    virtual void showEvent(QShowEvent *event);
+
 
     UICallback<void (*)(UI *elem, void *arg)> import_proc = {};
     UICallback<void (*)(UI *elem, void *arg)> export_anaglyph_proc = {};
     UICallback<void (*)(UI *elem, void *arg)> export_jps_proc = {};
+
+
 
 private slots:
     void import();

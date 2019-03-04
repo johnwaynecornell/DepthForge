@@ -23,7 +23,7 @@ extern "C"
 
 class MainUI;
 
-class DepthForgeWin : public QGLWidget
+class DepthForgeWin : public QOpenGLWindow//QGLWidget
 {
     Q_OBJECT
 public:
@@ -61,6 +61,7 @@ public:
     int lastMouseX;
     int lastMouseY;
 
+    void initializeGL();
     virtual void paintGL();
     virtual void resizeGL(int w,int h);
 
@@ -78,7 +79,7 @@ public:
 
     bool Anaglyph;
 
-    DepthForgeWin(QGLFormat &format, QMainWindow *parent);
+    DepthForgeWin(QMainWindow *appWindow, QWindow *parent);
 
     virtual void MouseButtonDown();
 

@@ -353,7 +353,7 @@ void Forge::import(void *arg)
             QStandardPaths::LocateOption::LocateDirectory);
 
     QString fileName = QFileDialog::getOpenFileName(
-            ((MainUI *)rootElement())->owner, ("Open Image File"),
+            ((MainUI *)rootElement())->owner->parent, ("Open Image File"),
             path,
             ("Images (*.png *.jpg)"));
 
@@ -408,7 +408,7 @@ void Forge::export_anaglyph(void *arg) {
                                           QStandardPaths::LocateOption::LocateDirectory);
 
     QString fileName = QFileDialog::getSaveFileName(
-            ((MainUI *) rootElement())->owner, ("Save Image File"),
+            ((MainUI *) rootElement())->owner->parent, ("Save Image File"),
             path,
             ("Images (*.png *.jpg)"));
 
@@ -516,7 +516,7 @@ void Forge::export_jps(void *arg)
                                           QStandardPaths::LocateOption::LocateDirectory);
 
     QString fileName = QFileDialog::getSaveFileName(
-            ((MainUI *) rootElement())->owner, ("Save Image File"),
+            ((MainUI *) rootElement())->owner->parent, ("Save Image File"),
             path,
             ("Images (*.jps)"));
 

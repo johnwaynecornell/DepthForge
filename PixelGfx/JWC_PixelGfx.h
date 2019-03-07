@@ -30,6 +30,8 @@ struct ARGB
 
     static const PixType pixType = PixType_ARGB;
     static const int size=4;
+
+    ARGB interpolate(ARGB B, unsigned char v);
 };
 
 struct RGBA

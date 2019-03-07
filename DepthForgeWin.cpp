@@ -220,7 +220,7 @@ void DepthForgeWin::takeMouse()
 bool DepthForgeWin::checkRelinquishMouse(int x, int y)
 {
     if (!hasMouse) return false;
-    if (x<0||y<0||x>width()||y>height() && mouseCapture == nullptr)
+    if (x<0||y<0||x>width()||y>height() && mouseCapture == nullptr || parent->isActiveWindow() == false)
     {
         setMouseGrabEnabled(false);
         hasMouse = false;

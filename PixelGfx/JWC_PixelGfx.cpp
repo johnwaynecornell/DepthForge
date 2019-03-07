@@ -20,6 +20,18 @@ PixTypeInfo pixInfo[] = {
 float* rgb_v;
 unsigned char* ValValAlpha_Mix;
 
+ARGB ARGB::interpolate(ARGB B, unsigned char v)
+{
+    ARGB dest;
+    dest.r = valValAlpha(r, B.r, v);
+    dest.g = valValAlpha(g, B.g, v);
+    dest.b = valValAlpha(b, B.b, v);
+    dest.a = valValAlpha(a, B.a, v);
+
+    return dest;
+}
+
+
 void Init_JWC_PixelGfx()
 {
     ValValAlpha_Mix = new unsigned char[1<<24];

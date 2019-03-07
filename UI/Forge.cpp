@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QImageWriter>
 #include <QStandardPaths>
+#include <Image/PathAdapter.h>
 
 
 #include "MainUI.h"
@@ -39,7 +40,7 @@ Forge::Forge(UI *parent) : UI(parent)
 
     QString fileName;
 
-    src = new Image(1,1);
+    drawInitial();
 
     previewLense = false;
 
@@ -81,6 +82,163 @@ Forge::Forge(UI *parent) : UI(parent)
 Forge::~Forge()
 {
     delete src;
+}
+
+bool letters(int line, double y, ARGB &p, float &z, void *arg)
+{
+    //y -= 10;
+
+    y = abs(y);
+
+    if (y <= 6.0 && y>2.0)
+    {
+        z = -.2;
+        p = {0xFF, 0xFF, 0xFF, 0xFF};
+    } else
+    {
+        if (y>6) y -= 6.0;
+        else if (y<2) y = 2.0-y;
+
+        y /= 36.0;
+
+        z = 0;
+        p = {0xFF,0,0x0,0};
+
+        ARGB wave[] = {
+                {0xFF,0xFF,0x00,0xFF}, {0xFF,0x80,0x00,0x80},
+                {0xFF,0xA0,0xA0,0xA0}, {0xFF,0x80,0xFF,0x00}
+        };
+
+        float zb = 0.0;
+
+        for (int i=0; i<4; i++) {
+
+            y -= .5;
+
+            if (y < 0) goto ret;
+
+            if (y < .5) {
+                double q = (y - .5 * .5) / (.5*.5);
+
+                double v = 1.0 - abs(q);
+
+                unsigned char m = (unsigned char) ((v)*0xFF);
+
+                ARGB mixColor = ARGB{0xFF, 0x00, 0x00, 0x00};
+
+                //int i2;
+                //if (q<0) i2 = i+1; else i2 = i-1;
+
+                //if (i2>=0 && i2 < 4) mixColor = wave[i2];
+
+                p = mixColor.interpolate(wave[i], m);
+                z = zb + (1.0 - v) * .125;
+            }
+
+            zb += .125;
+
+        }
+
+
+    }
+ret:
+    return true;
+}
+
+void Forge::drawInitial()
+{
+    src = new Image(800,600);
+
+    PathAdapter pth;
+
+    pth.inputMatrix *= dMatrix2D::Translate({0,4});
+
+    pth.Line({0,0},{0,-4});
+    pth.LineTo({4,-2});
+    pth.LineTo({0,0});
+
+    pth.inputMatrix *= dMatrix2D::Translate({6,0});
+
+    pth.Line({3,-1}, {2,0});
+    pth.LineTo({0,-2});
+    pth.LineTo({2, -4});
+    pth.LineTo({4,-2});
+    pth.LineTo({0,-2});
+
+    pth.inputMatrix *= dMatrix2D::Translate({6,0});
+    pth.Line({0,0},{0,-4});
+    pth.LineTo({2,-3});
+    pth.LineTo({0,-2});
+
+    pth.inputMatrix *= dMatrix2D::Translate({4,0});
+    pth.Line({0,-4},{4,-4});
+    pth.Line({2,0},{2,-4});
+
+    pth.inputMatrix *= dMatrix2D::Translate({6,0});
+    pth.Line({0,0},{0,-4});
+    pth.Line({0,-2},{4,-2});
+    pth.Line({4,-4},{4,0});
+
+    pth.outputMatrix = dMatrix2D::Scale({.25,.25}) * dMatrix2D::Scale({64,64}) *
+            dMatrix2D::Translate({200,150});
+
+    pth.Apply(src);
+
+    pth.ClearPath();
+    pth.inputMatrix.Identity();
+    pth.outputMatrix.Identity();
+
+    pth.inputMatrix *= dMatrix2D::Translate({0,4});
+    pth.Line({0,0},{0,-4});
+    pth.LineTo({4,-4});
+    pth.Line({0,-2},{2,-2});
+
+    pth.inputMatrix *= dMatrix2D::Translate({6,0});
+    pth.Line({2,0},{0,-2});
+    pth.LineTo({2,-4});
+    pth.LineTo({4,-2});
+    pth.LineTo({2, 0});
+
+    pth.inputMatrix *= dMatrix2D::Translate({6,0});
+    pth.Line({0,0},{0,-4});
+    pth.LineTo({2,-3});
+    pth.LineTo({0,-2});
+    pth.LineTo({2,0});
+
+    pth.inputMatrix *= dMatrix2D::Translate({4,0});
+    pth.Line({0,-1},{2,0});
+    pth.LineTo({4,-1});
+    pth.LineTo({4,-3});
+    pth.LineTo({2,-4});
+    pth.LineTo({0,-3});
+    pth.LineTo({2,-2});
+    pth.LineTo({4,-3});
+
+    pth.inputMatrix *= dMatrix2D::Translate({6,0});
+
+    pth.Line({3,-1}, {2,0});
+    pth.LineTo({0,-2});
+    pth.LineTo({2, -4});
+    pth.LineTo({4,-2});
+    pth.LineTo({0,-2});
+
+    pth.outputMatrix = dMatrix2D::Scale({.25,.25}) * dMatrix2D::Scale({64,64});
+    dPnt2D pivot = pth.outputMatrix * (pth.inputMatrix * dPnt2D{4,-4});
+
+    pth.outputMatrix *=
+            dMatrix2D::Translate(-pivot) * dMatrix2D::Rotate(M_PI/16) *
+            dMatrix2D::Scale({1.25,1.25}) *
+            dMatrix2D::Translate(pivot) * dMatrix2D::Translate({200+64,150+90});
+
+
+
+    pth.Apply(src);
+
+
+
+
+
+    src->DrawPath(PixOp_SRC, ZOp_SRC, 1.0, &letters, nullptr);
 }
 
 struct LenseData

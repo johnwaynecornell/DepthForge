@@ -34,6 +34,8 @@ public:
 
     Image *bkgTile;
 
+    void drawInitial();
+
     virtual void drawBackground(UI *member, Image *target, QImage *qImage);
     virtual void draw(Image *target, QImage *qImage);
 

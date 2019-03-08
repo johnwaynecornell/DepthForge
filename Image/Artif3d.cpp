@@ -208,211 +208,6 @@ void Artif3dSlice(GfxThreadWorker *w, Image *in, int sep, Image *left, Image *ri
 
 }
 
-
-void Artif3dSliceold(GfxThreadWorker *w, Image *in, int sep, Image *left, Image *right)
-{
-
-    int Width = in->Width;
-    int Height = in->Height;
-    float *_depth = in->zMemory;
-
-    int start = Height * w->index / w->of;
-    int end   = Height * (w->index+1) / w->of;
-
-    if (end > Height) end = Height;
-
-    if (myData.Magic != 0x7A9F3F63 || myData.l < Width) initMyData(Width);
-
-    float *depth = myData.depth;
-
-    int *loff = myData.loff;
-    int *roff = myData.roff;
-
-    float *lzbuf = myData.lzbuf;
-    float *rzbuf = myData.rzbuf;
-
-    int x;
-
-    for (int y=start; y < end; y++)
-    {
-        ARGB *inRow = in->pix[y];
-        ARGB *outRowLeft = left->pix[y];
-        ARGB *outRowRight = right->pix[y];
-
-        int p = 3;
-        float _s = 0;
-        int d = 0;
-
-
-        float *_depthRow = _depth + y * Width;
-
-        //for (x=0; x<w; x++) _depthRow[x] = 1.0;
-
-        for (x=0; x < p; x++)
-        {	_s += _depthRow[x];
-            d++;
-        }
-
-        for (x=0; x < Width; x++)
-        {
-            if (x-p-1>=0) {_s -= _depthRow[x-p-1]; d--; }
-
-            depth[x] = _s / d;
-
-            if (x+p < Width) { _s += _depthRow[x+p]; d ++; }
-
-            loff[x] =  (int) (sep -depth[x]* sep);
-            roff[x] = -loff[x];
-
-            lzbuf[x] = rzbuf[x]= INFINITY;
-
-        }
-
-        for (int i=0; i < Width; i++)
-        {
-            outRowLeft[i] = outRowRight[i] = q;
-        }
-
-
-        int x1_L,x2_L=0;
-        float z1_1,z2_1=0;
-
-        ARGB pixa_1, pixb_1 = q;
-
-        int x1_R,x2_R=0;
-
-        for (x=0; x < Width; x++)
-        {
-            x1_L = x + loff[x];//lookup_x(x, inp.Width, sep, depth, loff);
-            if (x1_L<0) x1_L = 0; else if (x1_L>=Width) x1_L = Width-1;
-
-            z1_1 = depth[x];
-
-            pixa_1 = inRow[x];
-
-            x1_R = x + roff[x];//lookup_x(x, w, sep, depth, roff);
-            if (x1_R<0) x1_R = 0; else if (x1_R>=Width) x1_R = Width-1;
-
-            if (x != 0)
-            {
-                //drawline(0, x1_L, x2_L, pixa_1, pixb_1, z1_1, z2_1, outRow, lzbuf);
-                //drawline(w, x1_R, x2_R, pixa_1, pixb_1, z1_1, z2_1, outRow, rzbuf);
-
-                int xp;
-                int x1,x2;
-                ARGB pixa,pixb;
-                float z2,z1;
-                float *zbuf;
-
-                xp = 0; x1 = x1_L; x2 = x2_L; pixa = pixa_1; pixb = pixb_1; z1 = z1_1; z2 = z2_1; zbuf = lzbuf;
-
-                {
-
-                    int d = x1 - x2;
-                    if (d<0) d = -d;
-                    if (d==0) d = 1;
-
-                    int r = pixa.r;
-                    int g = pixa.g;
-                    int b = pixa.b;
-                    int a = pixa.a;
-
-                    int ro = pixb.r - r;
-                    int go = pixb.g - g;
-                    int bo = pixb.b - b;
-                    int ao = pixb.a - a;
-
-                    double dp = 1.0 / d;
-
-                    int x2_1 = x2 - x1;
-                    double z2_1 = z2 - z1;
-
-                    for (int q=0; q<=d; q++)
-                    {
-                        double _q = q * dp;
-
-                        int x = x1 + (x2_1) * q / d;
-                        double z = z1 + (z2_1) * _q;
-
-                        if (z<zbuf[x])
-                        {
-                            zbuf[x] = z;
-
-                            ARGB pix;
-
-                            pix.r = r + ro * q / d;
-                            pix.g = g + go * q / d;
-                            pix.b = b + bo * q / d;
-                            pix.a = a + ao * q / d;
-
-                            outRowLeft[x+xp] = pix;
-                        }
-                    }
-
-                }
-
-                xp = 0; x1 = x1_R; x2 = x2_R; zbuf = rzbuf;
-                {
-
-                    int d = x1 - x2;
-                    if (d<0) d = -d;
-
-                    if (d==0) d = 1;
-
-                    int r = pixa.r;
-                    int g = pixa.g;
-                    int b = pixa.b;
-                    int a = pixa.a;
-
-                    int ro = pixb.r - r;
-                    int go = pixb.g - g;
-                    int bo = pixb.b - b;
-                    int ao = pixb.a - a;
-
-                    float dp = 1.0 / d;
-
-                    int x2_1 = x2 - x1;
-                    float z2_1 = z2 - z1;
-
-                    for (int q=0; q<=d; q++)
-                    {
-                        float _q = q * dp;
-
-                        int x = x1 + (x2_1) * q / d;
-                        float  z = z1 + (z2_1) * _q;
-
-                        if (z<zbuf[x])
-                        {
-                            zbuf[x] = z;
-
-                            ARGB pix;
-
-                            pix.r = r + ro * q / d;
-                            pix.g = g + go * q / d;
-                            pix.b = b + bo * q / d;
-                            pix.a = a + ao * q / d;
-
-                            outRowRight[x+xp] = pix;
-                        }
-                    }
-
-                }
-
-
-
-            }
-
-            z2_1 = z1_1;
-
-            pixb_1 = pixa_1;
-
-            x2_L = x1_L;
-            x2_R = x1_R;
-
-        }
-    }
-}
-
 struct Artif3d_Params
 {
     Image *image;
@@ -453,5 +248,136 @@ void Image::Artif3d(int sep, Image *left, Image *right)
 
     Barrier_wait(gfxThreadWorkerBarrier);
     Barrier_wait(gfxThreadWorkerBarrier);
+
+}
+
+void InferDepthSlice_NoFilter(GfxThreadWorker *w, Image *in, float scale, float offset, int filter) {
+
+    int Width = in->Width;
+    int Height = in->Height;
+
+    int start = Height * w->index / w->of;
+    int end = Height * (w->index + 1) / w->of;
+
+    for (int y=start; y<end; y++)
+    {
+        for (int x=0; x<Width; x++) {
+            ARGB p = in->pix[y][x];
+            float z = 1.0f - Rgb_v(p.r,p.g,p.b);
+            z *= z;
+
+            in->z[y][x] = z * scale + offset;
+        }
+    }
+}
+
+void InferDepthSlice(GfxThreadWorker *w, Image *in, float scale, float offset, int filter) {
+
+    int Width = in->Width;
+    int Height = in->Height;
+
+    int start = Height * w->index / w->of;
+    int end = Height * (w->index + 1) / w->of;
+
+    ARGB p;
+    float z;
+
+    int x;
+
+    int e = in->Width - filter;
+
+    for (int y=start; y<end; y++)
+    {
+        float Z = 0;
+        int D = 0;
+
+        for (x=0; x<filter && x<in->Width; x++)
+        {
+            p = in->pix[y][x];
+            z = 1.0f - Rgb_v(p.r,p.g,p.b);
+            z *= z;
+
+            Z += z;
+            D++;
+        }
+
+        for (x=0; x<=filter && x<e; x++) {
+            p = in->pix[y][x+filter];
+            z = 1.0f - Rgb_v(p.r,p.g,p.b);
+            z *= z;
+
+            Z += z;
+            D++;
+
+            in->z[y][x] = Z / D;
+        }
+
+        for (; x < e; x++)
+        {
+            p = in->pix[y][x+filter];
+            z = 1.0f - Rgb_v(p.r,p.g,p.b);
+            z *= z;
+
+            Z += z;
+            Z-=in->z[y][x-filter];
+
+
+            in->z[y][x] = Z / D;
+
+        }
+
+        for (; x < in->Width; x++)
+        {
+            Z-=in->z[y][x-filter];
+            D--;
+
+            in->z[y][x] = Z / D;
+
+        }
+    }
+}
+
+struct InferDepth_Params
+{
+    Image *image;
+
+    float scale;
+    float offset;
+    int filter;
+
+};
+
+
+void *InferDepthProc(GfxThreadWorker *w)
+{
+    InferDepth_Params *p = (InferDepth_Params *)w->p[17];
+    if (p->filter == 0) InferDepthSlice_NoFilter(w, p->image, p->scale, p->offset, p->filter);
+    else InferDepthSlice(w, p->image, p->scale, p->offset, p->filter);
+    return nullptr;
+}
+
+void Image::InferDepth(float scale, float offset, float filter)
+{
+    int count = gfxThreadWorkerCount;
+    GfxThreadWorker **workers = gfxThreadWorkers;
+
+    InferDepth_Params params;
+
+    params.image = this;
+    params.scale = scale;
+    params.offset = offset;
+    params.filter = (int) (filter*Width);
+
+    for (int i = 0; i < count; i++) {
+        GfxThreadWorker *w = gfxThreadWorkers[i];
+
+        w->p[17] = &params;
+
+        w->WorkerProc = InferDepthProc;
+    }
+
+    Barrier_wait(gfxThreadWorkerBarrier);
+    Barrier_wait(gfxThreadWorkerBarrier);
+
 
 }

@@ -1134,6 +1134,48 @@ void Image::FillRect(int x1,int y1, int x2, int y2, PixOp pixOp, ARGB p, ZOp zOp
     Barrier_wait(gfxThreadWorkerBarrier);
 }
 
+void Image::Tile(int dx,int dy, int dw, int dh,
+          PixOp pixOp, ZOp zOp, Image *src, int sxo, int syo, int sx, int sy, int sw, int sh)
+{
+    int x1 = dx;
+    int x2 = x1 + dw-1;
+
+    int y1 = dy;
+    int y2 = y1 + dh-1;
+
+    Image *image = this;
+
+    for (int y=y1; y<y2; y++)
+    {
+        int yy = sy + ((y-dy+syo) % sh);
+
+        for (int x=x1; x<=x2; x++) {
+            int xx = sx + ((x-dx+sxo) % sw);
+
+            ARGB p = src->pix[yy][xx];
+            float z = src->z[yy][xx];
+
+            if (pixOp == PixOp_SRC) {
+                image->pix[y][x] = p;
+            } else if (pixOp == PixOp_SRC_ALPHA) {
+                ARGB dest = image->pix[y][x];
+                dest.r = valValAlpha(dest.r, p.r, p.a);
+                dest.g = valValAlpha(dest.g, p.g, p.a);
+                dest.b = valValAlpha(dest.b, p.b, p.a);
+                dest.a = valValAlpha(dest.a, p.a, p.a);
+                image->pix[y][x] = dest;
+            }
+
+            if (zOp == ZOp_SRC)
+            {
+                image->z[y][x] = z;
+            } else if (zOp == ZOp_SRC_ADD)
+            {
+                image->z[y][x] += z;
+            }
+        }
+    }
+}
 
 struct Anaglyph_Params
 {

@@ -152,9 +152,12 @@ public:
                     PixOp pixOp, ZOp zOp,
                     Image *src, int sx,int sy, int sw, int sh);
 
+    void Tile(int dx,int dy, int dw, int dh,
+              PixOp pixOp, ZOp zOp, Image *src, int sxo, int syo, int sx, int sy, int sw, int sh);
 
     void CalcZ();
 
+    void InferDepth(float scale=1.0f, float offset = 0.0f, float filter=0.0f);
     void Artif3d(int sep, Image *left, Image *right);
     void AnaglyphFrom(Image *L, Image *R);
 

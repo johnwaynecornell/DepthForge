@@ -69,14 +69,14 @@ Forge::Forge(UI *parent) : UI(parent)
   */
     MainWnd *w = (MainWnd *) ((MainUI *) rootElement())->owner->parent;
 
-    get_member_pointer(void (Forge::*a)(void *), &Forge::import, tmp);
-    w->import_proc = {this, (void (*)(void *,void *))tmp, nullptr};
+    get_member_pointer(void (Forge::*a)(UI *, void *), &Forge::import, tmp);
+    w->import_proc = {this, nullptr, (void (*)(void *,UI *, void *))tmp, nullptr};
 
-    get_member_pointer(void (Forge::*a)(void *), &Forge::export_jps, tmp);
-    w->export_jps_proc = {this, (void (*)(void *,void *))tmp, nullptr};
+    get_member_pointer(void (Forge::*a)(UI *, void *), &Forge::export_jps, tmp);
+    w->export_jps_proc = {this, nullptr, (void (*)(void *, UI *,void *))tmp, nullptr};
 
-    get_member_pointer(void (Forge::*a)(void *), &Forge::export_anaglyph, tmp);
-    w->export_anaglyph_proc = {this, (void (*)(void *,void *))tmp, nullptr};
+    get_member_pointer(void (Forge::*a)(UI *, void *), &Forge::export_anaglyph, tmp);
+    w->export_anaglyph_proc = {this, nullptr, (void (*)(void *,UI *, void *))tmp, nullptr};
 }
 
 Forge::~Forge()
@@ -494,7 +494,7 @@ void Forge::applyLense()
 
 }
 
-void Forge::import(void *arg)
+void Forge::import(UI *sender, void *arg)
 {
     QString path = QStandardPaths::locate(QStandardPaths::PicturesLocation, QString::null,
             QStandardPaths::LocateOption::LocateDirectory);
@@ -530,7 +530,7 @@ void Forge::import(void *arg)
     }
 }
 
-void Forge::export_anaglyph(void *arg) {
+void Forge::export_anaglyph(UI *sender, void *arg) {
     Image *ImageLeft;
     Image *ImageRight;
 
@@ -563,7 +563,7 @@ void Forge::export_anaglyph(void *arg) {
 
 }
 
-void Forge::export_jps(void *arg)
+void Forge::export_jps(UI *sender, void *arg)
 {
     Image *ImageLeft;
     Image *ImageRight;

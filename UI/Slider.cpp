@@ -40,13 +40,13 @@ void Slider::setV(double val)
 
     if (c && vCallback.function != nullptr)
     {
-        vCallback.function(vCallback.element, v, vCallback.argument);
+        vCallback.function(vCallback._This, vCallback.element, v, vCallback.argument);
     }
 }
 
-void Slider::setVCallvack(void (*proc)(void *, double, void *), void *elem, void *arg)
+void Slider::setVCallvack(void (*proc)(void *, UI *, double, void *), void *_This, void *arg)
 {
-    vCallback = { elem, proc, arg };
+    vCallback = { _This, this, proc, arg };
 }
 
 bool sliderPixFunc(int index, double y, ARGB &p, float &z, void *arg)

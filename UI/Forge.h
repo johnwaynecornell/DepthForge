@@ -48,9 +48,9 @@ public:
 
     void applyLense();
 
-    void import(void *arg);
-    void export_anaglyph(void *arg);
-    void export_jps(void *arg);
+    void import(UI *sender, void *arg);
+    void export_anaglyph(UI *sender, void *arg);
+    void export_jps(UI *sender, void *arg);
 
 };
 

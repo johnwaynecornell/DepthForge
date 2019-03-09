@@ -113,7 +113,7 @@ bool pixFunc(int index, double y, ARGB &p, float &z, void *arg)
 
 void TestUI::draw(Image *target, QImage *qImage)
 {
-    target->FillRect(xReal, yReal, xReal+width.get(), yReal+height.get(),
+    target->FillRect(xReal, yReal, width.get(), height.get(),
             PixOp_SRC, {0xFF,0x00,0x00,0x00}, ZOp_SRC, 0);
 
     target->ClearPath();

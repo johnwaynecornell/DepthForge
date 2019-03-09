@@ -26,7 +26,7 @@ UI::UI(UI *parent)
 
     mouseIn = nullptr;
     
-    mouseEnterProc = mouseLeaveProc = {0,0,0} ;
+    mouseEnterProc = mouseLeaveProc = {0,0,0,0} ;
 
     if (parent != nullptr) parent->children.push_back(this);
 }
@@ -47,13 +47,54 @@ UI * UI::rootElement()
     return i;
 }
 
+void UI::drawBackground(UI *member, Image *target, QImage *qImage)
+{
+    if (backgroundResp == Resp_Child) children.front()->drawBackground(member, target, qImage);
+    if (parent != nullptr &&
+            (parent->backgroundResp == Resp_Child || backgroundResp != Resp_None))
+    {
+        if (backImage != nullptr)
+            target->DrawImage(member->xReal, member->yReal,
+                              member->xReal + member->width.get(), member->yReal + member->height.get(),
+                              PixOp_SRC_ALPHA, ZOp_SRC_ADD, backImage,
+                              0, 0, backImage->Width, backImage->Height);
+
+        target->FillRect(member->xReal, member->yReal,
+                         member->width.get(), member->height.get(),
+                         backOp.pixOp, backColor, backOp.zOp, backColor.z);
+    }
+}
+
+void UI::doDraw(Image *target, QImage *qImage)
+{
+    draw(target, qImage);
+    drawChildern(target, qImage);
+}
+
+void UI::draw(Image *target, QImage *qImage)
+{
+    drawBackground(this, target, qImage);
+}
+
+void UI::drawChildern(Image *target, QImage *qImage)
+{
+    for (std::list<UI*>::iterator i = children.begin(); i != children.end(); i++)
+    {
+        (*i)->doDraw(target, qImage);
+    }
+}
+
 void UI::finalLayout()
 {
     selfLayout();
     doLayout();
 
+    updateReals();
     //Q_ASSERT(doLayout());
+}
 
+void UI::updateReals()
+{
     std::list<UI *> l;
 
     l.insert(l.begin(), this);
@@ -67,7 +108,7 @@ void UI::finalLayout()
         int _y = cur->yReal + cur->childOriginY.get();
 
         for (std::list<UI *>::iterator i = cur->children.begin();
-                i != cur->children.end(); i++)
+             i != cur->children.end(); i++)
         {
             UI *e = *i;
             e->xReal = _x+e->xPos.get();
@@ -101,10 +142,27 @@ bool UI::doLayout()
     return false;
 }
 
+void UI::setMouseEnterProc(void (*proc)(void *_This, UI * elem, void *arg),
+        void *_This, void *arg)
+{
+    mouseEnterProc = {_This, this, proc, arg};
+}
+void UI::setMouseLeaveProc(void (*proc)(void *_This, UI *elem, void *arg),
+    void *_This, void *arg)
+{
+    mouseLeaveProc = {_This, this, proc, arg};
+}
+
+bool UI::contains(int x, int y)
+{
+    return (x>=0 && x<width.get()) && (y>=0 && y<height.get());
+}
+
 void UI::mouseEnter()
 {
     if (mouseEnterProc.function != nullptr) 
-        mouseEnterProc.function(mouseEnterProc.element, mouseEnterProc.argument);
+        mouseEnterProc.function(mouseEnterProc._This,
+                mouseEnterProc.element, mouseEnterProc.argument);
 }
 void UI::mouseLeave()
 {
@@ -115,16 +173,8 @@ void UI::mouseLeave()
     }
 
     if (mouseLeaveProc.function != nullptr)
-        mouseLeaveProc.function(mouseLeaveProc.element, mouseLeaveProc.argument);
-}
-
-void UI::setMouseEnterProc(void (*proc)(void *elem, void *arg), void *elem, void *arg)
-{
-    mouseEnterProc = {elem, proc, arg};
-}
-void UI::setMouseLeaveProc(void (*proc)(void *elem, void *arg), void *elem, void *arg)
-{
-    mouseLeaveProc = {elem, proc, arg};
+        mouseLeaveProc.function(mouseEnterProc._This,
+                                mouseLeaveProc.element, mouseLeaveProc.argument);
 }
 
 bool UI::mouseMove(int x, int y)
@@ -217,8 +267,8 @@ void UI::freeMouse(UI *element)
 
 UI *UI::childAt(int &x, int &y)
 {
-    x += childOriginX.get();
-    y += childOriginY.get();
+    x -= childOriginX.get();
+    y -= childOriginY.get();
 
     for (std::list<UI*>::iterator i = children.begin(); i != children.end(); i++)
     {
@@ -226,7 +276,7 @@ UI *UI::childAt(int &x, int &y)
         int _x = x - el->xPos.get();
         int _y = y - el->yPos.get();
 
-        if (_x>=0 && _x < el->width.get() && _y >=0 && _y<el->height.get())
+        if (el->contains(_x,_y))
         {
             x = _x;
             y = _y;
@@ -238,34 +288,6 @@ UI *UI::childAt(int &x, int &y)
 
     return nullptr;
 
-}
-
-void UI::drawBackground(UI *member, Image *target, QImage *qImage)
-{
-    if (backgroundResp == Resp_Child) children.front()->drawBackground(member, target, qImage);
-    if (parent != nullptr &&
-        parent->backgroundResp == Resp_Child || backgroundResp != Resp_None)
-    {
-        if (backImage != nullptr)
-            target->DrawImage(member->xReal, member->yReal,
-                          member->xReal + member->width.get(), member->yReal + member->height.get(),
-                          PixOp_SRC_ALPHA, ZOp_SRC_ADD, backImage,
-                          0, 0, backImage->Width, backImage->Height);
-
-        target->FillRect(member->xReal, member->yReal,
-                member->xReal + member->width.get(), member->yReal + member->height.get(),
-                backOp.pixOp, backColor, backOp.zOp, backColor.z);
-    }
-}
-
-void UI::draw(Image *target, QImage *qImage)
-{
-    drawBackground(this, target, qImage);
-
-    for (std::list<UI*>::iterator i = children.begin(); i != children.end(); i++)
-    {
-        (*i)->draw(target, qImage);
-    }
 }
 
 double UI::getTimeInSeconds()
@@ -286,6 +308,10 @@ Frame::Frame(UI *parent) : UI(parent)
 {
     childOriginX.set(3);
     childOriginY.set(3);
+}
+
+Frame::~Frame()
+{
 }
 
 void Frame::draw(Image *target, QImage *qImage)
@@ -382,10 +408,6 @@ bool Frame::doLayout() {
     return false;
 }
 
-Frame::~Frame()
-{
-}
-
 Fixed::Fixed(UI *parent) : UI(parent)
 {
 
@@ -395,18 +417,77 @@ Fixed::~Fixed()
 {
 
 }
-/*
-void Fixed::draw(Image *target, QImage *qImage)
-{
-}*/
 
-bool Fixed::doLayout()
+bool Fixed::selfLayout()
 {
-    bool rc = UI::doLayout();
-    if (rc) return true;
+    UI::selfLayout();
+
+    UI *child = *children.begin();
+
+    if (width.resp == Resp_Child)
+    {
+        int w = 0;
+        for (std::list<UI*>::iterator i = children.begin(); i != children.end(); i++) {
+            UI *child = (*i);
+
+            Q_ASSERT(child != nullptr && child->width.resp != Resp_Parent);
+            int ww =child->xPos.get() + child->width.get();
+            if (ww > w) w = ww;
+
+        }
+
+        width.set(w);
+        width.dirty = false;
+    }
+
+    if (height.resp == Resp_Child)
+    {
+        Q_ASSERT(child != nullptr && child->height.resp != Resp_Parent);
+
+        int h = 0;
+        for (std::list<UI*>::iterator i = children.begin(); i != children.end(); i++) {
+            UI *child = (*i);
+
+            Q_ASSERT(child != nullptr && child->width.resp != Resp_Parent);
+            int hh =child->yPos.get() + child->height.get();
+            if (hh > h) h = hh;
+
+        }
+
+        height.set(h);
+        height.dirty = false;
+    }
+
+    return true;
+}
+
+bool Fixed::doLayout() {
+
+    for (std::list<UI*>::iterator i = children.begin(); i != children.end(); i++) {
+        UI *child = (*i);
+
+        if (child != nullptr) {
+            if (child->width.resp == Resp_Parent) {
+                Q_ASSERT(width.resp != Resp_Child);
+                child->width.set(width.get());
+            }
+
+            if (child->height.resp == Resp_Parent) {
+                Q_ASSERT(height.resp != Resp_Child);
+                child->height.set(height.get());
+            }
+        }
+    }
+
+    UI::doLayout();
 
     return false;
 }
+
+
+
+
+
 
 /* Media Types */
 #define SD_MTYPE_STEREOSCOPIC_IMAGE 0x01

@@ -772,6 +772,9 @@ void *DrawImageSlice(GfxThreadWorker *w)
 
 void Image::DrawImage(int dx,int dy, int dw, int dh, PixOp pixOp, ZOp zOp,
                Image *src, int sx,int sy, int sw, int sh) {
+
+    if (dw==0 || dh == 0 || sw == 0 || sh==0) return;
+
     int count = gfxThreadWorkerCount;
     GfxThreadWorker **workers = gfxThreadWorkers;
 
@@ -847,6 +850,8 @@ void Image::DrawImage(int boundX, int boundY, int boundW, int boundH,
                PixOp pixOp, ZOp zOp,
                Image *src, int sx,int sy, int sw, int sh)
 {
+    if (dw==0 || dh == 0 || sw == 0 || sh==0) return;
+
     if (dy >= boundY +boundH) return;
     if (dy + dh <= boundY) return;
 

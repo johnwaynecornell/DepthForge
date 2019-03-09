@@ -16,7 +16,28 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
     xPos.setResp(Resp_Self);
     yPos.setResp(Resp_Self);
 
-    toolFrame = new Frame(this);
+    basicToolsCtl = new TabCtl(this);
+
+    basicToolsCtl->width.setResp(Resp_Child);
+    basicToolsCtl->height.setResp(Resp_Parent);
+    basicToolsCtl->xPos.setResp(Resp_Self);
+    basicToolsCtl->yPos.setResp(Resp_Self);
+
+    basicToolsCtl->xPos.set(0);
+    basicToolsCtl->yPos.set(0);
+
+    basicToolsCtl->open();
+
+    basicTools = new Fixed(basicToolsCtl);
+    basicTools->width.setResp(Resp_Child);
+    basicTools->height.setResp(Resp_Parent);
+    basicTools->xPos.setResp(Resp_Self);
+    basicTools->yPos.setResp(Resp_Self);
+
+    basicTools->xPos.set(0);
+    basicTools->yPos.set(0);
+
+    toolFrame = new Frame(basicTools);
     toolFrame->width.setResp(Resp_Child);
     toolFrame->height.setResp(Resp_Child);
     toolFrame->xPos.setResp(Resp_Self);
@@ -52,7 +73,7 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
     forge->xPos.setResp(Resp_Parent);
     forge->yPos.setResp(Resp_Parent);
 
-    bottomFrame = new Frame(this);
+    bottomFrame = new Frame(basicTools);
     bottomFrame->width.setResp(Resp_Child);
     bottomFrame->height.setResp(Resp_Child);
     bottomFrame->xPos.setResp(Resp_Self);
@@ -97,8 +118,8 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
 
     union
     {
-        void (MainUI::*a)(void *);
-        void (*b)(void *, void *);
+        void (MainUI::*a)(UI *, void *);
+        void (*b)(void *, UI *, void *);
     } test;
 
     test.a = &MainUI::sizeEntered;
@@ -113,8 +134,8 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
 
     union
     {
-        void (MainUI::*a)(double, void *);
-        void (*b)(void *, double, void *);
+        void (MainUI::*a)(UI *, double, void *);
+        void (*b)(void *, UI *, double, void *);
     } testb;
 
     testb.a = &MainUI::sizeChanged;
@@ -137,16 +158,32 @@ double MainUI::getTimeInSeconds()
                 / 1000000000.0;
 }
 
+
+/*
+void cycle(void *_This, TabCtl *ctl, TabCtl::State state, void *arg)
+{
+    if (state == TabCtl::State_open) ctl->close();
+    else if (state == TabCtl::State_closed) ctl->open();
+}*/
+
 void MainUI::draw(Image *target, QImage *qImage)
 {
-    fps.mark(getTimeInSeconds());
-
     UI::draw(target, qImage);
+
+    if (firstDraw)
+    {
+//        basicToolsCtl->setStateChangeCallback(nullptr, cycle, nullptr);
+        basicToolsCtl->open();
+        firstDraw = false;
+    }
 }
 
 bool MainUI::selfLayout()
 {
-    toolFrame->height.set(height.get());
+    forge->height.set(height.get());
+    forge->yPos.set(0);
+
+    basicToolsCtl->height.set(height.get());
 
     Fixed::selfLayout();
 
@@ -155,20 +192,18 @@ bool MainUI::selfLayout()
 
 bool MainUI::doLayout()
 {
+
     Fixed::doLayout();
 
-    int x = toolFrame->width.get();
+    int x = basicToolsCtl->width.get();
     int w = width.get()-x;
 
-    forge->xPos.set(x);
-    forge->yPos.set(0);
 
+    forge->xPos.set(x);
     forge->width.set(w);
 
-    forge->height.set(height.get());
-
     bottomFrame->xPos.set(0);
-    bottomFrame->yPos.set(height.get()-bottomFrame->height.get());
+    bottomFrame->yPos.set(basicTools->height.get()-bottomFrame->height.get());
 
     return true;
 }
@@ -183,22 +218,22 @@ void MainUI::freeMouse(UI *element)
     owner->freeMouse(element);
 }
 
-void MainUI::sizeEntered(void *arg)
+void MainUI::sizeEntered(UI *sender, void *arg)
 {
     forge->previewLense = true;
 }
 
-void MainUI::sizeLeave(void *arg)
+void MainUI::sizeLeave(UI *sender, void *arg)
 {
     forge->previewLense = false;
 }
 
-void MainUI::sizeChanged(double v, void *arg)
+void MainUI::sizeChanged(UI *sender, double v, void *arg)
 {
     lense->setSize(v / 2.0);
 }
 
-void MainUI::intensityChanged(double v, void *arg)
+void MainUI::intensityChanged(UI *sender, double v, void *arg)
 {
     lense->setIntensity(v * 2.0);
 }

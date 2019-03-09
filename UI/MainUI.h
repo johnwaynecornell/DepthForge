@@ -11,6 +11,8 @@
 #include "DepthForgeWin.h"
 #include "UI.h"
 #include "Slider.h"
+#include "TabCtl.h"
+
 #include "../FpsMonitor.h"
 
 class Forge;
@@ -21,11 +23,13 @@ class DepthForgeWin;
 class MainUI : public Fixed
 {
 public:
-    FpsMonitor fps;
     std::chrono::high_resolution_clock clk;
     std::chrono::time_point<std::chrono::high_resolution_clock> timeUp;
 
     Lense *lense;
+
+    TabCtl *basicToolsCtl;
+    Fixed *basicTools;
 
     Frame *toolFrame;
     Frame *bottomFrame;
@@ -38,6 +42,8 @@ public:
     Forge *forge;
 
     DepthForgeWin *owner;
+
+    bool firstDraw = true;
 
     MainUI(DepthForgeWin *win);
 
@@ -52,10 +58,10 @@ private:
     virtual void freeMouse(UI *element);
 
 public:
-    void sizeEntered(void *arg);
-    void sizeLeave(void *arg);
-    void sizeChanged(double v, void *arg);
-    void intensityChanged(double v, void *arg);
+    void sizeEntered(UI *sender, void *arg);
+    void sizeLeave(UI *sender, void *arg);
+    void sizeChanged(UI *sender, double v, void *arg);
+    void intensityChanged(UI *sender, double v, void *arg);
 
     void setLense(Lense *lense);
 

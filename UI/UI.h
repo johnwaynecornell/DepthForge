@@ -52,9 +52,12 @@ public:
 
 };
 
+class UI;
+
 template <class f> struct UICallback
 {
-    void *element;
+    void *_This;
+    UI *element;
     f function;
     void *argument;
 };
@@ -88,25 +91,33 @@ public:
 
     UI *mouseIn;
 
+private:
+    UICallback<void (*)(void*, UI *, void *)> mouseEnterProc;
+    UICallback<void (*)(void*, UI *, void *)> mouseLeaveProc;
+
+public:
+
     UI(UI *parent);
+    virtual ~UI();
 
     UI * rootElement();
 
+
+    void doDraw(Image *target, QImage *qImage);
     virtual void drawBackground(UI *member, Image *target, QImage *qImage);
     virtual void draw(Image *target, QImage *qImage);
+    virtual void drawChildern(Image *target, QImage *qImage);
 
     void finalLayout();
+    void updateReals();
 
     virtual bool selfLayout();
     virtual bool doLayout();
 
-private:
-    UICallback<void (*)(void*, void *)> mouseEnterProc;
-    UICallback<void (*)(void*, void *)> mouseLeaveProc;
+    void setMouseEnterProc(void (*proc)(void *_This, UI *elem, void *arg), void *elem, void *arg);
+    void setMouseLeaveProc(void (*proc)(void *_This, UI *elem, void *arg), void *elem, void *arg);
 
-public:
-    void setMouseEnterProc(void (*proc)(void *elem, void *arg), void *elem, void *arg);
-    void setMouseLeaveProc(void (*proc)(void *elem, void *arg), void *elem, void *arg);
+    virtual bool contains(int x, int y);
 
     virtual void mouseEnter();
     virtual void mouseLeave();
@@ -124,8 +135,6 @@ private:
 public:
     virtual UI *childAt(int &x, int &y);
     virtual double getTimeInSeconds();
-
-    virtual ~UI();
 };
 
 class Frame : public UI
@@ -133,13 +142,13 @@ class Frame : public UI
 public:
 
     Frame(UI *parent);
+    virtual ~Frame();
 
     virtual void draw(Image *target, QImage *qImage);
 
     virtual bool selfLayout();
     virtual bool doLayout();
 
-    virtual ~Frame();
 };
 
 class Fixed : public UI
@@ -147,21 +156,15 @@ class Fixed : public UI
 public:
 
     Fixed(UI*parent);
-
-    //virtual void draw(Image *target, QImage *qImage);
-
-    virtual bool doLayout();
-
     virtual ~Fixed();
 
+    virtual bool selfLayout();
+    virtual bool doLayout();
 };
 
 class Button : public UI
 {
 public:
-    Button(UI *parent);
-    virtual ~Button();
-
     float z;
     float zAct;
     float zTarg;
@@ -169,6 +172,9 @@ public:
 
     double drawTime;
     double lastDrawTime;
+
+    Button(UI *parent);
+    virtual ~Button();
 
     virtual void drawBackground(UI *member, Image *target, QImage *qImage);
 

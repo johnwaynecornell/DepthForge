@@ -106,20 +106,20 @@ void MainWnd::createMenus()
 
 void MainWnd::import()
 {
-    if (import_proc.function != nullptr) import_proc.function(import_proc.element,
-            import_proc.argument);
+    if (import_proc.function != nullptr) import_proc.function(
+            import_proc._This, import_proc.element,import_proc.argument);
 }
 
 void MainWnd::export_anaglyph()
 {
     if (export_anaglyph_proc.function!= nullptr) export_anaglyph_proc.function(
-            export_anaglyph_proc.element, export_anaglyph_proc.argument);
+            export_anaglyph_proc._This, export_anaglyph_proc.element, export_anaglyph_proc.argument);
 }
 
 void MainWnd::export_jps()
 {
     if (export_jps_proc.function != nullptr) export_jps_proc.function(
-            export_jps_proc.element, export_jps_proc.argument);
+            export_jps_proc._This, export_jps_proc.element, export_jps_proc.argument);
 }
 
 void MainWnd::toggle_fps()

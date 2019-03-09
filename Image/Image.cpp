@@ -169,14 +169,14 @@ Image::Image(int Width, int Height)
 
     imageMemory = new ARGB[Width * Height];
 
-    memset(imageMemory, 0, Width*Height* sizeof(ARGB));
+    //memset(imageMemory, 0, Width*Height* sizeof(ARGB));
 
     pix = new ARGB *[Height];
 
     zMemory = new float[Width*Height];
     z = new float *[Height];
 
-    memset(zMemory,0,sizeof(float)*Width*Height);
+    //memset(zMemory,0,sizeof(float)*Width*Height);
 
     ARGB *d = imageMemory;
     float *d2 = zMemory;
@@ -188,6 +188,8 @@ Image::Image(int Width, int Height)
     }
 
     needUpdate = true;
+
+    FillRect(0,0,Width,Height,PixOp_SRC, {0,0,0,0}, ZOp_SRC, 0.0f);
 }
 
 Image::~Image()
@@ -977,10 +979,10 @@ void Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB,
 struct FillRect_Params
 {
     Image *image;
-    int x1;
-    int y1;
-    int x2;
-    int y2;
+    int x;
+    int y;
+    int width;
+    int height;
 
     PixOp pixOp;
     ARGB p;
@@ -989,52 +991,38 @@ struct FillRect_Params
     float z;
 };
 
-void FillRectProc_SRC_SRC(GfxThreadWorker *w, Image *image, int x1, int _y1, int x2, int _y2,
+void FillRectProc_SRC_SRC(GfxThreadWorker *w, Image *image, int _x, int _y,
+        int width, int height,
         PixOp pixOp, ARGB p, ZOp zop, float z)
 {
-    int t;
-    if (x1>x2)
-    {
-        t=x1;
-        x1=x2;
-        x2 = t;
-    }
+    int x2 = _x + width;
 
-    if (_y1>_y2)
-    {
-        t=_y1;
-        _y1 =_y2;
-        _y2 = t;
-    }
+    int y1 = _y + height * w->index / w->of;
+    int y2 = _y + height * (w->index+1) / w->of;
 
-    int h = (_y2-_y1);
+    int _w = width;
 
-    int y1 = _y1 + h * w->index / w->of;
-    int y2 = _y1 + h * (w->index+1) / w->of;
+    int pixb = ARGB::size * (_w);
+    int zb = sizeof(float)*_w;
 
-
-    for (int x=x1; x<=x2; x++)
+    for (int x=_x; x<x2; x++)
     {
         image->pix[y1][x] = p;
         image->z[y1][x] = z;
     }
 
-    int _w = x2-x1+1;
-
-    int pixb = ARGB::size * (_w);
-    int zb = sizeof(float)*_w;
-
     for (int y=y1+1; y<y2; y++)
     {
-        memcpy(image->pix[y]+x1, image->pix[y1]+x1, pixb);
-        memcpy(image->z[y]+x1, image->z[y1]+x1, zb);
+        memcpy(image->pix[y]+_x, image->pix[y1]+_x, pixb);
+        memcpy(image->z[y]+_x, image->z[y1]+_x, zb);
     }
 
 }
 
-void FillRectProc(GfxThreadWorker *w, Image *image, int x1, int _y1, int x2, int _y2,
+void FillRectProc(GfxThreadWorker *w, Image *image, int x, int y, int width, int height,
                           PixOp pixOp, ARGB p, ZOp zOp, float z)
 {
+    /*
     int t;
     if (x1>x2)
     {
@@ -1051,30 +1039,32 @@ void FillRectProc(GfxThreadWorker *w, Image *image, int x1, int _y1, int x2, int
     }
 
     int h = (_y2-_y1);
+*/
+    int y1 = y + height * w->index / w->of;
+    int y2 = y + height * (w->index+1) / w->of;
 
-    int y1 = _y1 + h * w->index / w->of;
-    int y2 = _y1 + h * (w->index+1) / w->of;
+    int x2 = x+width;
 
-    for (int y=y1; y<y2; y++)
+    for (int _y=y1; _y<y2; _y++)
     {
-        for (int x=x1; x<=x2; x++) {
+        for (int _x=x; _x<x2; _x++) {
             if (pixOp == PixOp_SRC) {
-                image->pix[y][x] = p;
+                image->pix[_y][_x] = p;
             } else if (pixOp == PixOp_SRC_ALPHA) {
-                ARGB dest = image->pix[y][x];
+                ARGB dest = image->pix[_y][_x];
                 dest.r = valValAlpha(dest.r, p.r, p.a);
                 dest.g = valValAlpha(dest.g, p.g, p.a);
                 dest.b = valValAlpha(dest.b, p.b, p.a);
                 dest.a = valValAlpha(dest.a, p.a, p.a);
-                image->pix[y][x] = dest;
+                image->pix[_y][_x] = dest;
             }
 
             if (zOp == ZOp_SRC)
             {
-                image->z[y][x] = z;
+                image->z[_y][_x] = z;
             } else if (zOp == ZOp_SRC_ADD)
             {
-                image->z[y][x] += z;
+                image->z[_y][_x] += z;
             }
         }
     }
@@ -1085,7 +1075,7 @@ void FillRectProc(GfxThreadWorker *w, Image *image, int x1, int _y1, int x2, int
 void *FillRectSlice_SRC_SRC(GfxThreadWorker *w)
 {
     FillRect_Params *p = (FillRect_Params *)w->p[17];
-    FillRectProc_SRC_SRC(w, p->image, p->x1, p->y1, p->x2, p->y2, p->pixOp, p->p, p->zOp, p->z);
+    FillRectProc_SRC_SRC(w, p->image, p->x, p->y, p->width, p->height, p->pixOp, p->p, p->zOp, p->z);
     return nullptr;
 }
 
@@ -1093,12 +1083,14 @@ void *FillRectSlice_SRC_SRC(GfxThreadWorker *w)
 void *FillRectSlice(GfxThreadWorker *w)
 {
     FillRect_Params *p = (FillRect_Params *)w->p[17];
-    FillRectProc(w, p->image, p->x1, p->y1, p->x2, p->y2, p->pixOp, p->p, p->zOp, p->z);
+    FillRectProc(w, p->image, p->x, p->y, p->width, p->height,
+            p->pixOp, p->p, p->zOp, p->z);
     return nullptr;
 }
 
 
-void Image::FillRect(int x1,int y1, int x2, int y2, PixOp pixOp, ARGB p, ZOp zOp, float z)
+void Image::FillRect(int x,int y, int width, int height,
+        PixOp pixOp, ARGB p, ZOp zOp, float z)
 {
     int count = gfxThreadWorkerCount;
     GfxThreadWorker **workers = gfxThreadWorkers;
@@ -1106,10 +1098,10 @@ void Image::FillRect(int x1,int y1, int x2, int y2, PixOp pixOp, ARGB p, ZOp zOp
     FillRect_Params params;
 
     params.image = this;
-    params.x1 = x1;
-    params.y1 = y1;
-    params.x2 = x2;
-    params.y2 = y2;
+    params.x = x;
+    params.y = y;
+    params.width = width;
+    params.height = height;
     params.pixOp = pixOp;
     params.p = p;
     params.zOp = zOp;
@@ -1137,6 +1129,8 @@ void Image::FillRect(int x1,int y1, int x2, int y2, PixOp pixOp, ARGB p, ZOp zOp
 void Image::Tile(int dx,int dy, int dw, int dh,
           PixOp pixOp, ZOp zOp, Image *src, int sxo, int syo, int sx, int sy, int sw, int sh)
 {
+    if (dw==0 || dh == 0 || sw == 0 || sh==0) return;
+
     int x1 = dx;
     int x2 = x1 + dw-1;
 

@@ -51,6 +51,8 @@ public:
     Image *UI_ImageLeft;
     Image *UI_ImageRight;
 
+    BGRA *obuf;
+
     bool showFPS;
 
     QAbstractEventDispatcher *dispatcher;
@@ -90,8 +92,8 @@ public:
 
     void setShowFPS(bool state);
 
-    void take_picture_jps(void *arg);
-    void take_picture_ana(void *arg);
+    void take_picture_jps(UI *sender, void *arg);
+    void take_picture_ana(UI *sender, void *arg);
 
 private slots:
     void aboutToBlock();

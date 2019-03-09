@@ -7,6 +7,7 @@ extern "C"
 #include "Sync.h"
 }
 
+#include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
 
@@ -69,7 +70,7 @@ bool Barrier_wait(void *event) {
         //while (pthread_mutex_lock(&ev->mutex) != 0);
 
         while (ev->current != 0)
-            while (!ev->cond->wait(ev->mutex));
+            while (!ev->cond->wait(ev->mutex)) QThread::yieldCurrentThread();
 
         //pthread_mutex_unlock(&ev->mutex);
     }

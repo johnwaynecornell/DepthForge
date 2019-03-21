@@ -8,6 +8,10 @@
 #include "DepthForgeWin.h"
 #include "MainWnd.h"
 
+#include "version.h"
+
+const char VERSION[] = "0.0.1";
+
 QApplication *app;
 
 extern double sinTab[65536];

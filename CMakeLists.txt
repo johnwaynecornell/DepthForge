@@ -22,7 +22,7 @@ include_directories(QtOpengl5_INCLUDE_DIRS)
 
 add_executable(DepthForge main.cpp  Threading/Sync.h Threading/Sync.cpp
                                     PixelGfx/GfxThreadWorker.h PixelGfx/GfxThreadWorker.cpp PixelGfx/JWC_PixelGfx.h PixelGfx/JWC_PixelGfx.cpp
-        PixelGfx/GfxBlt.cpp DepthForgeWin.cpp DepthForgeWin.h UI/UI.cpp UI/UI.h Image/Image.cpp Image/Image.h MainWnd.cpp MainWnd.h Image/Artif3d.cpp Image/DrawImage.cpp UI/Button.cpp UI/MainUI.cpp UI/MainUI.h UI/Forge.cpp UI/Forge.h Lense.cpp Lense.h UI/Slider.cpp UI/Slider.h UI/TestUI.cpp UI/TestUI.h FpsMonitor.cpp FpsMonitor.h Image/TrigCache.cpp Image/TrigCache.h Image/Geometry.cpp Image/Geometry.h Image/PathAdapter.cpp Image/PathAdapter.h UI/TabCtl.cpp UI/TabCtl.h)
+        PixelGfx/GfxBlt.cpp DepthForgeWin.cpp DepthForgeWin.h UI/UI.cpp UI/UI.h Image/Image.cpp Image/Image.h MainWnd.cpp MainWnd.h Image/Artif3d.cpp Image/DrawImage.cpp UI/Button.cpp UI/MainUI.cpp UI/MainUI.h UI/Forge.cpp UI/Forge.h Lense.cpp Lense.h UI/Slider.cpp UI/Slider.h UI/TestUI.cpp UI/TestUI.h FpsMonitor.cpp FpsMonitor.h Image/TrigCache.cpp Image/TrigCache.h Image/Geometry.cpp Image/Geometry.h Image/PathAdapter.cpp Image/PathAdapter.h UI/TabCtl.cpp UI/TabCtl.h version.h)
 
 qt5_use_modules(DepthForge Widgets OpenGL)
 

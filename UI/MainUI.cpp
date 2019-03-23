@@ -16,7 +16,17 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
     xPos.setResp(Resp_Self);
     yPos.setResp(Resp_Self);
 
-    basicToolsCtl = new TabCtl(this);
+    tabs = new TabFolder(this);
+
+    tabs->width.setResp(Resp_Child);
+    tabs->height.setResp(Resp_Parent);
+    tabs->xPos.setResp(Resp_Self);
+    tabs->yPos.setResp(Resp_Self);
+
+    tabs->xPos.set(0);
+    tabs->yPos.set(0);
+
+    basicToolsCtl = new TabCtl(tabs);
 
     basicToolsCtl->width.setResp(Resp_Child);
     basicToolsCtl->height.setResp(Resp_Parent);
@@ -26,7 +36,7 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
     basicToolsCtl->xPos.set(0);
     basicToolsCtl->yPos.set(0);
 
-    basicToolsCtl->open();
+    //basicToolsCtl->open();
 
     basicTools = new Fixed(basicToolsCtl);
     basicTools->width.setResp(Resp_Child);
@@ -36,6 +46,31 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
 
     basicTools->xPos.set(0);
     basicTools->yPos.set(0);
+
+    pathToolsCtl = new TabCtl(tabs);
+
+    pathToolsCtl->width.setResp(Resp_Child);
+    pathToolsCtl->height.setResp(Resp_Parent);
+    pathToolsCtl->xPos.setResp(Resp_Self);
+    pathToolsCtl->yPos.setResp(Resp_Self);
+
+    pathToolsCtl->xPos.set(0);
+    pathToolsCtl->yPos.set(0);
+
+    pathToolsCtl->tabPosition.set(basicToolsCtl->tabPosition.get() + 64 +9);
+
+    pathTools = new Fixed(pathToolsCtl);
+    pathTools->width.setResp(Resp_Self);
+    pathTools->height.setResp(Resp_Parent);
+    pathTools->xPos.setResp(Resp_Self);
+    pathTools->yPos.setResp(Resp_Self);
+
+    pathTools->xPos.set(0);
+    pathTools->yPos.set(0);
+
+    pathTools->width.set(256+12);
+
+    //pathToolsCtl->open();
 
     toolFrame = new Frame(basicTools);
     toolFrame->width.setResp(Resp_Child);
@@ -173,7 +208,7 @@ void MainUI::draw(Image *target, QImage *qImage)
     if (firstDraw)
     {
 //        basicToolsCtl->setStateChangeCallback(nullptr, cycle, nullptr);
-        basicToolsCtl->open();
+        //basicToolsCtl->open();
         firstDraw = false;
     }
 }
@@ -195,7 +230,7 @@ bool MainUI::doLayout()
 
     Fixed::doLayout();
 
-    int x = basicToolsCtl->width.get();
+    int x = tabs->width.get();
     int w = width.get()-x;
 
 

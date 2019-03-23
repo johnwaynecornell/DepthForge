@@ -47,6 +47,7 @@ public:
 
     virtual bool contains(int x, int y);
     virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
+    virtual bool mouseButtonPress_Tab(int x, int y, Qt::MouseButton button);
 
     virtual UI *childAt(int &x, int &y);
 
@@ -58,7 +59,22 @@ public:
 
     virtual void open();
     virtual void close();
+};
 
+class TabFolder : public UI
+{
+public:
+    TabFolder(UI *parent);
+    virtual ~TabFolder();
+
+    virtual void draw(Image *target, QImage *qImage);
+
+    virtual bool selfLayout();
+    virtual bool doLayout();
+
+    virtual bool tabPress(TabCtl *ctl, int x, int y, Qt::MouseButton button);
+
+    TabCtl *activeCtl();
 };
 
 

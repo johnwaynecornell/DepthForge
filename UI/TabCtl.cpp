@@ -13,6 +13,8 @@ TabCtl::TabCtl(UI *parent) : Frame(parent)
 
     animation = nullptr;
     qAnimation = nullptr;
+
+    myState = State_collapsed;
 }
 
 TabCtl::~TabCtl()
@@ -167,7 +169,7 @@ void TabCtl::draw(Image *target, QImage *qImage) {
         yy = y1 + sz;
 
         w = sz;
-        h = (iyt - sz) - yy + 1;
+        h = (iyt) - yy + 1;
 
         target->Tile(xx, yy, w, h, PixOp_SRC_ALPHA, ZOp_SRC_ADD,
                      frameSrc, 0, 0, 0, sz, sz, sz);
@@ -339,16 +341,18 @@ bool TabCtl::mouseButtonPress(int x, int y, Qt::MouseButton button)
     if (!UI::mouseButtonPress(x,y,button))
     {
         if (x<tabSize.get()) {
-            if (myState == State_open) close();
-            else if (myState == State_closed) open();
-
-            return true;
+            return mouseButtonPress_Tab(x,y,button);
         }
 
         return false;
     }
 
     return true;
+}
+
+bool TabCtl::mouseButtonPress_Tab(int x, int y, Qt::MouseButton button)
+{
+    return ((TabFolder *)parent)->tabPress(this, x, y, button);
 }
 
 UI *TabCtl::childAt(int &x, int &y)
@@ -386,4 +390,127 @@ void TabCtl::close()
     myState = State_closing;
     animTime = getTimeInSeconds();
     invokeStateChangeCallback(myState);
+}
+
+TabFolder::TabFolder(UI *parent) : UI(parent)
+{
+}
+
+TabFolder::~TabFolder()
+{
+}
+
+void TabFolder::draw(Image *target, QImage *qImage)
+{
+    UI::draw(target, qImage);
+}
+
+bool TabFolder::selfLayout()
+{
+    UI::selfLayout();
+
+    int hx=0;
+    int hy=0;
+
+    for (auto i = children.begin(); i != children.end(); i++)
+    {
+        int _x = (*i)->width.get();
+        int _y = (*i)->height.get();
+
+        if (_x>hx) hx = _x;
+        if (_y>hy) hy = _y;
+
+    }
+
+    //UI *child = *children.begin();
+
+    if (width.resp == Resp_Child)
+    {
+        //Q_ASSERT(child != nullptr && child->width.resp != Resp_Parent);
+        width.set(hx);
+        width.dirty = false;
+    }
+
+    if (height.resp == Resp_Child)
+    {
+        height.set(hy);
+        height.dirty = false;
+    }
+
+    return true;
+}
+
+bool TabFolder::doLayout() {
+
+    for (std::list<UI*>::iterator i = children.begin(); i != children.end(); i++)
+    {
+        UI *child = *i;
+
+        if (child != nullptr) {
+            if (child->width.resp == Resp_Parent) {
+                Q_ASSERT(width.resp != Resp_Child);
+                child->width.set(width.val - 6);
+                width.dirty = false;
+            }
+
+            if (child->height.resp == Resp_Parent) {
+                Q_ASSERT(height.resp != Resp_Child);
+
+                child->height.set(height.val - 6);
+                height.dirty = false;
+            }
+        }
+    }
+
+    UI::doLayout();
+
+    return false;
+}
+
+void stateChange(void *_This, TabCtl *ctl, TabCtl::State state, void *arg)
+{
+    TabFolder *This = (TabFolder *)_This;
+    TabCtl *New = (TabCtl *) arg;
+
+    if (state == TabCtl::State_closed)
+    {
+        ctl->myState = TabCtl::State_collapsed;
+        ctl->setStateChangeCallback(nullptr, nullptr, nullptr);
+
+        New->open();
+    }
+}
+
+bool TabFolder::tabPress(TabCtl *ctl, int x, int y, Qt::MouseButton button)
+{
+    if (ctl->myState == TabCtl::State_open) ctl->close();
+    else if (ctl->myState == TabCtl::State_closed) ctl->open();
+    else if (ctl->myState == TabCtl::State_collapsed)
+    {
+        TabCtl *a = activeCtl();
+
+        if (a == nullptr) ctl->open();
+        else if (a->myState == TabCtl::State_closed)
+        {
+            ctl->open();
+            a->myState = TabCtl::State_collapsed;
+        } else if (a->myState == TabCtl::State_open)
+        {
+            a->setStateChangeCallback(this, stateChange, ctl);
+            a->close();
+        }
+    }
+
+    return true;
+}
+
+TabCtl *TabFolder::activeCtl()
+{
+    for (std::list<UI *>::iterator i = children.begin(); i != children.end(); i++)
+    {
+        if (((TabCtl *)*i)->myState != TabCtl::State_collapsed)
+            return(TabCtl *)*i;
+    }
+
+    return nullptr;
 }

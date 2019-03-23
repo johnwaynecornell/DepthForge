@@ -28,8 +28,13 @@ public:
 
     Lense *lense;
 
+    TabFolder *tabs;
     TabCtl *basicToolsCtl;
     Fixed *basicTools;
+
+    TabCtl *pathToolsCtl;
+    Fixed *pathTools;
+
 
     Frame *toolFrame;
     Frame *bottomFrame;

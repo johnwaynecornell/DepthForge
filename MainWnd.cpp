@@ -61,8 +61,6 @@ void MainWnd::showEvent(QShowEvent *event)
 
 
 void MainWnd::createActions() {
-
-
     action_import = new QAction(tr("&Import"), this);
     action_import->setStatusTip(tr("Import image file"));
     connect(action_import, &QAction::triggered, this, &MainWnd::import);
@@ -75,6 +73,27 @@ void MainWnd::createActions() {
     action_export_jps->setStatusTip(tr("Export Jpeg stereo image file"));
     connect(action_export_jps, &QAction::triggered, this, &MainWnd::export_jps);
 
+    action_file_new = new QAction(tr("&New"), this);
+    action_file_new->setStatusTip(tr("Create new"));
+    connect(action_file_new, &QAction::triggered, this, &MainWnd::file_new);
+
+    action_file_open = new QAction(tr("&Open"), this);
+    action_file_open->setStatusTip(tr("Open .dfg file"));
+    connect(action_file_open, &QAction::triggered, this, &MainWnd::file_open);
+
+
+    action_file_reopen = new QAction(tr("&Reopen"), this);
+    action_file_reopen->setStatusTip(tr("Re-open .dfg file"));
+    connect(action_file_reopen, &QAction::triggered, this, &MainWnd::file_reopen);
+
+    action_file_save = new QAction(tr("&Save"), this);
+    action_file_save->setStatusTip(tr("Save .dfg file"));
+    connect(action_file_save, &QAction::triggered, this, &MainWnd::file_save);
+
+    action_file_save_as = new QAction(tr("Save &as"), this);
+    action_file_save_as->setStatusTip(tr("Save .dfg file as ..."));
+    connect(action_file_save_as, &QAction::triggered, this, &MainWnd::file_save_as);
+    
     action_toggle_fps = new QAction(tr("Toggle show &FPS"), this);
     action_toggle_fps->setStatusTip(tr("Show &Frames per second"));
     action_toggle_fps->setCheckable(true);
@@ -92,6 +111,15 @@ void MainWnd::createMenus()
 
     QMenuBar *mb = menuBar();
     QMenu *file = mb->addMenu(tr("&File"));
+    
+    file->addAction(action_file_new);
+    file->addAction(action_file_open);
+    file->addAction(action_file_reopen);
+    file->addAction(action_file_save);
+    file->addAction(action_file_save_as);
+
+    file->addSeparator();
+    
     file->addAction(action_import);
 
     QMenu *Export = file->addMenu("&Export");
@@ -104,10 +132,46 @@ void MainWnd::createMenus()
     Settings->addAction(action_toggle_forceAnaglyph);
 }
 
+void MainWnd::setFileName(QString &fileName)
+{
+
+    if (fileName.isNull()) setWindowTitle(tr("DepthForge"));
+    else
+    {
+        setWindowTitle(fileName);
+    }
+}
+
 void MainWnd::import()
 {
     if (import_proc.function != nullptr) import_proc.function(
-            import_proc._This, import_proc.element,import_proc.argument);
+                import_proc._This, import_proc.element,import_proc.argument);
+}
+
+void MainWnd::file_new()
+{
+    if (file_new_proc.function != nullptr) file_new_proc.function(
+                file_new_proc._This, file_new_proc.element,file_new_proc.argument);
+}
+void MainWnd::file_open()
+{
+    if (file_open_proc.function != nullptr) file_open_proc.function(
+                file_open_proc._This, file_open_proc.element,file_open_proc.argument);
+}
+void MainWnd::file_reopen()
+{
+    if (file_reopen_proc.function != nullptr) file_reopen_proc.function(
+                file_reopen_proc._This, file_reopen_proc.element,file_reopen_proc.argument);
+}
+void MainWnd::file_save()
+{
+    if (file_save_proc.function != nullptr) file_save_proc.function(
+                file_save_proc._This, file_save_proc.element,file_save_proc.argument);
+}
+void MainWnd::file_save_as()
+{
+    if (file_save_as_proc.function != nullptr) file_save_as_proc.function(
+                file_save_as_proc._This, file_save_as_proc.element,file_save_as_proc.argument);
 }
 
 void MainWnd::export_anaglyph()

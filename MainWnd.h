@@ -17,11 +17,17 @@ public:
     QAction *action_export_anaglyph;
     QAction *action_export_jps;
 
+    QAction *action_file_new;
+    QAction *action_file_open;
+    QAction *action_file_reopen;
+
+    QAction *action_file_save;
+    QAction *action_file_save_as;
+
     QAction *action_toggle_fps;
     QAction *action_toggle_forceAnaglyph;
 
     DepthForgeWin *depthForge;
-
 
     MainWnd();
 
@@ -31,19 +37,33 @@ public:
     virtual void closeEvent(QCloseEvent *event);
     virtual void showEvent(QShowEvent *event);
 
+    UICallback<void (*)(void *elem, UI *sender, void *arg)> file_new_proc = {};
+    UICallback<void (*)(void *elem, UI *sender, void *arg)> file_open_proc = {};
+    UICallback<void (*)(void *elem, UI *sender, void *arg)> file_reopen_proc = {};
+    UICallback<void (*)(void *elem, UI *sender, void *arg)> file_save_proc = {};
+    UICallback<void (*)(void *elem, UI *sender, void *arg)> file_save_as_proc = {};
 
     UICallback<void (*)(void *elem, UI *sender, void *arg)> import_proc = {};
     UICallback<void (*)(void *elem, UI *sender, void *arg)> export_anaglyph_proc = {};
     UICallback<void (*)(void *elem, UI *sender, void *arg)> export_jps_proc = {};
 
-
+    void setFileName(QString &file);
 
 private slots:
     void import();
     void export_anaglyph();
     void export_jps();
+
+    void file_new();
+    void file_open();
+    void file_reopen();
+
+    void file_save();
+    void file_save_as();
+
     void toggle_fps();
     void toggle_forceAnaglyph();
+
 };
 
 

@@ -208,7 +208,7 @@ void MainUI::draw(Image *target, QImage *qImage)
     if (firstDraw)
     {
 //        basicToolsCtl->setStateChangeCallback(nullptr, cycle, nullptr);
-        //basicToolsCtl->open();
+        basicToolsCtl->open();
         firstDraw = false;
     }
 }

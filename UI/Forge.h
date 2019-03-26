@@ -7,6 +7,8 @@
 
 
 #include "UI.h"
+#include "../DepthForgeWin.h"
+#include "../MainWnd.h"
 
 class Forge : public UI
 {
@@ -27,12 +29,17 @@ public:
 
     bool previewLense;
 
+    QString lastPath1;
+    QString lastPath2;
+    QString fileName = QString::null;
+
     Image *bkgImage;
+    Image *bkgTile;
 
     Forge(UI *parent);
     virtual ~Forge();
 
-    Image *bkgTile;
+    MainWnd *wnd();
 
     void drawInitial();
 
@@ -47,6 +54,15 @@ public:
     virtual bool mouseButtonRelease(int x, int y, Qt::MouseButton button);
 
     void applyLense();
+
+    void open(QString &fileName);
+    void save(QString &fileName);
+
+    void file_new(UI *sender, void *arg);
+    void file_open(UI *sender, void *arg);
+    void file_reopen(UI *sender, void *arg);
+    void file_save(UI *sender, void *arg);
+    void file_save_as(UI *sender, void *arg);
 
     void import(UI *sender, void *arg);
     void export_anaglyph(UI *sender, void *arg);

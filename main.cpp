@@ -10,7 +10,7 @@
 
 #include "version.h"
 
-const char VERSION[] = "0.0.1";
+const char VERSION[] = "0.0.2";
 
 QApplication *app;
 

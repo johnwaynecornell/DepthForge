@@ -2,8 +2,6 @@
 // Created by jwc on 1/28/19.
 //
 
-#include "DepthForgeWin.h"
-
 #include <QtGui/QPainter>
 #include <QtCore/QAbstractEventDispatcher>
 #include <QtWidgets/QMenuBar>
@@ -14,6 +12,8 @@
 #include <QFileDialog>
 
 #include <math.h>
+
+#include "DepthForgeWin.h"
 #include <UI/TestUI.h>
 
 extern "C"

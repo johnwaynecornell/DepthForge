@@ -2,9 +2,10 @@
 // Created by jwc on 2/12/19.
 //
 
-#include "MainWnd.h"
 #include <QApplication>
 #include <QMouseEvent>
+
+#include "MainWnd.h"
 
 extern QApplication *app;
 
@@ -17,7 +18,7 @@ MainWnd::MainWnd() : QMainWindow()
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
     format.setStereo(true);
-
+    
 
 //    format.setAlphaBufferSize(8);
 //    format.setRedBufferSize(8);

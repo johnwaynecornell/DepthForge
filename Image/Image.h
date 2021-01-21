@@ -142,6 +142,16 @@ public:
     void DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z);
     void DrawPath(PixOp pixOp, ZOp zOp, double yScale,
             bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg);
+    void DrawPath(PixOp pixOp, ZOp zOp, double yScale,
+                  double *min, double *max,
+                  bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg);
+
+
+    void DrawPathOutline(PixOp pixOp, ZOp zOp,
+            bool (*func)(int I, double X, int x, int xD, ARGB &P, float &Z, void *arg), void *arg);
+
+    int Line(int xA,int yA, int xB, int yB, PixOp pixOp, ZOp zOp,
+            bool (*pixFunc)(int x, int y, int v, int Vd, ARGB &p, float &z, void *arg), void *arg);
 
     void Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB, ZOp zOp, float zA, float zB);
     void FillRect(int x,int y, int w, int h, PixOp pixOp, ARGB p, ZOp zOp, float z);

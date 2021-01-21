@@ -12,6 +12,24 @@ struct dPnt2D
 
     double & operator[](int idx);
     dPnt2D operator-();
+
+    dPnt2D operator-(dPnt2D other);
+    dPnt2D operator+(dPnt2D other);
+
+    dPnt2D operator*(dPnt2D other);
+    dPnt2D operator/(dPnt2D other);
+
+    dPnt2D operator*(double scaler);
+    dPnt2D operator/(double scaler);
+
+    static dPnt2D sinCos(double Th);
+    double atan2();
+
+    double len();
+
+    dPnt2D negate();
+    dPnt2D invert();
+
 };
 
 struct dMatrix2D

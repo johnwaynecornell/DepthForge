@@ -164,6 +164,7 @@ public:
 
 class Button : public UI
 {
+    bool toggled;
 public:
     float z;
     float zAct;
@@ -173,11 +174,17 @@ public:
     double drawTime;
     double lastDrawTime;
 
+    UICallback<void (*)(void *_This, Button*element, bool pressed, void *arg)> onPress = {};
+
     Button(UI *parent);
     virtual ~Button();
 
-    virtual void drawBackground(UI *member, Image *target, QImage *qImage);
+    virtual bool isToggled();
+    virtual void setToggled(bool state);
 
+    virtual void toggle();
+
+    virtual void drawBackground(UI *member, Image *target, QImage *qImage);
 
     virtual void mouseEnter();
     virtual void mouseLeave();
@@ -189,12 +196,16 @@ public:
 
 class Button_Image : public Button
 {
-public:
-    Image *src;
+    Image *src_noToggle;
+    Image *src_Toggle;
 
+public:
 
     Button_Image(UI *parent);
     virtual ~Button_Image();
+
+    void setSource(Image *src, bool forToggle);
+    Image *getSource();
 
     virtual void draw(Image *target, QImage *qImage);
 

@@ -8,7 +8,8 @@
 
 #include "UI.h"
 #include "../DepthForgeWin.h"
-#include "../MainWnd.h"
+
+class MainWnd;
 
 class Forge : public UI
 {
@@ -26,8 +27,6 @@ public:
 
     int _w;
     int _h;
-
-    bool previewLense;
 
     QString lastPath1;
     QString lastPath2;
@@ -53,8 +52,6 @@ public:
     virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
     virtual bool mouseButtonRelease(int x, int y, Qt::MouseButton button);
 
-    void applyLense();
-
     void open(QString &fileName);
     void save(QString &fileName);
 
@@ -69,6 +66,5 @@ public:
     void export_jps(UI *sender, void *arg);
 
 };
-
 
 #endif //DEPTHFORGE_FORGE_H

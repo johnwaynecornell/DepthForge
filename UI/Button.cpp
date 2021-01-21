@@ -14,12 +14,29 @@ Button::Button(UI *parent) : UI(parent)
     zSpeed = .5f;
 
     lastDrawTime = INFINITY;
+
+    toggled = false;
 }
 
 Button::~Button()
 {
 
 }
+
+bool Button::isToggled()
+{
+    return toggled;
+}
+void Button::setToggled(bool state)
+{
+    toggled = state;
+}
+
+void Button::toggle()
+{
+    setToggled(!isToggled());
+}
+
 
 void Button::drawBackground(UI *member, Image *target, QImage *qImage)
 {
@@ -70,6 +87,10 @@ bool Button::mouseButtonPress(int x, int y, Qt::MouseButton button)
 {
     if (UI::mouseButtonPress(x,y, button)) return true;
 
+    grabMouse();
+
+    if (onPress.function != nullptr) onPress.function(onPress._This, this, true, onPress.argument);
+
     return true;
 }
 
@@ -77,20 +98,45 @@ bool Button::mouseButtonRelease(int x, int y, Qt::MouseButton button)
 {
     if (UI::mouseButtonRelease(x,y, button)) return true;
 
+    releaseMouse();
+
+    if (onPress.function != nullptr) onPress.function(onPress._This, this, false, onPress.argument);
+
     return true;
 }
 
 
 Button_Image::Button_Image(UI *parent) : Button(parent)
 {
+    src_noToggle = src_Toggle = nullptr;
 }
+
+Button_Image::~Button_Image()
+{
+    if (src_noToggle != nullptr) delete src_noToggle;
+    if (src_Toggle != nullptr) delete src_Toggle;
+}
+
+void Button_Image::setSource(Image *src, bool forToggle)
+{
+    if (forToggle) src_Toggle = src; else src_noToggle = src;
+}
+
+Image *Button_Image::getSource()
+{
+    if (isToggled() && src_Toggle != nullptr) return src_Toggle;
+
+    return src_noToggle;
+}
+
 
 void Button_Image::draw(Image *target, QImage *qImage)
 {
     UI::draw(target, qImage);
 
     target->DrawImage(xReal, yReal, width.get(), height.get(),
-            PixOp_SRC_ALPHA, ZOp_SRC_ADD, src, 0,0, src->Width, src->Height);
+            PixOp_SRC_ALPHA, ZOp_SRC_ADD, getSource(),
+            0,0, getSource()->Width, getSource()->Height);
 
 }
 
@@ -100,13 +146,13 @@ bool Button_Image::selfLayout()
 
     if (width.resp = Resp_Self)
     {
-        width.set(src->Width);
+        width.set(getSource()->Width);
         width.dirty = false;
     }
 
     if (height.resp = Resp_Self)
     {
-        height.set(src->Height);
+        height.set(getSource()->Height);
         height.dirty = false;
     }
 
@@ -122,8 +168,4 @@ bool Button_Image::doLayout()
     if (rc) return true;
 
     return false;
-}
-
-Button_Image::~Button_Image()
-{
 }

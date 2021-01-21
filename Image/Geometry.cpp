@@ -18,6 +18,64 @@ dPnt2D dPnt2D::operator-()
     return {-x,-y};
 }
 
+dPnt2D dPnt2D::operator-(dPnt2D other)
+{
+    return {x-other.x, y-other.y};
+}
+
+dPnt2D dPnt2D::operator+(dPnt2D other)
+{
+    return {x+other.x, y+other.y};
+}
+
+
+dPnt2D dPnt2D::operator*(dPnt2D other)
+{
+    return {x*other.x, y*other.y};
+}
+
+dPnt2D dPnt2D::operator/(dPnt2D other)
+{
+    return {x/other.x, y/other.y};
+}
+
+
+dPnt2D dPnt2D::operator*(double scaler)
+{
+    return {x*scaler, y*scaler};
+}
+
+dPnt2D dPnt2D::operator/(double scaler)
+{
+    return {x/scaler, y/scaler};
+}
+
+
+dPnt2D dPnt2D::sinCos(double Th)
+{
+    return { cos(Th),sin(Th)};
+}
+
+double dPnt2D::atan2()
+{
+    return ::atan2(y,x);
+}
+
+double dPnt2D::len()
+{
+    return sqrt(x*x+y*y);
+}
+
+dPnt2D dPnt2D::negate()
+{
+    return {-x,-y};
+}
+dPnt2D dPnt2D::invert()
+{
+    return {y,x};
+}
+
+
 dMatrix2D & dMatrix2D::Identity()
 {
     val[0][0] = val[1][1] = val[2][2] = 1.0;

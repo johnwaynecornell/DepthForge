@@ -3,8 +3,9 @@
 //
 
 #include "TabCtl.h"
+#include "MainUI.h"
 
-TabCtl::TabCtl(UI *parent) : Frame(parent)
+TabCtl::TabCtl(UI *parent, QString Lable) : Frame(parent)
 {
     tabSize.set(16<<1);
     borderSize.set(6);
@@ -15,6 +16,8 @@ TabCtl::TabCtl(UI *parent) : Frame(parent)
     qAnimation = nullptr;
 
     myState = State_collapsed;
+
+    this->Lable = Lable;
 }
 
 TabCtl::~TabCtl()
@@ -92,6 +95,36 @@ void TabCtl::draw(Image *target, QImage *qImage) {
     int yy;
     int w;
     int h;
+
+    QPainter *p = new QPainter(qImage);
+
+    //p->fontMetrics().height()
+
+    QPen pen = p->pen();
+
+    pen.setColor(QColor{0xFF,0xFF,0xFF});
+    pen.setWidth(30);
+
+    p->setPen(pen);
+
+    QFont f = p->font();
+
+    f.setPointSize(14);
+
+    p->setFont(f);
+
+    QRect r = p->fontMetrics().boundingRect(Lable);
+
+    int _w = r.width();
+
+    p->translate((x1+ix+r.height()) / 2, iyb);
+    p->rotate(-90);
+
+    p->drawText((tabLength.get()-sz-_w) / 2,0, Lable);
+
+
+    p->end();
+    delete p;
 
     if (myState != State_collapsed) {
         xx = ix + sz;
@@ -391,6 +424,23 @@ void TabCtl::close()
     animTime = getTimeInSeconds();
     invokeStateChangeCallback(myState);
 }
+
+DepthForgeTabCtl::DepthForgeTabCtl(UI *parent, QString Lable) : TabCtl(parent, Lable)
+{
+}
+
+DepthForgeTabCtl::~DepthForgeTabCtl()
+{
+
+}
+
+void DepthForgeTabCtl::open()
+{
+    TabCtl::open();
+
+    ((MainUI *)rootElement())->mode_Current = myMode;
+}
+
 
 TabFolder::TabFolder(UI *parent) : UI(parent)
 {

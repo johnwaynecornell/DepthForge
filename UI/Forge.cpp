@@ -11,6 +11,7 @@
 
 
 #include "MainUI.h"
+#include "MainWnd.h"
 #include "Forge.h"
 
 extern QApplication *app;
@@ -40,8 +41,6 @@ Forge::Forge(UI *parent) : UI(parent)
     QString fileName;
 
     drawInitial();
-
-    previewLense = false;
 
     bkgTile = new Image(32,32);
 
@@ -253,17 +252,8 @@ void Forge::drawInitial()
     pth.Apply(src);
 
 
-
-
-
     src->DrawPath(PixOp_SRC, ZOp_SRC, 1.0, &letters, nullptr);
 }
-
-struct LenseData
-{
-    float **map;
-    Image *lenseImage[10];
-};
 
 void Forge::drawBackground(UI *member, Image *target, QImage *qImage)
 {
@@ -297,134 +287,17 @@ void Forge::draw(Image *target, QImage *qImage)
 {
     UI::draw(target, qImage);
 
-    double time = getTimeInSeconds();
-    time = time - trunc(time);
-
     _x = xReal;
     _y = yReal;
 
     _w = width.get();
     _h = height.get();
 
-    int _x1 = xReal;
-    int _y1 = yReal;
-
-    int _w1 = width.get();
-    int _h1 = height.get();
-
     GfxFitRect(0, 0, src->Width, src->Height, &_x, &_y, &_w, &_h);
 
     target->DrawImage(_x,_y,_w,_h, PixOp_SRC, ZOp_SRC, src, 0, 0, src->Width, src->Height);
 
-    if (hasMouse || previewLense)
-    {
-        int xx;
-        int yy;
-
-        if (hasMouse)
-        {
-            xx = (int) (mouseX * _w + _x);
-            yy = (int) (mouseY * _h + _y);
-        } else
-        {
-            xx = (int) (.5 * _w + _x);
-            yy = (int) (.5 * _h + _y);
-        }
-
-        Lense *lense = ((MainUI *) rootElement())->lense;
-
-        int sz = (int) (lense->size * fmax(_w,_h));
-
-        Lense::Cache * dta;
-
-        LenseData *d;
-
-        if (!lense->getData(0, sz, &dta))
-        {
-            if (dta->dta != nullptr)
-            {
-                d = (LenseData *)dta->dta;
-
-                lense->freeMap(d->map, dta->s);
-
-                for (int i =0; i<10; i++) {
-                    if (d->lenseImage[i] != nullptr) {
-                        delete d->lenseImage[i];
-                        d->lenseImage[i] = nullptr;
-                    }
-                }
-            } else
-            {
-                dta->dta = d = new LenseData();
-                for (int i =0; i<10; i++)
-                {
-                    d->lenseImage[i] = nullptr;
-                }
-            }
-
-            d->map = lense->map(sz);
-            dta->s = sz;
-
-            dta->needUpdate = true;
-        }
-
-        d = ((LenseData *)dta->dta);
-
-        float **map = d->map;
-
-        if (dta->needUpdate)
-        {
-            lense->updateMap(map, sz);
-
-            for (int i=0; i<10; i++)
-            {
-                if (d->lenseImage[i] != nullptr)
-                {
-                    d->lenseImage[i]->needUpdate = true;
-                }
-            }
-            
-            dta->needUpdate = false;
-        }
-
-        int i = (int) (abs(time-.5)*2*9);
-
-        int q = (sz << 1) + 1;
-
-        if (d->lenseImage[i] == nullptr) {
-
-            d->lenseImage[i] = new Image(q, q);
-        }
-
-        Image *img = d->lenseImage[i];
-
-        if (img->needUpdate)
-        {
-
-            for (int yp = -sz; yp <= sz; yp++) {
-                int y = sz + yp;
-
-                for (int xp = -sz; xp <= sz; xp++) {
-                    int x = sz + xp;
-
-                    float l = map[yp][xp];
-
-                    unsigned char g = (unsigned char) (i * 0xFF / 9);
-
-                    ARGB p = {(unsigned char) (0x80 * l), 0xFF, g, 0xFF};
-
-                    img->pix[y][x] = p;
-                }
-            }
-            img->needUpdate = false;
-        }
-
-        target->DrawImage(_x1, _y1, _w1, _h1,
-                xx-sz, yy-sz, q, q, PixOp_SRC_ALPHA, ZOp_SRC_ADD,
-                img, 0,0, q, q);
-
-
-    }
+    ((MainUI *)rootElement())->mode_Current->drawForge(this, target, qImage);
 }
 
 void Forge::mouseEnter()
@@ -444,7 +317,7 @@ bool Forge::mouseMove(int x, int y)
     mouseX = (x - (_x-xReal)) / (double) _w;
     mouseY = (y - (_y-yReal)) / (double) _h;
 
-    applyLense();
+    ((MainUI *)rootElement())->mode_Current->mouseMoveForge(this, x, y);
 
     bool rc = UI::mouseMove(x,y);
 
@@ -458,7 +331,7 @@ bool Forge::mouseButtonPress(int x, int y, Qt::MouseButton button)
 
     mouseDown.setFlag(button, true);
 
-    applyLense();
+    ((MainUI *)rootElement())->mode_Current->mouseButtonPressForge(this, x, y, button);
 
     bool rc = UI::mouseButtonPress(x,y,button);
 
@@ -469,47 +342,11 @@ bool Forge::mouseButtonRelease(int x, int y, Qt::MouseButton button)
 {
     mouseDown.setFlag(button, false);
 
+    ((MainUI *)rootElement())->mode_Current->mouseButtonReleaseForge(this, x, y, button);
+
     bool rc = UI::mouseButtonRelease(x,y,button);
 
     return rc;
-}
-
-void Forge::applyLense()
-{
-    int xx = mouseX * src->Width;
-    int yy = mouseY * src->Height;
-
-    Lense *lense = ((MainUI *) rootElement())->lense;
-
-    int sz = lense->size * fmax(src->Width,src->Height);
-
-    Qt::MouseButtons l;
-    l.setFlag(Qt::MouseButton::LeftButton);
-
-    Qt::MouseButtons r;
-    r.setFlag(Qt::MouseButton::RightButton);
-
-    double dir;
-
-    if (mouseDown == l) dir = -1; else if (mouseDown == r) dir = 1; else return;
-
-    for (int y=yy-sz; y<yy+sz; y++) {
-        for (int x = xx - sz; x < xx + sz; x++) {
-            if (y >= 0 && y < (src->Height)) {
-                if (x >= 0 && x < (src->Width)) {
-                    double lx = (y - yy) / (double) sz;
-                    double ly = (x - xx) / (double) sz;
-
-                    float l = lense->get(lx, ly);
-
-                    src->z[y][x] += l * .01 * dir;
-
-                }
-            }
-
-        }
-    }
-
 }
 
 void Forge::open(QString &fileName)

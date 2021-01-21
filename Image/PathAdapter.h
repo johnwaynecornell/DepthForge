@@ -12,12 +12,13 @@ struct dPathEntry
 {
     dPnt2D A;
     dPnt2D B;
+
     double r;
 
     bool point;
     bool invert;
 
-    bool _break;
+    void *data;
 
 };
 
@@ -44,6 +45,10 @@ public:
     void Line(dPnt2D A, dPnt2D B);
 
     void Apply(Image *image);
+
+    void Nearest(dPnt2D interest, int &I, double &X);
+
+    void BoundingBox(dPnt2D &topLeft, dPnt2D &bottomRight);
 
 };
 

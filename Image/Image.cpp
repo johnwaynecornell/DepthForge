@@ -465,6 +465,112 @@ void Image::DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z) {
     if (clear) ClearPath();
 }
 
+struct MyPixFuncArgs
+{
+    int I;
+    double X;
+    void *args;
+    bool (*func)(int I, double X, int x, int xD, ARGB &P, float &Z, void *arg);
+};
+
+bool myPixFunc(int x, int y, int v, int Vd, ARGB &p, float &z, void *arg)
+{
+    MyPixFuncArgs *myArgs = (MyPixFuncArgs *) arg;
+
+    return myArgs->func(myArgs->I, myArgs->X, v, Vd, p, z, myArgs->args );
+}
+
+void Image::DrawPathOutline(PixOp pixOp, ZOp zOp,
+                     bool (*func)(int I, double X, int x, int xD, ARGB &P, float &Z, void *arg), void *arg)
+{
+//    double X;
+
+    MyPixFuncArgs A;
+
+    A.X = 0;
+    A.args = arg;
+    A.func = func;
+
+    for (int i = 0; i < pathIndex; i++) {
+
+        A.I = i;
+
+        PathEntry &pe = path[i];
+
+        if (pe.point)
+        {
+            int x1 = pe.x1;
+            int y1 = pe.y1;
+
+            if (pe.r==0)
+            {
+                ARGB p;
+                float z;
+
+                if (func(i, A.X, 0,0, p, z, arg)) {
+
+                    if (pixOp == PixOp_SRC) {
+                        //pix[y][x] = p;
+                        pix[y1][x1] = p;
+
+                    } else if (pixOp == PixOp_SRC_ALPHA) {
+                        ARGB dest = pix[y1][x1];
+                        dest.r = valValAlpha(dest.r, p.r, p.a);
+                        dest.g = valValAlpha(dest.g, p.g, p.a);
+                        dest.b = valValAlpha(dest.b, p.b, p.a);
+                        dest.a = valValAlpha(dest.a, p.a, p.a);
+                        pix[y1][x1] = dest;
+                    }
+
+                    if (zOp == ZOp_SRC) {
+                        this->z[y1][x1] = z;
+                    } else if (zOp == ZOp_SRC_ADD) {
+                        this->z[y1][x1] += z;
+                    }
+                }
+            } else
+            {
+                int lx, ly;
+
+                int x = (int) (x1 + cos(0.0)*pe.r);
+                int y = (int) (y1 + sin(0.0)*pe.r);
+
+                double thd =M_PI*2/16;
+
+                for (double th = thd; th <= M_PI*2; th += M_PI*2/16)
+                {
+                    int nx =(int) (x1 + cos(th)*pe.r);
+                    int ny = (int) (x1 + sin(th)*pe.r);
+
+                    if (nx != x || ny != y) {
+                        A.X += Line(x, y, nx, ny, pixOp, zOp, myPixFunc, &A);
+                    }
+
+                    x = nx;
+                    y = ny;
+
+                }
+            }
+
+        } else{
+
+            int x1 = pe.x1;
+            int y1 = pe.y1;
+
+            int x2 = pe.x2;
+            int y2 = pe.y2;
+
+            A.X += Line(x1, y1, x2, y2, pixOp, zOp, myPixFunc, &A);
+        }
+    }
+
+    bool clear = _preservePath == 0;
+
+    if (_preservePath > 0) _preservePath--;
+    if (clear) ClearPath();
+}
+
+
 TrigCellCache cache;
 
 struct pdata
@@ -642,6 +748,8 @@ void *pathProcSlice(GfxThreadWorker *worker) {
     return nullptr;
 }
 
+#undef pathApply
+
 void *pathProc(Image *img, pdata *pathdata, int i, TrigEntry *E)
 {
     int count = gfxThreadWorkerCount;
@@ -740,6 +848,45 @@ void *pathMergeSlice(GfxThreadWorker *worker)
     return nullptr;
 }
 
+struct minMaxFuncParams
+{
+    pdata *data;
+    double *min;
+    double *max;
+
+    double yScale;
+    int Width;
+    int Height;
+};
+
+void *pathMinMaxSlice(GfxThreadWorker *worker)
+{
+    minMaxFuncParams *p = (minMaxFuncParams *) worker->p[17];
+
+    int ly = p->Height * worker->index / worker->of;
+    int hy = p->Height * (worker->index+1) / worker->of;
+
+    int t = worker->index;
+
+    p->min[t] = INFINITY;
+    p->max[t] = -INFINITY;
+
+    for (int y=ly; y<hy; y++)
+    {
+        for (int x=0; x<p->Width; x++)
+        {
+            pdata *d = p->data + y*p->Width+x;
+
+            double mv = d->mv * p->yScale;
+
+            if (mv<p->min[t]) p->min[t] = mv;
+            if (mv>p->max[t]) p->max[t] = mv;
+        }
+    }
+
+    return nullptr;
+}
+
 void *pathMerge(Image *img, pdata *pathdata, double yScale, PixOp pixOp, ZOp zOp,
                 bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg) {
 
@@ -786,29 +933,274 @@ void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
     }
 
     for (int i = 0; i < pathIndex; i++) {
-/*
-        double x1 = pathX[i - 1];
-        double y1 = pathY[i - 1];
 
-        double x2 = pathX[i];
-        double y2 = pathY[i];
-
-        int xd = x2 - x1;
-        int yd = y2 - y1;
-
-        int xKey = (xd < 0 ? ((-xd) >> 8) : (xd >> 8));
-        int yKey = (yd < 0 ? ((-yd) >> 8) : (yd >> 8));
-
-        //TrigCell *C = ((TrigCell *) *cache.get(xKey, yKey, xd < 0 ? -1 : 1, yd < 0 ? -1 : 1));
-        //TrigEntry *E = &C->data[((((yd < 0) ? -yd : yd) & 0xFF) << 8) + ((xd < 0 ? -xd : xd) & 0xFF)];
-*/
-TrigEntry *E = nullptr;
+        TrigEntry *E = nullptr;
 
         pathProc(this, data,i, E);
     }
 
     pathMerge(this, data,yScale,pixOp,zOp,pixFunc, arg);
     delete []data;
+
+    bool clearPath = _preservePath == 0;
+    if (!clearPath) _preservePath--; else ClearPath();
+}
+
+void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
+                     double *min, double *max,
+                     bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg)
+{
+    pdata *data = new pdata[Width*Height];
+
+    for (int y=0; y<Height; y++) {
+        for (int x = 0; x < Width; x++) {
+            data[y*Width+x] = {-1,INFINITY, 0};
+        }
+    }
+
+    for (int i = 0; i < pathIndex; i++) {
+
+        TrigEntry *E = nullptr;
+
+        pathProc(this, data,i, E);
+    }
+
+    int count = gfxThreadWorkerCount;
+    GfxThreadWorker **workers = gfxThreadWorkers;
+
+    minMaxFuncParams params;
+
+    params.data = data;
+
+    params.Width = Width;
+    params.Height = Height;
+
+    params.yScale = yScale;
+
+    params.min = new double[count];
+    params.max = new double[count];
+
+    GfxWorker_ProcType func;
+
+    func = pathMinMaxSlice;
+
+    for (int i = 0; i < count; i++) {
+        GfxThreadWorker *w = gfxThreadWorkers[i];
+
+        w->p[17] = &params;
+
+        w->WorkerProc = func;
+    }
+
+    Barrier_wait(gfxThreadWorkerBarrier);
+    Barrier_wait(gfxThreadWorkerBarrier);
+
+    double _min = params.min[0];
+    double _max = params.max[0];
+
+    for (int i = 1; i<count; i++)
+    {
+        if (params.min[i]<_min) _min = params.min[i];
+        if (params.max[i]>_max) _max = params.max[i];
+    }
+
+    delete [] params.min;
+    delete [] params.max;
+
+    *min = _min;
+    *max = _max;
+
+    pathMerge(this, data,yScale,pixOp,zOp,pixFunc, arg);
+    delete []data;
+
+    bool clearPath = _preservePath == 0;
+    if (!clearPath) _preservePath--; else ClearPath();
+}
+
+
+int Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ZOp zOp,
+          bool (*pixFunc)(int x, int y, int v, int Vd, ARGB &p, float &z, void *arg), void *arg)
+{
+    int xD = (xB-xA);
+    int yD = (yB-yA);
+
+    int xS = xD<0?-1:1;
+    int yS = yD<0?-1:1;
+
+    xD *= xS;
+    yD *= yS;
+
+    //xD++;
+    //yD++;
+
+    if (xD==0) xS=0;
+    if (yD==0) yS=0;
+
+    ARGB P;
+    float Z;
+
+    int Vd = (int)sqrt(xD*xD+yD*yD);
+
+    if (xD <= yD)
+    {
+        if (yD == 0)
+        {
+            if (pixFunc(yA,xA, 0, 0, P, Z, arg)) {
+
+                if (pixOp == PixOp_SRC) {
+                    pix[yA][xA] = P;
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = pix[yA][xA];
+                    dest.r = valValAlpha(dest.r, P.r, P.a);
+                    dest.g = valValAlpha(dest.g, P.g, P.a);
+                    dest.b = valValAlpha(dest.b, P.b, P.a);
+                    dest.a = valValAlpha(dest.a, P.a, P.a);
+                    pix[yA][xA] = dest;
+                }
+
+                if (zOp == ZOp_SRC) {
+                    z[yA][xA] = Z;
+                } else if (zOp == ZOp_SRC_ADD) {
+                    z[yA][xA] += Z;
+                }
+            }
+
+            return Vd;
+        }
+
+        Rational r = {xA, 0, yD};
+        Rational s = {xD / yD *xS, xD % yD, yD};
+
+        Rational _d = {0, 0, yD};
+        Rational _ds = {Vd / yD, Vd % yD, yD};
+
+        int y = yA;
+        for (int d=0; d <= yD; d++)
+        {
+            if (pixFunc(y,r.integer, _d.integer, Vd, P, Z, arg)) {
+                ARGB p = P;;
+
+                if (pixOp == PixOp_SRC) {
+                    pix[y][r.integer] = p;
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = pix[y][r.integer];
+                    dest.r = valValAlpha(dest.r, p.r, p.a);
+                    dest.g = valValAlpha(dest.g, p.g, p.a);
+                    dest.b = valValAlpha(dest.b, p.b, p.a);
+                    dest.a = valValAlpha(dest.a, p.a, p.a);
+                    pix[y][r.integer] = dest;
+                }
+
+                if (zOp == ZOp_SRC) {
+                    z[y][r.integer] = Z;
+                } else if (zOp == ZOp_SRC_ADD) {
+                    z[y][r.integer] += Z;
+                }
+            }
+
+            r.integer += s.integer;
+            if (r.numerator += s.numerator)
+            {
+                if (r.numerator >= r.denominator)
+                {
+                    r.numerator -= r.denominator;
+                    r.integer += xS;
+                }
+            }
+
+            _d.integer += _ds.integer;
+            if (_d.numerator += _ds.numerator)
+            {
+                if (_d.numerator >= _ds.denominator)
+                {
+                    _d.numerator -= _d.denominator;
+                    _d.integer += 1;
+                }
+            }
+
+            y+=yS;
+        }
+    } else
+    {
+        /*
+        if (yD == 0)
+        {
+            if (pixOp == PixOp_SRC) {
+                pix[yA][xA] = pA;
+            } else if (pixOp == PixOp_SRC_ALPHA) {
+                ARGB dest = pix[yA][xA];
+                dest.r = valValAlpha(dest.r, pA.r, pA.a);
+                dest.g = valValAlpha(dest.g, pA.g, pA.a);
+                dest.b = valValAlpha(dest.b, pA.b, pA.a);
+                dest.a = valValAlpha(dest.a, pA.a, pA.a);
+                pix[yA][xA] = dest;
+            }
+
+            if (zOp == ZOp_SRC)
+            {
+                z[yA][xA] = zA;
+            } else if (zOp == ZOp_SRC_ADD)
+            {
+                z[yA][xA] += zA;
+            }
+            return;
+        }*/
+
+
+        Rational r = {yA, 0, xD};
+        Rational s = {yD / xD *yS, yD % xD, xD};
+
+        Rational _d = {0, 0, xD};
+        Rational _ds = {Vd / xD, Vd % xD, xD};
+
+        int x = xA;
+        for (int d=0; d <= xD; d++)
+        {
+            if (pixFunc(r.integer, x, _d.integer, Vd, P, Z, arg)) {
+                ARGB p = P;
+
+                if (pixOp == PixOp_SRC) {
+                    pix[r.integer][x] = p;
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = pix[r.integer][x];
+                    dest.r = valValAlpha(dest.r, p.r, p.a);
+                    dest.g = valValAlpha(dest.g, p.g, p.a);
+                    dest.b = valValAlpha(dest.b, p.b, p.a);
+                    dest.a = valValAlpha(dest.a, p.a, p.a);
+                    pix[r.integer][x] = dest;
+                }
+
+                if (zOp == ZOp_SRC) {
+                    z[r.integer][x] = Z;
+                } else if (zOp == ZOp_SRC_ADD) {
+                    z[r.integer][x] += Z;
+                }
+            }
+
+            r.integer += s.integer;
+            if (r.numerator += s.numerator)
+            {
+                if (r.numerator >= r.denominator)
+                {
+                    r.numerator -= r.denominator;
+                    r.integer += yS;
+                }
+            }
+
+            _d.integer += _ds.integer;
+            if (_d.numerator += _ds.numerator)
+            {
+                if (_d.numerator >= _ds.denominator)
+                {
+                    _d.numerator -= _d.denominator;
+                    _d.integer += 1;
+                }
+            }
+
+            x+=xS;
+        }
+    }
+    return Vd;
 }
 
 

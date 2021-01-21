@@ -7,6 +7,7 @@
 
 
 #include "UI.h"
+#include "Mode.h"
 
 class TabCtl : public Frame {
 
@@ -34,7 +35,9 @@ public:
     UICallback<void (*)(void *_This, TabCtl *ctl, State state, void *arg)>
         stateChangeCallback = {0,0,0};
 
-    TabCtl(UI *parent);
+    QString Lable;
+
+    TabCtl(UI *parent, QString Lable);
     virtual ~TabCtl();
 
     void drawFrameSrc();
@@ -61,9 +64,21 @@ public:
     virtual void close();
 };
 
+class DepthForgeTabCtl : public TabCtl {
+public:
+    Mode *myMode;
+
+    DepthForgeTabCtl(UI *parent, QString Lable);
+    virtual ~DepthForgeTabCtl();
+
+    virtual void open();
+};
+
 class TabFolder : public UI
 {
 public:
+    int _tabPosition = 6;
+
     TabFolder(UI *parent);
     virtual ~TabFolder();
 

@@ -15,10 +15,11 @@
 
 #include "../FpsMonitor.h"
 
-class Forge;
-class LenseButton;
-class DepthForgeWin;
+#include "Mode_DepthEdit.h"
+#include "Mode_Path.h"
 
+class Forge;
+class DepthForgeWin;
 
 class MainUI : public Fixed
 {
@@ -26,23 +27,11 @@ public:
     std::chrono::high_resolution_clock clk;
     std::chrono::time_point<std::chrono::high_resolution_clock> timeUp;
 
-    Lense *lense;
+    Mode *mode_Current;
+    Mode_DepthEdit *mode_DepthEdit;
+    Mode_Path *mode_Path;
 
     TabFolder *tabs;
-    TabCtl *basicToolsCtl;
-    Fixed *basicTools;
-
-    TabCtl *pathToolsCtl;
-    Fixed *pathTools;
-
-
-    Frame *toolFrame;
-    Frame *bottomFrame;
-    Fixed *tools;
-    Fixed *bottom;
-
-    Slider *slideA;
-    Slider *slideB;
 
     Forge *forge;
 
@@ -62,33 +51,7 @@ private:
     virtual void giveMouse(UI *element);
     virtual void freeMouse(UI *element);
 
-public:
-    void sizeEntered(UI *sender, void *arg);
-    void sizeLeave(UI *sender, void *arg);
-    void sizeChanged(UI *sender, double v, void *arg);
-    void intensityChanged(UI *sender, double v, void *arg);
-
-    void setLense(Lense *lense);
-
-    LenseButton * addLenseButton(int x, int y, LenseProc lensProc);
-
 };
 
-class LenseButton : public Button_Image
-{
-public:
-    Lense *lense;
-
-    LenseButton(UI *parent, LenseProc proc);
-    virtual ~LenseButton();
-
-    virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
-
-    static float Sphere(float x, float y);
-    static float Circle(float x, float y);
-    static float Pyramid(float x, float y);
-    static float Square(float x, float y);
-
-};
 
 #endif //DEPTHFORGE_MAINUI_H

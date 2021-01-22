@@ -16,10 +16,10 @@ find_package(OpenGL)
 
 include_directories(QtOpengl5_INCLUDE_DIRS)
 
-#if (WIN32)
+if (WIN32)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
 set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/AppIcon.rc")
-#endif
+endif()
 
 # executable
 

@@ -56,12 +56,10 @@ DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLW
 
     ui = new MainUI(this);
     forceAnaglyph = false;
-
 }
 
 void DepthForgeWin::aboutToBlock()
 {
-
     OnIdle();
 }
 
@@ -225,7 +223,9 @@ bool DepthForgeWin::checkRelinquishMouse(int x, int y)
 
 void DepthForgeWin::initializeGL()
 {
-    anaglyph = !format().stereo();
+    glDrawBuffer(GL_BACK_RIGHT);
+    real_stereo = format().stereo() && (glGetError() == GL_NO_ERROR);
+    anaglyph = !real_stereo;
 }
 
 void DepthForgeWin::paintGL()
@@ -276,11 +276,9 @@ void DepthForgeWin::paintGL()
     if (anaglyph || forceAnaglyph)
         UI_ImageAnaglyph->AnaglyphFrom(UI_ImageLeft, UI_ImageRight);
 
-    if (format().stereo())
+    if (real_stereo)
     {
         glDrawBuffer(GL_BACK_LEFT);
-
-        Q_ASSERT(glGetError() == GL_NO_ERROR);
 
         GfxBlt(PixType_ARGB, (anaglyph || forceAnaglyph) ?
                              UI_ImageAnaglyph->imageMemory : UI_ImageLeft->imageMemory,
@@ -288,10 +286,9 @@ void DepthForgeWin::paintGL()
                0, 0, Width, -Height, Width);
 
         glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
+        glFinish();
 
         glDrawBuffer(GL_BACK_RIGHT);
-        Q_ASSERT(glGetError() == GL_NO_ERROR);
-        glFinish();
 
         GfxBlt(PixType_ARGB, (anaglyph || forceAnaglyph)
                              ? UI_ImageAnaglyph->imageMemory : UI_ImageRight->imageMemory,

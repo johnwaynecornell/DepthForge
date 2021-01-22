@@ -11,6 +11,11 @@ extern QApplication *app;
 
 MainWnd::MainWnd() : QMainWindow()
 {
+
+#ifdef WIN32
+    setWindowIcon(QIcon("DepthForge.ico"));
+#endif
+
     QSurfaceFormat format;
 
     //format.setVersion(3,3);

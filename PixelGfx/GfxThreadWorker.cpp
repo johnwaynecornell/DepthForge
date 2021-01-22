@@ -107,7 +107,7 @@ void GfxInitThreadWorkers(int count)
     gfxThreadWorkers = new GfxThreadWorker*[count];
     gfxThreadWorkerCount = count;
 
-    gfxThreadWorkerBarrier = new unsigned char[(unsigned long) Barrier_size()];
+    gfxThreadWorkerBarrier = new unsigned char[(size_t) Barrier_size()];
     Barrier_init(gfxThreadWorkerBarrier, count+1);
 
     for (int i=0; i<count; i++)

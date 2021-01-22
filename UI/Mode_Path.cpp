@@ -156,7 +156,7 @@ void button_press(void *_This, Button*element, bool pressed, void *arg)
         if (element->isToggled())
         {
             T->curSubModeButton = (Button_Image *) element;
-            T->subMode = (Mode_Path::SubMode) (long) element->tag;
+            T->subMode = (Mode_Path::SubMode) (long) (size_t) element->tag;
         }
         else {
 
@@ -594,19 +594,19 @@ void Mode_Path::BuildShapeToggle()
 
     a.MoveTo(pnt);
 
-    printf("{%lf,%lf}\n", pnt.x,pnt.y);
+    //printf("{%lf,%lf}\n", pnt.x,pnt.y);
 
     pnt2 = pnt + dPnt2D::sinCos(M_PI / 2.0 + M_PI / 50.0)*.4;
 
     a.LineTo(pnt2);
 
-    printf("{%lf,%lf}\n", pnt2.x,pnt2.y);
+    //printf("{%lf,%lf}\n", pnt2.x,pnt2.y);
 
     pnt3 = pnt2 + dPnt2D::sinCos((pnt2-pnt).atan2() + M_PI / 2.0 - M_PI / 20.0)*.3;
 
     a.LineTo(pnt3);
 
-    printf("{%lf,%lf}\n", pnt3.x,pnt3.y);
+    //printf("{%lf,%lf}\n", pnt3.x,pnt3.y);
 
     pnt = pnt2;
     pnt2 = pnt3;
@@ -615,7 +615,7 @@ void Mode_Path::BuildShapeToggle()
 
     a.LineTo(pnt3);
 
-    printf("{%lf,%lf}\n", pnt3.x,pnt3.y);
+    //printf("{%lf,%lf}\n", pnt3.x,pnt3.y);
 
     pnt = pnt2;
     pnt2 = pnt3;
@@ -624,7 +624,7 @@ void Mode_Path::BuildShapeToggle()
 
     a.LineTo(pnt3);
 
-    printf("{%lf,%lf}\n", pnt3.x,pnt3.y);
+    //printf("{%lf,%lf}\n", pnt3.x,pnt3.y);
 
     pnt = pnt2;
     pnt2 = pnt3;
@@ -921,7 +921,7 @@ bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButto
             if (nearestIndex != -1) {
                 dPathEntry &pe = pth.path[nearestIndex];
 
-                int p = (int) (long) pe.data;
+                int p = (int) (size_t) pe.data;
 
                 dPnt2D _c = {nearestX, 0};
 

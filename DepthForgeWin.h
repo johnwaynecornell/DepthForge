@@ -45,7 +45,7 @@ public:
 
     bool anaglyph;
     bool forceAnaglyph;
-
+    bool real_stereo;
 
     Image *UI_ImageAnaglyph;
     Image *UI_ImageLeft;

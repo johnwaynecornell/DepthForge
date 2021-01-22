@@ -23,7 +23,7 @@ bool bkgTilePixFunc(int index, double y, ARGB &p, float &z, void *arg)
         if (y<0) y = 0;
 
         //if (y<0) y = 0;
-        z = (1.0f- sinf((1.0f-(float) y) * M_PIf32 / 2.0f))*.125f;
+        z = (1.0f- sinf((1.0f-(float) y) * (float) M_PI / 2.0f))*.125f;
 
         unsigned char v = (unsigned char) (y*0x80);
 

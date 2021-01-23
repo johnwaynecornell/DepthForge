@@ -59,6 +59,9 @@ public:
     int nearestIndex=-1;
     double nearestX;
 
+    int mouseX = 0;
+    int mouseY = 0;
+
     enum SubMode
     {
         SubMode_None,

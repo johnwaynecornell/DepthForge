@@ -33,19 +33,27 @@ public:
 
     TabFolder *tabs;
 
+    Image *ArrowCursor;
+
     Forge *forge;
 
     DepthForgeWin *owner;
 
     bool firstDraw = true;
 
+    int mouseX;
+    int mouseY;
+
     MainUI(DepthForgeWin *win);
 
     virtual void draw(Image *target, QImage *qImage);
+    virtual void drawOverlay(Image *target, QImage *qImage);
 
     virtual bool selfLayout();
     virtual bool doLayout();
     virtual double getTimeInSeconds();
+
+    virtual bool mouseMove(int x, int y);
 
 private:
     virtual void giveMouse(UI *element);

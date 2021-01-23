@@ -69,6 +69,7 @@ void UI::doDraw(Image *target, QImage *qImage)
 {
     draw(target, qImage);
     drawChildern(target, qImage);
+    drawOverlay(target, qImage);
 }
 
 void UI::draw(Image *target, QImage *qImage)
@@ -82,6 +83,11 @@ void UI::drawChildern(Image *target, QImage *qImage)
     {
         (*i)->doDraw(target, qImage);
     }
+}
+
+void UI::drawOverlay(Image *target, QImage *qImage)
+{
+
 }
 
 void UI::finalLayout()

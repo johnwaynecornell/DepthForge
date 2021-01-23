@@ -1265,23 +1265,23 @@ void Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB,
                        (unsigned char) (pA.g + gD * d / yD),
                        (unsigned char) (pA.b + bD * d / yD)};
 
-            if (pixOp == PixOp_SRC) {
-                pix[y][r.integer] = p;
-            } else if (pixOp == PixOp_SRC_ALPHA) {
-                ARGB dest = pix[y][r.integer];
-                dest.r = valValAlpha(dest.r, p.r, p.a);
-                dest.g = valValAlpha(dest.g, p.g, p.a);
-                dest.b = valValAlpha(dest.b, p.b, p.a);
-                dest.a = valValAlpha(dest.a, p.a, p.a);
-                pix[y][r.integer] = dest;
-            }
+            if (Bound(r.integer, y)) {
+                if (pixOp == PixOp_SRC) {
+                    pix[y][r.integer] = p;
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = pix[y][r.integer];
+                    dest.r = valValAlpha(dest.r, p.r, p.a);
+                    dest.g = valValAlpha(dest.g, p.g, p.a);
+                    dest.b = valValAlpha(dest.b, p.b, p.a);
+                    dest.a = valValAlpha(dest.a, p.a, p.a);
+                    pix[y][r.integer] = dest;
+                }
 
-            if (zOp == ZOp_SRC)
-            {
-                z[y][r.integer] = zA + zD * d / yD;
-            } else if (zOp == ZOp_SRC_ADD)
-            {
-                z[y][r.integer] += zA + zD * d / yD;
+                if (zOp == ZOp_SRC) {
+                    z[y][r.integer] = zA + zD * d / yD;
+                } else if (zOp == ZOp_SRC_ADD) {
+                    z[y][r.integer] += zA + zD * d / yD;
+                }
             }
 
             r.integer += s.integer;
@@ -1334,25 +1334,24 @@ void Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB,
                        (unsigned char) (pA.g + gD * d / xD),
                        (unsigned char) (pA.b + bD * d / xD)};
 
-            if (pixOp == PixOp_SRC) {
-                pix[r.integer][x] = p;
-            } else if (pixOp == PixOp_SRC_ALPHA) {
-                ARGB dest = pix[r.integer][x];
-                dest.r = valValAlpha(dest.r, p.r, p.a);
-                dest.g = valValAlpha(dest.g, p.g, p.a);
-                dest.b = valValAlpha(dest.b, p.b, p.a);
-                dest.a = valValAlpha(dest.a, p.a, p.a);
-                pix[r.integer][x] = dest;
-            }
+            if (Bound(x, r.integer)) {
+                if (pixOp == PixOp_SRC) {
+                    pix[r.integer][x] = p;
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = pix[r.integer][x];
+                    dest.r = valValAlpha(dest.r, p.r, p.a);
+                    dest.g = valValAlpha(dest.g, p.g, p.a);
+                    dest.b = valValAlpha(dest.b, p.b, p.a);
+                    dest.a = valValAlpha(dest.a, p.a, p.a);
+                    pix[r.integer][x] = dest;
+                }
 
-            if (zOp == ZOp_SRC)
-            {
-                z[r.integer][x] = zA + zD * d / xD;
-            } else if (zOp == ZOp_SRC_ADD)
-            {
-                z[r.integer][x] += zA + zD * d / xD;
+                if (zOp == ZOp_SRC) {
+                    z[r.integer][x] = zA + zD * d / xD;
+                } else if (zOp == ZOp_SRC_ADD) {
+                    z[r.integer][x] += zA + zD * d / xD;
+                }
             }
-
             r.integer += s.integer;
             if (r.numerator += s.numerator)
             {

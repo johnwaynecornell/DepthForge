@@ -107,6 +107,7 @@ public:
     virtual void drawBackground(UI *member, Image *target, QImage *qImage);
     virtual void draw(Image *target, QImage *qImage);
     virtual void drawChildern(Image *target, QImage *qImage);
+    virtual void drawOverlay(Image *target, QImage *qImage);
 
     void finalLayout();
     void updateReals();

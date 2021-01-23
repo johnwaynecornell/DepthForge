@@ -83,7 +83,6 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     pathOpsFrame->xPos.set(0);
     pathOpsFrame->yPos.set(0);
 
-
     pathTools = new Fixed(pathToolsFrame);
     pathTools->width.setResp(Resp_Child);
     pathTools->height.setResp(Resp_Self);
@@ -847,6 +846,9 @@ void Mode_Path::drawForge(Forge *forge, Image *target, QImage *qImage) {
 
 bool Mode_Path::mouseMoveForge(Forge *forge, int x, int y)
 {
+    mouseX = x;
+    mouseY = y;
+
     if (subMode == SubMode_Divide)
     {
         pth.Nearest({forge->mouseX, forge->mouseY}, nearestIndex, nearestX);

@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
     MainWnd *Win = new MainWnd();
 
-    Win->resize(800,600);
+    Win->resize(800,800);
     Win->show();
 
     app->exec();

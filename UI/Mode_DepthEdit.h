@@ -46,7 +46,7 @@ public:
 
     void setLense(Lense *lense);
 
-    LenseButton * addLenseButton(int x, int y, LenseProc lensProc);
+    LenseButton * addLenseButton(int x, int y, LenseProc lensProc, int lensesz);
 
 public:
     void sizeEntered(UI *sender, void *arg);
@@ -61,14 +61,16 @@ class LenseButton : public Button_Image
 public:
     Lense *lense;
 
-    LenseButton(UI *parent, LenseProc proc);
+    LenseButton(UI *parent, LenseProc proc, int lensesz);
     virtual ~LenseButton();
 
     virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
 
     static float Sphere(float x, float y);
+    static float SphereC(float x, float y);
     static float Circle(float x, float y);
     static float Pyramid(float x, float y);
+    static float PyramidC(float x, float y);
     static float Square(float x, float y);
 
 };

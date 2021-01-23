@@ -51,8 +51,11 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     tools->xPos.setResp(Resp_Self);
     tools->yPos.setResp(Resp_Self);
 
-    tools->height.set(256+12);
-    tools->width.set(256+12);
+    int lensesz = 64;
+    int border = 6;
+    
+    tools->height.set((lensesz+ border)*3);
+    tools->width.set((lensesz+ border)*2);
     tools->xPos.set(0);
     tools->yPos.set(0);
 
@@ -71,8 +74,8 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     bottom->xPos.setResp(Resp_Self);
     bottom->yPos.setResp(Resp_Self);
 
-    bottom->height.set(256+12);
-    bottom->width.set(256+12);
+    bottom->height.set((lensesz+ border)*4);
+    bottom->width.set((lensesz+ border)*2);
     bottom->xPos.set(0);
     bottom->yPos.set(0);
 
@@ -82,9 +85,9 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     slideA->xPos.setResp(Resp_Self);
     slideA->yPos.setResp(Resp_Self);
 
-    slideA->height.set(256+12);
+    slideA->height.set((lensesz+ border)*4);
     slideA->width.set(32);
-    slideA->xPos.set(256+12-32-6);
+    slideA->xPos.set((lensesz+ border)*2-32-6);
     slideA->yPos.set(0);
 
 
@@ -94,9 +97,9 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     slideB->xPos.setResp(Resp_Self);
     slideB->yPos.setResp(Resp_Self);
 
-    slideB->height.set(256+12);
+    slideB->height.set((lensesz+ border)*4);
     slideB->width.set(32);
-    slideB->xPos.set(256+12-32-6-32-3);
+    slideB->xPos.set((lensesz+ border)*2-32-6-32-3);
     slideB->yPos.set(0);
 
     union
@@ -131,11 +134,13 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
 
     lense = nullptr;
 
-    Lense *l = addLenseButton(0,0, LenseButton::Sphere)->lense;
+    Lense *l = addLenseButton(0,0, LenseButton::Sphere, lensesz)->lense;
+    addLenseButton(0,lensesz+ border, LenseButton::SphereC, lensesz);
+    addLenseButton(0,(lensesz+ border)*2, LenseButton::Circle, lensesz);
 
-    addLenseButton(128+6,0, LenseButton::Circle);
-    addLenseButton(0,128+6, LenseButton::Pyramid);
-    addLenseButton(128+6,128+6, LenseButton::Square);
+    addLenseButton(lensesz+ border,0, LenseButton::Pyramid, lensesz);
+    addLenseButton(lensesz+ border,lensesz+ border, LenseButton::PyramidC, lensesz);
+    addLenseButton(lensesz+ border,(lensesz+ border)*2, LenseButton::Square, lensesz);
 
     setLense(l);
 }
@@ -364,7 +369,7 @@ void Mode_DepthEdit::setLense(Lense *lense)
 
 }
 
-LenseButton * Mode_DepthEdit::addLenseButton(int x, int y, LenseProc proc)
+LenseButton * Mode_DepthEdit::addLenseButton(int x, int y, LenseProc proc, int lensesz)
 {
     Frame *f = new Frame(tools);
 
@@ -376,7 +381,7 @@ LenseButton * Mode_DepthEdit::addLenseButton(int x, int y, LenseProc proc)
 
     f->backgroundResp = Resp_Child;
 
-    LenseButton *bt = new LenseButton(f, proc);
+    LenseButton *bt = new LenseButton(f, proc, lensesz);
     return bt;
 }
 
@@ -401,12 +406,12 @@ void Mode_DepthEdit::intensityChanged(UI *sender, double v, void *arg)
 }
 
 
-LenseButton::LenseButton(UI *parent, LenseProc proc) : Button_Image(parent)
+LenseButton::LenseButton(UI *parent, LenseProc proc, int lensesz) : Button_Image(parent)
 {
     this->lense = new Lense();
     this->lense->proc = proc;
 
-    Image * src = new Image(128,128);
+    Image * src = new Image(lensesz,lensesz);
 
     setSource(src, false);
 
@@ -492,6 +497,17 @@ float LenseButton::Sphere(float x, float y)
 
     return sin(d*M_PI/2);
 }
+
+float LenseButton::SphereC(float x, float y)
+{
+    float d = 1 - sqrtf(x*x+y*y);
+    if (d<0) return 0.0f;//d = 0;
+
+    return 1.0f - sin(d*M_PI/2);
+}
+
+
+
 float LenseButton::Circle(float x, float y)
 {
     float d = 1 - sqrtf(x*x+y*y);
@@ -506,6 +522,16 @@ float LenseButton::Pyramid(float x, float y)
     if (x<0 || y<0) return 0;
 
     return fmin(x,y);
+}
+
+float LenseButton::PyramidC(float x, float y)
+{
+    x = 1.0 - abs(x);
+    y = 1.0 - abs(y);
+
+    if (x<0 || y<0) return 0;
+
+    return 1.0-fmin(x,y);
 }
 
 float LenseButton::Square(float x, float y)

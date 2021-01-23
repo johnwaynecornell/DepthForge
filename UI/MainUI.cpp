@@ -29,6 +29,7 @@ bool drawArrow(int index, double y, ARGB &p, float &z, void *arg)
 
         p = a.interpolate(b, y / q);
     }
+    return true;
 }
 
 MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)

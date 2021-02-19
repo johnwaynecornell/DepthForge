@@ -846,14 +846,42 @@ void Mode_Path::drawForge(Forge *forge, Image *target, QImage *qImage) {
 
 bool Mode_Path::mouseMoveForge(Forge *forge, int x, int y)
 {
-    mouseX = x;
-    mouseY = y;
-
     if (subMode == SubMode_Divide)
     {
         pth.Nearest({forge->mouseX, forge->mouseY}, nearestIndex, nearestX);
 
+    } else if (subMode == SubMode_Move)
+    {
+        if (mouseDown) {
+            int deltaX = x - mouseX;
+            int deltaY = y - mouseY;
+
+            int i = 0;
+            std::list<dPnt2D>::iterator p = points.begin();
+            while (i < selectedPnt) {
+                p++;
+                i++;
+            }
+
+            dPnt2D q = *p;
+
+            q.x += deltaX / (double) forge->_w;// * forge->src->Width;
+            q.y += deltaY / (double) forge->_h;// * forge->src->Height;
+
+            if (q.x<0) q.x=0; else if (q.x > 1.0) q.x = 1.0;
+            if (q.y<0) q.y=0; else if (q.y > 1.0) q.y = 1.0;
+
+
+
+            *p = q;
+
+            refreshPth();
+        }
     }
+
+    mouseX = x;
+    mouseY = y;
+
     return true;
 }
 
@@ -885,6 +913,10 @@ void Mode_Path::refreshPth()
 
 bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButton button)
 {
+    if (button == Qt::MouseButton::LeftButton) {
+        mouseDown = true;
+    }
+
     if (subMode == SubMode_Plus)
     {
         dPnt2D c = {forge->mouseX, forge->mouseY};
@@ -963,6 +995,10 @@ bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButto
 
 bool Mode_Path::mouseButtonReleaseForge(Forge *forge, int x, int y, Qt::MouseButton button)
 {
+    if (button == Qt::MouseButton::LeftButton) {
+        mouseDown = false;
+    }
+
     return true;
 }
 

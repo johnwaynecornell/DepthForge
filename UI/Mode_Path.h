@@ -59,6 +59,7 @@ public:
     int nearestIndex=-1;
     double nearestX;
 
+    bool mouseDown = false;
     int mouseX = 0;
     int mouseY = 0;
 

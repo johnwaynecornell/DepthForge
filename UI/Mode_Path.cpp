@@ -20,6 +20,8 @@ extern "C"
 
 #include "MainWnd.h"
 
+void connect_press(void *_This, Button*element, bool pressed, void *arg);
+
 int _w = 48;
 int _h = 48;
 
@@ -125,6 +127,8 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     button_Connect->tag = (void *) SubMode_Connect;
     button_Select->tag = (void *) SubMode_Select;
 
+    button_Connect->onPress = {this, button_Connect, &connect_press, nullptr};
+
     ARGB _1 = {0xFF,0xFF,0xFF,0x00};
     ARGB _2 = {0xFF,0x00,0xFF,0xFF};
     ARGB _3 = {0xFF,0xFF,0x00,0xFF};
@@ -139,6 +143,16 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     }
 
     pathPixles[15] = pathPixles[0];
+}
+
+void connect_press(void *_This, Button*element, bool pressed, void *arg) {
+    Mode_Path *T = (Mode_Path *) _This;
+    element->toggle();
+
+    if (pressed) {
+        T->points.push_back(*T->points.begin());
+        T->refreshPth();
+    }
 }
 
 void button_press(void *_This, Button*element, bool pressed, void *arg)

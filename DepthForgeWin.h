@@ -54,6 +54,7 @@ public:
     BGRA *obuf;
 
     bool showFPS;
+    bool showMouse = true;
 
     QAbstractEventDispatcher *dispatcher;
 

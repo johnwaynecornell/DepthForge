@@ -146,17 +146,19 @@ void MainUI::drawOverlay(Image *target, QImage *qImage)
 {
     UI::drawOverlay(target, qImage);
 
-    for (int y=0; y<ArrowCursor->Height; y++) {
-        int yy = mouseY-2+y;
+    if (this->owner->showMouse) {
 
-        for (int x = 0; x < ArrowCursor->Width; x++)
-        {
-            int xx = mouseX-2+x;
+        for (int y = 0; y < ArrowCursor->Height; y++) {
+            int yy = mouseY - 2 + y;
 
-            if (target->Bound(xx,yy))
-            {
-                //int o = yy * target->Width + xx;
-                target->pix[yy][xx] = target->pix[yy][xx].interpolate(ArrowCursor->pix[y][x], ArrowCursor->pix[y][x].a);
+            for (int x = 0; x < ArrowCursor->Width; x++) {
+                int xx = mouseX - 2 + x;
+
+                if (target->Bound(xx, yy)) {
+                    //int o = yy * target->Width + xx;
+                    target->pix[yy][xx] = target->pix[yy][xx].interpolate(ArrowCursor->pix[y][x],
+                                                                          ArrowCursor->pix[y][x].a);
+                }
             }
         }
     }

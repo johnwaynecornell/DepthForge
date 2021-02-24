@@ -81,7 +81,7 @@ void ImageMask::Line(int xA,int yA, int xB, int yB,unsigned char pA, unsigned ch
         {
             unsigned char p = (unsigned char) (pA + D * d / yD);
 
-            pix[y][r.integer] = p;
+            if (Bound(r.integer, y)) pix[y][r.integer] = p;
 
             r.integer += s.integer;
             r.numerator += s.numerator;
@@ -131,7 +131,7 @@ void ImageMask::Line(int xA,int yA, int xB, int yB,unsigned char pA, unsigned ch
         {
             unsigned char p = (unsigned char) (pA + D * d / xD);
 
-            pix[r.integer][x] = p;
+            if (Bound(r.integer,x)) pix[r.integer][x] = p;
 
             r.integer += s.integer;
             r.numerator += s.numerator;
@@ -502,30 +502,33 @@ void Image::DrawPathOutline(PixOp pixOp, ZOp zOp,
             int x1 = pe.x1;
             int y1 = pe.y1;
 
+
             if (pe.r==0)
             {
-                ARGB p;
-                float z;
+                if (Bound(x1,y1)) {
+                    ARGB p;
+                    float z;
 
-                if (func(i, A.X, 0,0, p, z, arg)) {
+                    if (func(i, A.X, 0, 0, p, z, arg)) {
 
-                    if (pixOp == PixOp_SRC) {
-                        //pix[y][x] = p;
-                        pix[y1][x1] = p;
+                        if (pixOp == PixOp_SRC) {
+                            //pix[y][x] = p;
+                            pix[y1][x1] = p;
 
-                    } else if (pixOp == PixOp_SRC_ALPHA) {
-                        ARGB dest = pix[y1][x1];
-                        dest.r = valValAlpha(dest.r, p.r, p.a);
-                        dest.g = valValAlpha(dest.g, p.g, p.a);
-                        dest.b = valValAlpha(dest.b, p.b, p.a);
-                        dest.a = valValAlpha(dest.a, p.a, p.a);
-                        pix[y1][x1] = dest;
-                    }
+                        } else if (pixOp == PixOp_SRC_ALPHA) {
+                            ARGB dest = pix[y1][x1];
+                            dest.r = valValAlpha(dest.r, p.r, p.a);
+                            dest.g = valValAlpha(dest.g, p.g, p.a);
+                            dest.b = valValAlpha(dest.b, p.b, p.a);
+                            dest.a = valValAlpha(dest.a, p.a, p.a);
+                            pix[y1][x1] = dest;
+                        }
 
-                    if (zOp == ZOp_SRC) {
-                        this->z[y1][x1] = z;
-                    } else if (zOp == ZOp_SRC_ADD) {
-                        this->z[y1][x1] += z;
+                        if (zOp == ZOp_SRC) {
+                            this->z[y1][x1] = z;
+                        } else if (zOp == ZOp_SRC_ADD) {
+                            this->z[y1][x1] += z;
+                        }
                     }
                 }
             } else
@@ -1045,26 +1048,27 @@ int Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ZOp zOp,
     {
         if (yD == 0)
         {
-            if (pixFunc(yA,xA, 0, 0, P, Z, arg)) {
+            if (Bound(xA,yA)) {
+                if (pixFunc(yA, xA, 0, 0, P, Z, arg)) {
 
-                if (pixOp == PixOp_SRC) {
-                    pix[yA][xA] = P;
-                } else if (pixOp == PixOp_SRC_ALPHA) {
-                    ARGB dest = pix[yA][xA];
-                    dest.r = valValAlpha(dest.r, P.r, P.a);
-                    dest.g = valValAlpha(dest.g, P.g, P.a);
-                    dest.b = valValAlpha(dest.b, P.b, P.a);
-                    dest.a = valValAlpha(dest.a, P.a, P.a);
-                    pix[yA][xA] = dest;
-                }
+                    if (pixOp == PixOp_SRC) {
+                        pix[yA][xA] = P;
+                    } else if (pixOp == PixOp_SRC_ALPHA) {
+                        ARGB dest = pix[yA][xA];
+                        dest.r = valValAlpha(dest.r, P.r, P.a);
+                        dest.g = valValAlpha(dest.g, P.g, P.a);
+                        dest.b = valValAlpha(dest.b, P.b, P.a);
+                        dest.a = valValAlpha(dest.a, P.a, P.a);
+                        pix[yA][xA] = dest;
+                    }
 
-                if (zOp == ZOp_SRC) {
-                    z[yA][xA] = Z;
-                } else if (zOp == ZOp_SRC_ADD) {
-                    z[yA][xA] += Z;
+                    if (zOp == ZOp_SRC) {
+                        z[yA][xA] = Z;
+                    } else if (zOp == ZOp_SRC_ADD) {
+                        z[yA][xA] += Z;
+                    }
                 }
             }
-
             return Vd;
         }
 
@@ -1077,27 +1081,28 @@ int Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ZOp zOp,
         int y = yA;
         for (int d=0; d <= yD; d++)
         {
-            if (pixFunc(y,r.integer, _d.integer, Vd, P, Z, arg)) {
-                ARGB p = P;;
+            if (Bound(y,r.integer)) {
+                if (pixFunc(y, r.integer, _d.integer, Vd, P, Z, arg)) {
+                    ARGB p = P;;
 
-                if (pixOp == PixOp_SRC) {
-                    pix[y][r.integer] = p;
-                } else if (pixOp == PixOp_SRC_ALPHA) {
-                    ARGB dest = pix[y][r.integer];
-                    dest.r = valValAlpha(dest.r, p.r, p.a);
-                    dest.g = valValAlpha(dest.g, p.g, p.a);
-                    dest.b = valValAlpha(dest.b, p.b, p.a);
-                    dest.a = valValAlpha(dest.a, p.a, p.a);
-                    pix[y][r.integer] = dest;
-                }
+                    if (pixOp == PixOp_SRC) {
+                        pix[y][r.integer] = p;
+                    } else if (pixOp == PixOp_SRC_ALPHA) {
+                        ARGB dest = pix[y][r.integer];
+                        dest.r = valValAlpha(dest.r, p.r, p.a);
+                        dest.g = valValAlpha(dest.g, p.g, p.a);
+                        dest.b = valValAlpha(dest.b, p.b, p.a);
+                        dest.a = valValAlpha(dest.a, p.a, p.a);
+                        pix[y][r.integer] = dest;
+                    }
 
-                if (zOp == ZOp_SRC) {
-                    z[y][r.integer] = Z;
-                } else if (zOp == ZOp_SRC_ADD) {
-                    z[y][r.integer] += Z;
+                    if (zOp == ZOp_SRC) {
+                        z[y][r.integer] = Z;
+                    } else if (zOp == ZOp_SRC_ADD) {
+                        z[y][r.integer] += Z;
+                    }
                 }
             }
-
             r.integer += s.integer;
             if (r.numerator += s.numerator)
             {
@@ -1156,27 +1161,28 @@ int Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ZOp zOp,
         int x = xA;
         for (int d=0; d <= xD; d++)
         {
-            if (pixFunc(r.integer, x, _d.integer, Vd, P, Z, arg)) {
-                ARGB p = P;
+            if (Bound(r.integer, x)) {
+                if (pixFunc(r.integer, x, _d.integer, Vd, P, Z, arg)) {
+                    ARGB p = P;
 
-                if (pixOp == PixOp_SRC) {
-                    pix[r.integer][x] = p;
-                } else if (pixOp == PixOp_SRC_ALPHA) {
-                    ARGB dest = pix[r.integer][x];
-                    dest.r = valValAlpha(dest.r, p.r, p.a);
-                    dest.g = valValAlpha(dest.g, p.g, p.a);
-                    dest.b = valValAlpha(dest.b, p.b, p.a);
-                    dest.a = valValAlpha(dest.a, p.a, p.a);
-                    pix[r.integer][x] = dest;
-                }
+                    if (pixOp == PixOp_SRC) {
+                        pix[r.integer][x] = p;
+                    } else if (pixOp == PixOp_SRC_ALPHA) {
+                        ARGB dest = pix[r.integer][x];
+                        dest.r = valValAlpha(dest.r, p.r, p.a);
+                        dest.g = valValAlpha(dest.g, p.g, p.a);
+                        dest.b = valValAlpha(dest.b, p.b, p.a);
+                        dest.a = valValAlpha(dest.a, p.a, p.a);
+                        pix[r.integer][x] = dest;
+                    }
 
-                if (zOp == ZOp_SRC) {
-                    z[r.integer][x] = Z;
-                } else if (zOp == ZOp_SRC_ADD) {
-                    z[r.integer][x] += Z;
+                    if (zOp == ZOp_SRC) {
+                        z[r.integer][x] = Z;
+                    } else if (zOp == ZOp_SRC_ADD) {
+                        z[r.integer][x] += Z;
+                    }
                 }
             }
-
             r.integer += s.integer;
             if (r.numerator += s.numerator)
             {

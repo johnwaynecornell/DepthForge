@@ -132,6 +132,8 @@ void DepthForgeWin::mouseMoveEvent(QMouseEvent *eventMove)
     lastMouseX = x;
     lastMouseY = y;
 
+    showMouse = (x>=0)&&(x<width())&&(y>=0)&&(y<height());
+
     if (mouseCapture != nullptr)
     {
         x -= mouseCapture->xReal;

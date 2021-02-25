@@ -88,6 +88,13 @@ struct PathEntry
 
 };
 
+struct pdata
+{
+    int i;
+    double mv;
+    int x;
+};
+
 class Image {
 public:
     ARGB *imageMemory;
@@ -139,6 +146,8 @@ public:
     }
 
     //void FillPath(int x, int y, PixOp pixOp, ARGB p, ZOp zOp, float z);
+    pdata* ComputePath(void);
+
     void DrawPath(PixOp pixOp, ARGB p, ZOp zOp, float z);
     void DrawPath(PixOp pixOp, ZOp zOp, double yScale,
             bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg);

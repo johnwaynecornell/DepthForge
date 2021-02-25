@@ -576,13 +576,6 @@ void Image::DrawPathOutline(PixOp pixOp, ZOp zOp,
 
 TrigCellCache cache;
 
-struct pdata
-{
-    int i;
-    double mv;
-    int x;
-};
-
 struct PathProcParams
 {
     Image *img;
@@ -924,6 +917,29 @@ void *pathMerge(Image *img, pdata *pathdata, double yScale, PixOp pixOp, ZOp zOp
 
     return nullptr;
 }
+
+pdata* Image::ComputePath(void)
+{
+    pdata *data = new pdata[Width*Height];
+
+    for (int y=0; y<Height; y++) {
+        for (int x = 0; x < Width; x++) {
+            data[y*Width+x] = {-1,INFINITY, 0};
+        }
+    }
+
+    for (int i = 0; i < pathIndex; i++) {
+
+        TrigEntry *E = nullptr;
+        pathProc(this, data,i, E);
+    }
+
+    bool clearPath = _preservePath == 0;
+    if (!clearPath) _preservePath--; else ClearPath();
+
+    return data;
+}
+
 void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
               bool (*pixFunc)(int index, double y, ARGB &p, float &z, void *arg), void *arg)
 {
@@ -938,7 +954,6 @@ void Image::DrawPath(PixOp pixOp, ZOp zOp, double yScale,
     for (int i = 0; i < pathIndex; i++) {
 
         TrigEntry *E = nullptr;
-
         pathProc(this, data,i, E);
     }
 
@@ -1081,7 +1096,7 @@ int Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ZOp zOp,
         int y = yA;
         for (int d=0; d <= yD; d++)
         {
-            if (Bound(y,r.integer)) {
+            if (Bound(r.integer, y)) {
                 if (pixFunc(y, r.integer, _d.integer, Vd, P, Z, arg)) {
                     ARGB p = P;;
 
@@ -1239,23 +1254,23 @@ void Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB,
     {
         if (yD == 0)
         {
-            if (pixOp == PixOp_SRC) {
-                pix[yA][xA] = pA;
-            } else if (pixOp == PixOp_SRC_ALPHA) {
-                ARGB dest = pix[yA][xA];
-                dest.r = valValAlpha(dest.r, pA.r, pA.a);
-                dest.g = valValAlpha(dest.g, pA.g, pA.a);
-                dest.b = valValAlpha(dest.b, pA.b, pA.a);
-                dest.a = valValAlpha(dest.a, pA.a, pA.a);
-                pix[yA][xA] = dest;
-            }
+            if (Bound(xA,yA)) {
+                if (pixOp == PixOp_SRC) {
+                    pix[yA][xA] = pA;
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = pix[yA][xA];
+                    dest.r = valValAlpha(dest.r, pA.r, pA.a);
+                    dest.g = valValAlpha(dest.g, pA.g, pA.a);
+                    dest.b = valValAlpha(dest.b, pA.b, pA.a);
+                    dest.a = valValAlpha(dest.a, pA.a, pA.a);
+                    pix[yA][xA] = dest;
+                }
 
-            if (zOp == ZOp_SRC)
-            {
-                z[yA][xA] = zA;
-            } else if (zOp == ZOp_SRC_ADD)
-            {
-                z[yA][xA] += zA;
+                if (zOp == ZOp_SRC) {
+                    z[yA][xA] = zA;
+                } else if (zOp == ZOp_SRC_ADD) {
+                    z[yA][xA] += zA;
+                }
             }
             return;
         }

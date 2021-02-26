@@ -9,6 +9,7 @@
 #include "Mode.h"
 #include "UI.h"
 #include "TabCtl.h"
+#include "Slider.h"
 
 class Mode_Path : public Mode
 {
@@ -19,7 +20,6 @@ public:
 
     Frame *pathToolsFrame;
     Frame *pathOpsFrame;
-
 
     Fixed *pathTools;
     Fixed *pathOps;
@@ -32,6 +32,7 @@ public:
 
     Button_Image *button_ShapeToggle;
 
+    Slider *slide_Intensity;
 
     Image *image_Divide;
     Image *image_Move;
@@ -49,6 +50,7 @@ public:
     Image *image_ShapeToggle_t;
 
     std::list<dPnt2D> points;
+    bool pointsDirty = false;
 
     int pointsCurrent;
 
@@ -70,7 +72,8 @@ public:
         SubMode_Move,
         SubMode_Plus,
         SubMode_Connect,
-        SubMode_Select
+        SubMode_Select,
+        SubMode_Shape_Linear
     };
 
     SubMode subMode;

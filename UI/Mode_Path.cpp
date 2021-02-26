@@ -119,9 +119,21 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     button_Select = addButton(pathTools, 0, (_h+6)*2, image_Select, image_Select_t);
 
     button_Connect = addButton2(pathTools, _w+6, _h+6, image_Connect, image_Connect_t);
-    button_ShapeToggle = addButton2(pathOps, 0, 0, image_ShapeToggle, image_ShapeToggle_t);
+    button_ShapeToggle = addButton(pathOps, 0, 0, image_ShapeToggle, image_ShapeToggle_t);
+
+    slide_Intensity = new Slider(pathOps, "Intensity");
+    slide_Intensity->width.setResp(Resp_Self);
+    slide_Intensity->height.setResp(Resp_Self);
+    slide_Intensity->xPos.setResp(Resp_Self);
+    slide_Intensity->yPos.setResp(Resp_Self);
+
+    slide_Intensity->height.set(256 - 3 * 2);
+    slide_Intensity->width.set(32);
+    slide_Intensity->xPos.set(_w * 2 - 32 - 3);
+    slide_Intensity->yPos.set(0);
 
     button_Divide->tag = (void *) SubMode_Divide;
+    button_ShapeToggle->tag = (void *) SubMode_Shape_Linear;
     button_Move->tag = (void *) SubMode_Move;
     button_Plus->tag = (void *) SubMode_Plus;
     button_Connect->tag = (void *) SubMode_Connect;
@@ -574,15 +586,22 @@ bool highlight(int I, double X, ARGB &P, float &Z, void *arg)
 
 bool highlight2(int I, double X, ARGB &P, float &Z, void *arg)
 {
+    HighlightParams *params = (HighlightParams *)arg;
+
     if (X>=0)
     {
-        P = color;//{0xFF,0xFF,0xFF,0xFF};
-        Z = .25;
+        double v = 1.0-(X / params->max);
+
+        unsigned char z = (unsigned char) ((v)* 0xFF);
+
+        P = color;//{z,0xFF,0xFF,0xFF};
+        P.a = z;
+        Z = (- v) * .25;
 
         return true;
     }
 
-    return true;
+    return false;
 }
 
 
@@ -594,9 +613,6 @@ void Mode_Path::BuildShapeToggle()
 
     image_ShapeToggle = new Image(_w, _h);
     image_ShapeToggle_t = new Image(_w, _h);
-
-    image_ShapeToggle->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
-    image_ShapeToggle_t->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
 
     dPnt2D pnt = {1,-.05};
     dPnt2D pnt2;
@@ -680,19 +696,19 @@ void Mode_Path::BuildShapeToggle()
 
     HighlightParams params;
 
+    colors_toggled(false);
+
+    image_ShapeToggle->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
     image_ShapeToggle->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC, 1.0,
             &params.min, &params.max, highlight, &params);
 
 
     a.Apply(image_ShapeToggle_t);
 
+    colors_toggled(true);
+    image_ShapeToggle_t->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
     image_ShapeToggle_t->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC, 1.0,
-                                highlight2, nullptr);
-
-
-
-
-
+                                &params.min, &params.max, highlight, &params);
 
 }
 
@@ -917,12 +933,12 @@ void Mode_Path::refreshPth()
                 pth.LineTo(*i);
                 pth.path[pth.pathIndex-1].data = (void *) p;
             }
-
             New = false;
         }
-
         p++;
     }
+
+    pointsDirty = true;
 }
 
 bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButton button)

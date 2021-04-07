@@ -11,6 +11,7 @@
 class Slider : public UI {
 public:
     double v;
+    bool _signed;
 
     class Element;
     Element *element;
@@ -20,7 +21,7 @@ public:
 
     UICallback<void (*)(void *, UI *sender, double, void *)> vCallback;
 
-    Slider(UI *parent, const char *label);
+    Slider(UI *parent, const char *label, bool _signed);
     virtual ~Slider();
 
     virtual void setV(double val);

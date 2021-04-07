@@ -17,6 +17,7 @@ public:
 
     Mode(MainUI *mainUI);
 
+    virtual void updateSrc(Forge *forge);
     virtual void drawForge(Forge *forge, Image *target, QImage *qImage) = 0;
     virtual bool mouseMoveForge(Forge *forge, int x, int y) = 0;
     virtual bool mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButton button) = 0;

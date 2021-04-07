@@ -33,6 +33,7 @@ public:
     Button_Image *button_ShapeToggle;
 
     Slider *slide_Intensity;
+    Slider *slide_Offset;
 
     Image *image_Divide;
     Image *image_Move;
@@ -52,19 +53,17 @@ public:
     std::list<dPnt2D> points;
     bool pointsDirty = false;
 
-    int pointsCurrent;
-
     PathAdapter pth;
 
     ARGB pathPixles[16];
 
     int nearestIndex=-1;
-    double nearestX;
 
+    double nearestX;
     bool mouseDown = false;
+
     int mouseX = 0;
     int mouseY = 0;
-
     enum SubMode
     {
         SubMode_None,
@@ -78,17 +77,29 @@ public:
 
     SubMode subMode;
 
+    bool shapeDrawPositive;
+    bool doShapeDraw = false;
+    double shapeDrawMinMv;
+    double shapeDrawMaxMv;
+    float *shapeDrawZbuf = nullptr;
+    pdata *pathData = nullptr;
+
     Button_Image *curSubModeButton;
 
     int selectedPnt = -1;
     int nearsetPnt = -1;
 
     Mode_Path(MainUI *mainUI);
+    ~Mode_Path();
 
+    virtual void updateSrc(Forge *forge);
+
+    void changeSubMode(SubMode mode);
+
+    void applyShape(SubMode shape, int x, int y);
     Button_Image *addButton(UI *parent, int x, int y, Image *img, Image *img_t);
     Button_Image *addButton2(UI *parent, int x, int y, Image *img, Image *img_t);
     void refreshPth();
-
 
     virtual void drawForge(Forge *forge, Image *target, QImage *qImage);
 

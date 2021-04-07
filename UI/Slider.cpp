@@ -4,10 +4,11 @@
 
 #include "Slider.h"
 
-Slider::Slider(UI *parent, const char *label) : UI(parent)
+Slider::Slider(UI *parent, const char *label, bool _signed) : UI(parent)
 {
-    v = 0;
     this->label = label;
+    this->_signed = _signed;
+
     element = new Element(this, 16, 24);
 
     element->xPos.setResp(Resp_Self);
@@ -19,6 +20,8 @@ Slider::Slider(UI *parent, const char *label) : UI(parent)
     src = nullptr;
 
     vCallback = {0,0,0};
+
+    setV(0);
 }
 
 
@@ -27,9 +30,15 @@ Slider::~Slider()
     if (src != nullptr) delete src;
 }
 
+
 void Slider::setV(double val)
 {
-    if (val<0) val=0;
+    if (!_signed) {
+        if (val < 0) val = 0;
+    } else {
+        if (val < -1) val = -1;
+    }
+
     if (val>1) val=1;
 
     bool c = v != val;
@@ -88,6 +97,36 @@ bool sliderPixFunc(int index, double y, ARGB &p, float &z, void *arg)
     return false;
 }
 
+bool sliderPixFuncDiv(int index, double y, ARGB &p, float &z, void *arg)
+{
+    int xc = *((int *)arg);
+    xc >>= 1;
+
+    double q = abs(y);
+    //q = abs(q - (xc - 3));
+
+    z = 0.0;
+
+    if (q>=0 && q<=3)
+    {
+        q = 1.0 - q / 3;
+
+        unsigned char _y = (unsigned char)((q)*0xFF);
+
+        p = {_y, 0xFF, 0xFF, 0x00};
+
+
+        //z = - y * .125;
+        //z = 0;
+
+        return true;
+    }
+
+    return false;
+}
+
+
+
 
 void Slider::makeSrc()
 {
@@ -101,10 +140,18 @@ void Slider::makeSrc()
     src = new Image(_w,_h);
 
     int xc = _w / 2;
+    int yc = _h / 2;
+
 
     src->Line(xc+(xc>>1), 6, xc+(xc>>1), _h-6);
-
     src->DrawPath(PixOp_SRC_ALPHA,ZOp_SRC_ADD, 1, sliderPixFunc, &xc);
+
+    if (_signed) {
+        src->Line(xc+(xc>>2), yc, _w, yc);
+        src->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC_ADD, 1, sliderPixFuncDiv, &xc);
+    }
+
+
 
     QImage *i = new QImage((unsigned char *) src->imageMemory, src->Width, src->Height,
             QImage::Format_ARGB32);
@@ -169,6 +216,10 @@ void Slider::draw(Image *target, QImage *qImage)
 
 void Slider::updateElementPosition()
 {
+    double v = this->v;
+
+    if (_signed) v = (v+1)/2.0;
+
     int y = (int) ((1.0-v) * (height.get()-element->height.get()-1));
 
     element->xPos.set(16);
@@ -238,8 +289,12 @@ bool Slider::moveElement(int xd, int yd)
     if (y<0) y=0;
     if (y>h) y=h;
 
-    setV(1.0-(y / (double) h));
-
+    if (!_signed) {
+        setV(1.0 - (y / (double) h));
+    } else
+    {
+        setV(-1 + (1.0 - (y / (double) h))*2.0);
+    }
     return _y != y;
 }
 

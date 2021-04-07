@@ -9,3 +9,8 @@ Mode::Mode(MainUI *mainUI)
 {
     this->mainUI = mainUI;
 }
+
+void Mode::updateSrc(Forge *forge)
+{
+
+}

@@ -95,7 +95,7 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     pathTools->yPos.set(0);
 
 
-    pathTools->width.set(_w*2+6);
+    pathTools->width.set(_w*3+6);
     pathTools->height.set(256);
 
     pathOps = new Fixed(pathOpsFrame);
@@ -108,7 +108,7 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     pathOps->yPos.set(0);
 
 
-    pathOps->width.set(_w*2+6);
+    pathOps->width.set(_w*3+6);
     pathOps->height.set(256);
 
     //pathTools->width.set(256+12);
@@ -121,7 +121,18 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     button_Connect = addButton2(pathTools, _w+6, _h+6, image_Connect, image_Connect_t);
     button_ShapeToggle = addButton(pathOps, 0, 0, image_ShapeToggle, image_ShapeToggle_t);
 
-    slide_Intensity = new Slider(pathOps, "Intensity");
+    slide_Offset = new Slider(pathOps, "Offset", true);
+    slide_Offset->width.setResp(Resp_Self);
+    slide_Offset->height.setResp(Resp_Self);
+    slide_Offset->xPos.setResp(Resp_Self);
+    slide_Offset->yPos.setResp(Resp_Self);
+
+    slide_Offset->height.set(256 - 3 * 2);
+    slide_Offset->width.set(32);
+    slide_Offset->xPos.set(pathOps->width.get() - (slide_Offset->width.get())*2-3);
+    slide_Offset->yPos.set(0);
+
+    slide_Intensity = new Slider(pathOps, "Intensity", true);
     slide_Intensity->width.setResp(Resp_Self);
     slide_Intensity->height.setResp(Resp_Self);
     slide_Intensity->xPos.setResp(Resp_Self);
@@ -129,7 +140,7 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
 
     slide_Intensity->height.set(256 - 3 * 2);
     slide_Intensity->width.set(32);
-    slide_Intensity->xPos.set(_w * 2 - 32 - 3);
+    slide_Intensity->xPos.set(pathOps->width.get() - slide_Intensity->width.get());
     slide_Intensity->yPos.set(0);
 
     button_Divide->tag = (void *) SubMode_Divide;
@@ -157,6 +168,17 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     pathPixles[15] = pathPixles[0];
 }
 
+Mode_Path::~Mode_Path()
+{
+    if (shapeDrawZbuf != nullptr) delete shapeDrawZbuf;
+}
+
+void Mode_Path::changeSubMode(SubMode mode)
+{
+    subMode = mode;
+    doShapeDraw = false;
+}
+
 void connect_press(void *_This, Button*element, bool pressed, void *arg) {
     Mode_Path *T = (Mode_Path *) _This;
     element->toggle();
@@ -181,12 +203,12 @@ void button_press(void *_This, Button*element, bool pressed, void *arg)
         if (element->isToggled())
         {
             T->curSubModeButton = (Button_Image *) element;
-            T->subMode = (Mode_Path::SubMode) (long) (size_t) element->tag;
+            T->changeSubMode((Mode_Path::SubMode) (long) (size_t) element->tag);
         }
         else {
 
             T->curSubModeButton = nullptr;
-            T->subMode = Mode_Path::SubMode_None;
+            T->changeSubMode(Mode_Path::SubMode_None);
         }
     }
 }
@@ -764,6 +786,37 @@ int Mode_Path::nearest(dPnt2D c)
     return _i;
 }
 
+void Mode_Path::updateSrc(Forge *forge)
+{
+    if (doShapeDraw)
+    {
+        for (int y=0; y < forge->src->Height; y++)
+        {
+            for (int x = 0; x < forge->src->Width; x++)
+            {
+                long i = y*forge->src->Width+x;
+                float z = shapeDrawZbuf[i];
+
+                if (shapeDrawPositive)
+                {
+                    if (pathData[i].mv >=0)
+                    {
+                        z += slide_Offset->v + slide_Intensity->v * pathData[i].mv / shapeDrawMaxMv;
+                    }
+                } else
+                {
+                    if (pathData[i].mv <=0)
+                    {
+                        z += slide_Offset->v +  slide_Intensity->v * pathData[i].mv / shapeDrawMinMv;
+                    }
+                }
+
+                forge->src->zMemory[i] = z;
+            }
+        }
+    }
+}
+
 void Mode_Path::drawForge(Forge *forge, Image *target, QImage *qImage) {
     pth.outputMatrix = dMatrix2D::Scale({(double) forge->_w, (double) forge->_h}) *
                        dMatrix2D::Translate({(double) forge->_x, (double) forge->_y});
@@ -941,6 +994,55 @@ void Mode_Path::refreshPth()
     pointsDirty = true;
 }
 
+void Mode_Path::applyShape(SubMode shape, int x, int y)
+{
+    Image *target = this->mainUI->forge->src;
+
+    if (pointsDirty)
+    {
+        if (pathData != nullptr) delete pathData;
+
+        pth.outputMatrix = dMatrix2D::Scale({(double) target->Width, (double) target->Height});
+
+        pth._preservePath++;
+
+        pth.Apply(target);
+
+        pathData = target->ComputePath();
+
+        pointsDirty = false;
+
+        shapeDrawMinMv = INFINITY;
+        shapeDrawMaxMv = -INFINITY;
+
+        for (int y=0; y<target->Height; y++)
+        {
+            for (int x=0; x<target->Width; x++)
+            {
+                double mv = pathData[y*target->Width+x].mv;
+                if (mv<shapeDrawMinMv) shapeDrawMinMv = mv;
+                if (mv>shapeDrawMaxMv) shapeDrawMaxMv = mv;
+            }
+        }
+    }
+
+    if (shapeDrawZbuf != nullptr) delete shapeDrawZbuf;
+
+    shapeDrawZbuf = new float[target->Width*target->Height];
+
+    for (int y=0; y<target->Height; y++) {
+        for (int x = 0; x < target->Width; x++) {
+            int i = y * target->Width + x;
+            shapeDrawZbuf[i] = target->zMemory[i];
+        }
+    }
+
+    //target->pix[y][x] = {0xFF,0xFF,0xFF,0xFF};
+
+    shapeDrawPositive = pathData != nullptr && pathData[y*target->Width+x].mv>=0;
+    doShapeDraw = true;
+}
+
 bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButton button)
 {
     if (button == Qt::MouseButton::LeftButton) {
@@ -976,7 +1078,7 @@ bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButto
 
         }
 
-        pointsCurrent = points.size()-1;
+//        pointsCurrent = points.size()-1;
     } else if (subMode == SubMode_Divide)
     {
         if (button == Qt::MouseButton::LeftButton) {
@@ -1009,15 +1111,19 @@ bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButto
                 }
 
                 refreshPth();
-                pointsCurrent = points.size()-1;
+                //pointsCurrent = points.size()-1;
             }
         }
-    }else if (subMode == SubMode_Select) {
+    }else if (subMode == SubMode_Select)
+    {
         if (button == Qt::MouseButton::LeftButton)
         {
             selectedPnt = nearest({forge->mouseX,forge->mouseY});
 
         }
+    } else if (subMode == SubMode_Shape_Linear)
+    {
+        applyShape(SubMode_Shape_Linear, (int) (forge->mouseX*forge->src->Width), (int) (forge->mouseY*forge->src->Height));
     }
 
     return true;
@@ -1042,5 +1148,10 @@ void Mode_Path::doLayout()
     pathOpsFrame->xPos.set(0);
     pathOpsFrame->yPos.set(pathToolsFixed->height.get()-pathOpsFrame->height.get()-1);
 
-    pathOpsFrame->width.set(pathToolsFrame->width.get());
+    pathOpsFrame->width.set(pathOps->width.get()+6);
+
+    pathToolsFrame->xPos.set(0);
+    pathToolsFrame->yPos.set(0);
+
+    pathToolsFrame->width.set(pathTools->width.get()+6);
 }

@@ -285,6 +285,7 @@ void Forge::drawBackground(UI *member, Image *target, QImage *qImage)
 
 void Forge::draw(Image *target, QImage *qImage)
 {
+    ((MainUI *)rootElement())->mode_Current->updateSrc(this);
     UI::draw(target, qImage);
 
     _x = xReal;

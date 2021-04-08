@@ -164,8 +164,15 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
 
         if (forge->hasMouse)
         {
-            xx = (int) (forge->mouseX * forge->_w + forge->_x);
-            yy = (int) (forge->mouseY * forge->_h + forge->_y);
+            //xx = (int) (forge->mouseX * forge->_w + forge->_x);
+            //yy = (int) (forge->mouseY * forge->_h + forge->_y);
+
+            xx = forge->_x + (int) (((forge->mouseX * forge->src->Width) - forge->_srcX) * forge->_w / forge->_srcW);
+            yy = forge->_y + (int) (((forge->mouseY * forge->src->Height) - forge->_srcY) * forge->_h / forge->_srcH);
+
+            //xx = forge->_x + ((forge->mouseX * forge->src->Width) * forge->_w / (double) forge->src->Width);
+            //yy = forge->_y + ((forge->mouseY * forge->src->Height) * forge->_h / (double) forge->src->Height);
+
         } else
         {
             xx = (int) (.5 * forge->_w + forge->_x);
@@ -281,8 +288,8 @@ void Mode_DepthEdit::applyLense(Forge *forge)
 {
     Image *src = forge->src;
 
-    int xx = forge->mouseX * src->Width;
-    int yy = forge->mouseY * src->Height;
+    int xx = forge->mouseX * forge->src->Width;
+    int yy = forge->mouseY * forge->src->Height;
 
     Lense *lense = this->lense;
 

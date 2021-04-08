@@ -137,13 +137,18 @@ public:
     Image(int Width, int Height);
     virtual ~Image();
 
+    int boundX,boundY,boundW,boundH;
+
     bool Bound(int x, int y)
     {
-        if (x<0||x>=Width) return false;
-        if (y<0||y>=Height) return false;
+        if (x<boundX||x>=boundX+boundW) return false;
+        if (y<boundY||y>=boundY+boundH) return false;
 
         return true;
     }
+
+    void setBound(int boundX, int boundY, int boundW, int boundH);
+    void resetBound();
 
     //void FillPath(int x, int y, PixOp pixOp, ARGB p, ZOp zOp, float z);
     pdata* ComputePath(void);

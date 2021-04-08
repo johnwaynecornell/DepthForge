@@ -75,15 +75,18 @@ void GfxFitRect(int toFitX, int toFitY, int toFitW, int toFitH, int *x, int *y, 
 
     int _w, _h, _x, _y;
 
+    int tw, th;
+
     if (a2 <= a1)
     {
         _h = *h;
         _w = (int)(_h * a2);
+
     }
     else
     {
         _w = *w;
-        _h = (int)(_w / a2);
+        _h  = (int)(_w / a2);
     }
 
     _x = *x + (*w - _w) / 2;// - (toFit.X / toFit.Width * This.Width);

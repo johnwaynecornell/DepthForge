@@ -818,8 +818,15 @@ void Mode_Path::updateSrc(Forge *forge)
 }
 
 void Mode_Path::drawForge(Forge *forge, Image *target, QImage *qImage) {
-    pth.outputMatrix = dMatrix2D::Scale({(double) forge->_w, (double) forge->_h}) *
-                       dMatrix2D::Translate({(double) forge->_x, (double) forge->_y});
+    //pth.outputMatrix = dMatrix2D::Scale({(double) forge->_w, (double) forge->_h}) *
+    //                   dMatrix2D::Translate({(double) forge->_x, (double) forge->_y});
+
+    pth.outputMatrix =
+            dMatrix2D::Scale({(double) forge->src->Width, (double) forge->src->Height}) *
+            dMatrix2D::Translate( {(double) -forge->_srcX , (double) -forge->_srcY} ) *
+            dMatrix2D::Scale({(double) forge->_w / forge->_srcW,
+                              (double) forge->_h  / forge->_srcH}) *
+            dMatrix2D::Translate({(double) forge->_x, (double) forge->_y});
 
     pth._preservePath++;
 
@@ -909,8 +916,12 @@ void Mode_Path::drawForge(Forge *forge, Image *target, QImage *qImage) {
 
             PathAdapter _pth;
 
-            _pth.outputMatrix = dMatrix2D::Scale({(double) forge->_w, (double) forge->_h}) *
-                               dMatrix2D::Translate({(double) forge->_x, (double) forge->_y});
+            _pth.outputMatrix =
+                    dMatrix2D::Scale({(double) forge->src->Width, (double) forge->src->Height}) *
+                    dMatrix2D::Translate( {(double) -forge->_srcX , (double) -forge->_srcY} ) *
+                    dMatrix2D::Scale({(double) forge->_w / forge->_srcW,
+                                      (double) forge->_h  / forge->_srcH}) *
+                    dMatrix2D::Translate({(double) forge->_x, (double) forge->_y});
 
 
             _pth.inputMatrix = dMatrix2D::Rotate(-th) * dMatrix2D::Translate(pe->A);
@@ -948,13 +959,11 @@ bool Mode_Path::mouseMoveForge(Forge *forge, int x, int y)
 
             dPnt2D q = *p;
 
-            q.x += deltaX / (double) forge->_w;// * forge->src->Width;
-            q.y += deltaY / (double) forge->_h;// * forge->src->Height;
+            q.x += deltaX / (double) forge->_w * forge->_srcW / (double) forge->src->Width;// * forge->src->Width;
+            q.y += deltaY / (double) forge->_h * forge->_srcH / (double) forge->src->Height;// * forge->src->Height;
 
             if (q.x<0) q.x=0; else if (q.x > 1.0) q.x = 1.0;
             if (q.y<0) q.y=0; else if (q.y > 1.0) q.y = 1.0;
-
-
 
             *p = q;
 

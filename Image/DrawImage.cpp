@@ -247,7 +247,6 @@ void DrawImageProc_PixOp_SRC_ZOp_SRC(GfxThreadWorker *worker,
                     sp= src->pix[s][cols[0]];
                     zv = src->z[s][cols[0]];
                 }
-
             }
 
             for (int x=0;x<dw;x=x+1)
@@ -266,7 +265,6 @@ void DrawImageProc_PixOp_SRC_ZOp_SRC(GfxThreadWorker *worker,
                             sp=src->pix[s][xx];
                             zv = src->z[s][xx];
                         }
-
                     }
 
                     ox=xx;

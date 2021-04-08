@@ -189,6 +189,7 @@ Image::Image(int Width, int Height)
 
     needUpdate = true;
 
+    resetBound();
     FillRect(0,0,Width,Height,PixOp_SRC, {0,0,0,0}, ZOp_SRC, 0.0f);
 }
 
@@ -1064,7 +1065,7 @@ int Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ZOp zOp,
         if (yD == 0)
         {
             if (Bound(xA,yA)) {
-                if (pixFunc(yA, xA, 0, 0, P, Z, arg)) {
+                if (pixFunc(xA, yA, 0, 0, P, Z, arg)) {
 
                     if (pixOp == PixOp_SRC) {
                         pix[yA][xA] = P;
@@ -1097,7 +1098,7 @@ int Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ZOp zOp,
         for (int d=0; d <= yD; d++)
         {
             if (Bound(r.integer, y)) {
-                if (pixFunc(y, r.integer, _d.integer, Vd, P, Z, arg)) {
+                if (pixFunc(r.integer, y, _d.integer, Vd, P, Z, arg)) {
                     ARGB p = P;;
 
                     if (pixOp == PixOp_SRC) {
@@ -1176,8 +1177,8 @@ int Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ZOp zOp,
         int x = xA;
         for (int d=0; d <= xD; d++)
         {
-            if (Bound(r.integer, x)) {
-                if (pixFunc(r.integer, x, _d.integer, Vd, P, Z, arg)) {
+            if (Bound(x, r.integer)) {
+                if (pixFunc(x, r.integer, _d.integer, Vd, P, Z, arg)) {
                     ARGB p = P;
 
                     if (pixOp == PixOp_SRC) {
@@ -1682,4 +1683,19 @@ void Image::CalcZ()
     Barrier_wait(gfxThreadWorkerBarrier);
     Barrier_wait(gfxThreadWorkerBarrier);
 
+}
+
+void Image::setBound(int boundX, int boundY, int boundW, int boundH)
+{
+    this->boundX = boundX;
+    this->boundY = boundY;
+    this->boundW = boundW;
+    this->boundH = boundH;
+}
+void Image::resetBound()
+{
+    this->boundX = 0;
+    this->boundY = 0;
+    this->boundW = Width;
+    this->boundH = Height;
 }

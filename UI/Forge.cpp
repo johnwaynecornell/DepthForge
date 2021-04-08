@@ -283,24 +283,337 @@ void Forge::drawBackground(UI *member, Image *target, QImage *qImage)
             bkgImage, 0, 0, w, h);
 }
 
+bool GfxFitRect2(int *toFitX, int *toFitY, int *toFitW, int *toFitH, int toFitDimX, int toFitDimY,
+                 int *x, int *y, int *w, int *h)
+{
+    double a1 = *w / (double) *h;
+    double a2 = *toFitW / (double) *toFitH;
+
+    int _w, _h, _x, _y;
+
+    int tw, th;
+
+    tw = *toFitW;
+    th = *toFitH;
+
+    if (a2 <= a1)
+    {
+        _h = *h;
+        _w = *w;
+
+        tw = (int)(tw * a2);
+
+        if (tw>=toFitDimX)
+        {
+            tw = *toFitW;
+            _w = (int)(_h * a2);
+        }
+
+        //
+
+    }
+    else
+    {
+        _w = *w;
+        _h = *h;
+
+        th = th * a2;
+
+        if (th >= toFitDimY)
+        {
+            th = *toFitH;
+            _h  = (int)(_w / a2);
+
+        }
+    }
+
+    _x = *x + (*w - _w) / 2;// - (toFit.X / toFit.Width * This.Width);
+    _y = *y + (*h - _h) / 2;// - (toFit.Y / toFit.Height * This.Height);
+
+    *x = _x;
+    *y = _y;
+    *w = _w;
+    *h = _h;
+
+    *toFitX = *toFitX + (*toFitW - tw) / 2;// - (toFit.X / toFit.Width * This.Width);
+    *toFitY = *toFitY + (*toFitH - th) / 2;// - (toFit.Y / toFit.Height * This.Height);
+
+    *toFitW = tw;
+    *toFitH = th;
+}
+
+void zoomVars(double xo, double yo, double scale,
+              int &srcX, int &srcY, int &srcW, int &srcH,
+              int &destX, int &destY, int &destW, int &destH)
+{
+    double a1 = destW / (double) destH;
+    double a2 = srcW / (double) srcH;
+
+    int sx,sy,sw,sh;
+    int scx, scy;
+
+    sw = srcW;
+    sh = srcH;
+
+    scx = sw / 2.0;
+    scy = sh / 2.0;
+
+    if (a2<a1)
+    {
+        sh = srcH / scale;
+        sy = scy - scy / scale;
+
+        sw = destW * sh / destH;
+        sx = scx - sw / 2.0;
+    } else
+    {
+        sw = srcW / scale;
+        sx = scx - scx / scale;
+
+        sh = destH * sw / destW;
+        sy = scy - sh / 2.0;
+    }
+
+    int i;
+    int d;
+
+    if (sx<0)
+    {
+        i = destW * -sx / (double) sw;
+
+        destX += i;
+        destW -= i;
+
+        sw += sx;
+        sx = 0;
+    }
+
+    int sx2 = sx + sw;
+    int osx2 = srcW + srcX;
+
+    if (sx2>osx2)
+    {
+        d = sx2 - osx2;
+        i = destW * d / (double) sw;
+        destW -= i;
+        sw -= d;
+    }
+
+
+
+    if (sy<0)
+    {
+        i = destH * -sy / (double) sh;
+
+        destY += i;
+        destH -= i;
+
+        sh += sy;
+        sy = 0;
+    }
+
+    int sy2 = sy + sh;
+    int osy2 = srcH + srcY;
+
+    if (sy2>osy2)
+    {
+        d = sy2 - osy2;
+        i = destH * d / (double) sh;
+        destH -= i;
+        sh -= d;
+    }
+
+    srcX = sx;
+    srcY = sy;
+    srcW = sw;
+    srcH = sh;
+}
+
+
 void Forge::draw(Image *target, QImage *qImage)
 {
     ((MainUI *)rootElement())->mode_Current->updateSrc(this);
     UI::draw(target, qImage);
 
-    _x = xReal;
-    _y = yReal;
+    int _x1,_y1,_w1,_h1;
 
-    _w = width.get();
-    _h = height.get();
+    _x = _x1 = xReal;
+    _y = _y1 = yReal;
 
-    GfxFitRect(0, 0, src->Width, src->Height, &_x, &_y, &_w, &_h);
+    _w = _w1 = width.get();
+    _h = _h1 = height.get();
 
-    target->DrawImage(_x,_y,_w,_h, PixOp_SRC, ZOp_SRC, src, 0, 0, src->Width, src->Height);
+    _srcW = src->Width;
+    _srcH = src->Height;
+    _srcX = 0;
+    _srcY = 0;
+
+    double scale = 1.0;
+
+    zoomVars(0.0,0.0,scale, _srcX, _srcY, _srcW, _srcH, _x,_y,_w,_h);
+    target->DrawImage(_x,_y,_w,_h, PixOp_SRC, ZOp_SRC, src, _srcX, _srcY, _srcW, _srcH);
+
+    target->setBound(_x,_y,_w,_h);
+    ((MainUI *)rootElement())->mode_Current->drawForge(this, target, qImage);
+    target->resetBound();
+}
+
+
+
+/*
+void draw(Image *target, QImage *qImage)
+{
+    ((MainUI *)rootElement())->mode_Current->updateSrc(this);
+    UI::draw(target, qImage);
+
+    int _x1,_y1,_w1,_h1;
+
+    _x = _x1 = xReal;
+    _y = _y1 = yReal;
+
+    _w = _w1 = width.get();
+    _h = _h1 = height.get();
+
+    double scale = 3.0;
+
+    int _cx = _w / 2;
+    int _cy = _h / 2;
+
+    int targX = -_cx;
+    int targY = -_cy;
+
+    double a1;
+    double a2 = (double)src->Width / (double) src->Height;
+
+    double srcX, srcY;
+    double srcW, srcH;
+
+    int _srcX, _srcY;
+    int _srcW, _srcH;
+
+    int w = _w;
+    int h = _h;
+
+    srcX = -1;
+    srcW = 2;
+
+    srcH = 2;// / a2;
+    srcY = -1;// * srcH / 2.0;
+
+    if (a2<1)
+    {
+        /*
+        srcX = -1.0;
+        srcW = 2.0;
+
+        srcH = 2.0;// / a2;
+        srcY = -1.0;// * srcH / 2.0;
+
+        _x = _x + _w / 2 - _w / 2 * a2;
+        _w *= a2;
+
+    } else
+    {
+  /*
+        srcW = 2.0;// * a2;
+        srcX = -1.0;// * srcW / 2;
+
+        srcH = 2.0;
+        srcY = -1.0;
+
+        _y = _y + _h /2 - _h / 2 / a2;
+        _h /= a2;
+    }
+
+    a2 = (double) srcW / (double) srcH;
+    a1 = (double)_w/(double)_h;
+/*
+    if (a2 <= a1)
+    {
+//        _h = *h;
+        _w = (int)(_h * a1);
+    }
+    else
+    {
+//        _w = *w;
+        _h = (int)(_w / a1);
+    }
+
+    _x = _x + (w - _w) / 2;// - (toFit.X / toFit.Width * This.Width);
+    _y = _y + (h - _h) / 2;// - (toFit.Y / toFit.Height * This.Height);
+
+    int Cx = src->Width>>1;
+    int Cy = src->Height>>1;
+
+    _srcX = Cx + (int) (srcX * Cx);
+    _srcY = Cy + (int) (srcY * Cy);
+
+    _srcW = (int)( src->Width * srcW / 2.0);
+    _srcH = (int) (src->Height * srcH / 2.0);
+
+/*
+    if (_srcY<0)
+    {
+
+    }
+
+    if (_srcX<0)
+    {
+
+    }
+    */
+
+    /*
+    double a1 = *w / (double) *h;
+    double a2 = toFitW / (double) toFitH;
+
+    int _w, _h, _x, _y;
+
+    if (a2 <= a1)
+    {
+        _h = *h;
+        _w = (int)(_h * a2);
+    }
+    else
+    {
+        _w = *w;
+        _h = (int)(_w / a2);
+    }
+
+    _x = *x + (*w - _w) / 2;// - (toFit.X / toFit.Width * This.Width);
+    _y = *y + (*h - _h) / 2;// - (toFit.Y / toFit.Height * This.Height);
+*/
+
+
+
+
+
+/*
+    double windX = 0;
+    double windY = 0;
+    int Cx = src->Width>>1;
+    int Cy = src->Height>>1;
+
+    srcX = (int) (Cx - Cx / scale);
+    srcY = (int) (Cy - Cy / scale);
+
+    srcW = src->Width / scale;
+    srcH = src->Height / scale;
+*/
+
+
+
+
+
+/*
+
+    GfxFitRect(_srcX, _srcY, _srcW, _srcH, &_x, &_y, &_w, &_h);
+
+    target->DrawImage(_x,_y,_w,_h, PixOp_SRC, ZOp_SRC, src, _srcX, _srcY, _srcW, _srcH);
 
     ((MainUI *)rootElement())->mode_Current->drawForge(this, target, qImage);
 }
-
+*/
 void Forge::mouseEnter()
 {
     hasMouse = true;
@@ -313,12 +626,32 @@ void Forge::mouseLeave()
     UI::mouseLeave();
 }
 
+void Forge::setMouseXY(int x, int y)
+{
+    //double _x = (x - (_x-xReal)) / (double) _w;
+    //double _y = (y - (_y-yReal)) / (double) _h;
+
+    double _x = (x - (this->_x-xReal)) / (double) _w;
+    double _y = (y - (this->_y-yReal)) / (double) _h;
+
+    double sx = _srcX + _srcW * _x;
+    double sy = _srcY + _srcH * _y;
+
+    mouseX = sx / (double) src->Width;
+    mouseY = sy / (double) src->Height;
+}
+
 bool Forge::mouseMove(int x, int y)
 {
-    mouseX = (x - (_x-xReal)) / (double) _w;
-    mouseY = (y - (_y-yReal)) / (double) _h;
+    //mouseX = (x - (_x-xReal)) / (double) _w;
+    //mouseY = (y - (_y-yReal)) / (double) _h;
 
+    setMouseXY(x,y);
     ((MainUI *)rootElement())->mode_Current->mouseMoveForge(this, x, y);
+
+
+
+
 
     bool rc = UI::mouseMove(x,y);
 
@@ -327,9 +660,10 @@ bool Forge::mouseMove(int x, int y)
 
 bool Forge::mouseButtonPress(int x, int y, Qt::MouseButton button)
 {
-    mouseX = (x - (_x-xReal)) / (double) _w;
-    mouseY = (y - (_y-yReal)) / (double) _h;
+    //mouseX = (x - (_x-xReal)) / (double) _w;
+    //mouseY = (y - (_y-yReal)) / (double) _h;
 
+    setMouseXY(x,y);
     mouseDown.setFlag(button, true);
 
     ((MainUI *)rootElement())->mode_Current->mouseButtonPressForge(this, x, y, button);

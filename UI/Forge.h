@@ -28,6 +28,11 @@ public:
     int _w;
     int _h;
 
+    int _srcW;
+    int _srcH;
+    int _srcX;
+    int _srcY;
+
     QString lastPath1;
     QString lastPath2;
     QString fileName = QString::null;
@@ -39,6 +44,8 @@ public:
     virtual ~Forge();
 
     MainWnd *wnd();
+
+    void setMouseXY(int x, int y);
 
     void drawInitial();
 

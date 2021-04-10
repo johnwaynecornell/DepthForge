@@ -4,12 +4,15 @@
 
 #include "Slider.h"
 
-Slider::Slider(UI *parent, const char *label, bool _signed) : UI(parent)
+Slider::Slider(UI *parent, const char *label, bool _signed, bool horizontal) : UI(parent)
 {
     this->label = label;
     this->_signed = _signed;
+    this->horizontal = horizontal;
 
-    element = new Element(this, 16, 24);
+    if (!horizontal) {
+        element = new Element(this, 16, 24, false);
+    } else element = new Element(this, 24, 16, true);
 
     element->xPos.setResp(Resp_Self);
     element->yPos.setResp(Resp_Self);
@@ -24,12 +27,10 @@ Slider::Slider(UI *parent, const char *label, bool _signed) : UI(parent)
     setV(0);
 }
 
-
 Slider::~Slider()
 {
     if (src != nullptr) delete src;
 }
-
 
 void Slider::setV(double val)
 {
@@ -143,61 +144,105 @@ void Slider::makeSrc()
     int yc = _h / 2;
 
 
-    src->Line(xc+(xc>>1), 6, xc+(xc>>1), _h-6);
-    src->DrawPath(PixOp_SRC_ALPHA,ZOp_SRC_ADD, 1, sliderPixFunc, &xc);
+    if (!horizontal)
+    {
+        if (label == nullptr)
+        {
+            src->Line(xc, 6, xc, _h-6);
+            src->DrawPath(PixOp_SRC_ALPHA,ZOp_SRC_ADD, 1, sliderPixFunc, &xc);
 
-    if (_signed) {
-        src->Line(xc+(xc>>2), yc, _w, yc);
-        src->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC_ADD, 1, sliderPixFuncDiv, &xc);
+            if (_signed) {
+                src->Line(0, yc, _w, yc);
+                src->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC_ADD, 1, sliderPixFuncDiv, &xc);
+            }
+
+        } else
+        {
+            src->Line(xc+(xc>>1), 6, xc+(xc>>1), _h-6);
+            src->DrawPath(PixOp_SRC_ALPHA,ZOp_SRC_ADD, 1, sliderPixFunc, &xc);
+
+            if (_signed) {
+                //src->Line(xc+(xc>>2), yc, _w, yc);
+                src->Line(xc, yc, _w, yc);
+                src->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC_ADD, 1, sliderPixFuncDiv, &xc);
+            }
+
+        }
+    } else
+    {
+        if (label == nullptr)
+        {
+            src->Line(6, yc, _w-6, yc);
+
+            src->DrawPath(PixOp_SRC_ALPHA,ZOp_SRC_ADD, 1, sliderPixFunc, &yc);
+
+            if (_signed) {
+                src->Line(xc, 0, xc, _h);
+                src->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC_ADD, 1, sliderPixFuncDiv, &yc);
+            }
+        } else
+        {
+            src->Line(6, yc+(yc>>1), _w-6,yc+(yc>>1));
+            src->DrawPath(PixOp_SRC_ALPHA,ZOp_SRC_ADD, 1, sliderPixFunc, &yc);
+
+            if (_signed)
+            {
+                src->Line(xc, yc, xc, _h);
+                src->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC_ADD, 1, sliderPixFuncDiv, &yc);
+            }
+        }
     }
 
+    if (label != nullptr) {
 
+        QImage *i = new QImage((unsigned char *) src->imageMemory, src->Width, src->Height,
+                               QImage::Format_ARGB32);
 
-    QImage *i = new QImage((unsigned char *) src->imageMemory, src->Width, src->Height,
-            QImage::Format_ARGB32);
+        QPainter *p = new QPainter(i);
 
-    QPainter *p = new QPainter(i);
+        double osz = 1;
+        double sz;
 
-    double osz = 1;
-    double sz;
+        int w;
 
-    int w;
+        do {
+            sz = osz;
 
-    do
-    {
-        sz = osz;
+            QFont f;
+            f = p->font();
+
+            f.setPointSizeF(osz);
+
+            p->setFont(f);
+
+            w = p->fontMetrics().boundingRect(label).height();
+
+            osz += .1;
+        } while (w < (xc - 1));
 
         QFont f;
         f = p->font();
 
-        f.setPointSizeF(osz);
+        f.setPointSizeF(sz);
 
         p->setFont(f);
 
-        w = p->fontMetrics().boundingRect(label).height();
+        int __w = p->fontMetrics().boundingRect(label).width();
 
-        osz+=.1;
-    } while(w < (xc-1));
+        if (!horizontal) {
+            p->translate(_w / 2 - 3, _h);
+            p->rotate(-90);
+        } else {
+            p->translate(_w, _h / 2 - 3);
 
-    QFont f;
-    f = p->font();
+        }
+        p->setPen(QColor(0xFF, 0xFF, 0xFF, 0xFF));
+        p->drawText((_h - __w) / 2, 0, QApplication::tr(label));
 
-    f.setPointSizeF(sz);
-
-    p->setFont(f);
-
-    int __w = p->fontMetrics().boundingRect(label).width();
-
-    p->translate(_w/2-3,_h);
-    p->rotate(-90);
-
-    p->setPen(QColor(0xFF,0xFF,0xFF,0xFF));
-    p->drawText((_h-__w)/2,0, QApplication::tr(label));
-
-    p->end();
-    delete  p;
-    delete i;
-
+        p->end();
+        delete p;
+        delete i;
+    }
 }
 
 void Slider::drawBackground(UI *member, Image *target, QImage *qImage)
@@ -207,10 +252,9 @@ void Slider::drawBackground(UI *member, Image *target, QImage *qImage)
 
 void Slider::draw(Image *target, QImage *qImage)
 {
-    makeSrc();
-    target->DrawImage(xReal,yReal, width.get(), height.get(),
-                      PixOp_SRC_ALPHA, ZOp_SRC_ADD, src, 0,0,src->Width, src->Height);
 
+    makeSrc();
+    target->DrawImage(xReal,yReal, width.get(), height.get(),PixOp_SRC_ALPHA, ZOp_SRC_ADD, src, 0,0,src->Width, src->Height);
     UI::draw(target, qImage);
 }
 
@@ -220,13 +264,25 @@ void Slider::updateElementPosition()
 
     if (_signed) v = (v+1)/2.0;
 
-    int y = (int) ((1.0-v) * (height.get()-element->height.get()-1));
+    if (!horizontal)
+    {
+        int y = (int) ((1.0 - v) * (height.get() - element->height.get() - 1));
 
-    element->xPos.set(16);
-    element->yPos.set(y);
+        element->xPos.set((label == nullptr) ? (width.get() - element->width.get())/2 : width.get()/2);
+        element->yPos.set(y);
 
-    element->xReal = xReal + element->xPos.get();
-    element->yReal = yReal + element->yPos.get();
+        element->xReal = xReal + element->xPos.get();
+        element->yReal = yReal + element->yPos.get();
+    } else
+    {
+        int x = (int) ((1.0 -  v) * (width.get() - element->width.get() - 1));
+
+        element->xPos.set(x);
+        element->yPos.set(((label == nullptr) ? (height.get() - element->height.get())/2 : height.get()/2));
+
+        element->xReal = xReal + element->xPos.get();
+        element->yReal = yReal + element->yPos.get();
+    }
 }
 
 bool Slider::selfLayout()
@@ -278,24 +334,45 @@ bool Slider::mouseButtonRelease(int x, int y, Qt::MouseButton button)
 
 bool Slider::moveElement(int xd, int yd)
 {
-    int _y, y;
+    if (!horizontal)
+    {
+        int _y, y;
 
-    _y = y = element->yPos.get();
+        _y = y = element->yPos.get();
 
-    int h = height.get() - element->height.get() - 1;
+        int h = height.get() - element->height.get() - 1;
 
-    y = y + yd;
+        y = y + yd;
 
-    if (y<0) y=0;
-    if (y>h) y=h;
+        if (y < 0) y = 0;
+        if (y > h) y = h;
 
-    if (!_signed) {
-        setV(1.0 - (y / (double) h));
+        if (!_signed) {
+            setV(1.0 - (y / (double) h));
+        } else {
+            setV(-1 + (1.0 - (y / (double) h)) * 2.0);
+        }
+        return _y != y;
     } else
     {
-        setV(-1 + (1.0 - (y / (double) h))*2.0);
+        int _x, x;
+
+        _x = x = element->xPos.get();
+
+        int w = width.get() - element->width.get() - 1;
+
+        x = x + xd;
+
+        if (x < 0) x = 0;
+        if (x > w) x = w;
+
+        if (!_signed) {
+            setV(1.0 - (x / (double) w));
+        } else {
+            setV(-1 + (1.0 - (x / (double) w)) * 2.0);
+        }
+        return _x != x;
     }
-    return _y != y;
 }
 
 bool elementPixFunc(int index, double y, ARGB &p, float &z, void *arg)
@@ -327,8 +404,10 @@ bool elementPixFunc(int index, double y, ARGB &p, float &z, void *arg)
     return true;
 }
 
-Slider::Element::Element(Slider *slider, int width, int height) : UI(slider)
+Slider::Element::Element(Slider *slider, int width, int height, bool horizontal) : UI(slider)
 {
+    this->horizontal = horizontal;
+
     this->width.set(width);
     this->height.set(height);
 
@@ -339,14 +418,25 @@ Slider::Element::Element(Slider *slider, int width, int height) : UI(slider)
 
     int w = 3;
 
-    src->MoveTo(xc, height-w);
-    src->LineTo(width-w, yc);
-    src->LineTo(xc, w);
-    src->LineTo(w, yc);
-    src->LineTo(xc, height-w);
+    if (!horizontal)
+    {
+        src->MoveTo(xc, height - w);
+        src->LineTo(width - w, yc);
+        src->LineTo(xc, w);
+        src->LineTo(w, yc);
+        src->LineTo(xc, height - w);
 
-    src->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC_ADD, 1.0 / w, elementPixFunc, nullptr);
+        src->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC_ADD, 1.0 / w, elementPixFunc, nullptr);
+    } else
+    {
+        src->MoveTo(width-w, yc);
+        src->LineTo(xc, height - w);
+        src->LineTo(w, yc);
+        src->LineTo(xc, w);
+        src->LineTo(width-w, yc);
 
+        src->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC_ADD, 1.0 / w, elementPixFunc, nullptr);
+    }
     mouseDown = false;
 }
 

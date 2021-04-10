@@ -450,6 +450,10 @@ void BltImageProc_PixOp_SRC_ZOp_SRC_ADD(GfxThreadWorker *worker,
                 sp= srcPix[xx];
                 zv = srcZ[xx];
 
+                /* TODO */ //remove reality check
+
+                if (!dst->Bound(dx+x,y)) __asm("int3;");
+
                 dst->pix[y][dx+x]=sp;
                 dst->z[y][dx+x] += zv;
 

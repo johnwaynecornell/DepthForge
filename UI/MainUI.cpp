@@ -54,12 +54,14 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
 
     //pathToolsCtl->open();
 
-    forge = new Forge(this);
+    forgeContainer = new ForgeContainer(this);
 
-    forge->width.setResp(Resp_Parent);
-    forge->height.setResp(Resp_Parent);
-    forge->xPos.setResp(Resp_Parent);
-    forge->yPos.setResp(Resp_Parent);
+    forgeContainer->width.setResp(Resp_Parent);
+    forgeContainer->height.setResp(Resp_Parent);
+    forgeContainer->xPos.setResp(Resp_Parent);
+    forgeContainer->yPos.setResp(Resp_Parent);
+
+    //forge = forgeContainer->forge;
 
     mode_Current = nullptr;
     mode_DepthEdit = new Mode_DepthEdit(this);
@@ -166,29 +168,30 @@ void MainUI::drawOverlay(Image *target, QImage *qImage)
 
 bool MainUI::selfLayout()
 {
-    forge->height.set(height.get());
-    forge->yPos.set(0);
+    UI::selfLayout();
+
+    tabs->height.set(height.get());
+    tabs->yPos.set(0);
+
+    forgeContainer->height.set(height.get());
+    forgeContainer->yPos.set(0);
 
     if (mode_Current != nullptr) mode_Current->selfLayout();
-
-    Fixed::selfLayout();
 
     return true;
 }
 
 bool MainUI::doLayout()
 {
-
-    Fixed::doLayout();
-
     int x = tabs->width.get();
     int w = width.get()-x;
 
-
-    forge->xPos.set(x);
-    forge->width.set(w);
+    forgeContainer->xPos.set(x);
+    forgeContainer->width.set(w);
 
     if (mode_Current != nullptr) mode_Current->doLayout();
+
+    UI::doLayout();
 
     return true;
 }

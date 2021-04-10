@@ -1402,6 +1402,9 @@ struct FillRect_Params
 
     ZOp zOp;
     float z;
+
+    bool (*pixFunc)(Image *_this, int x, int y, ARGB &p, float &z, void *param);
+    void *param;
 };
 
 void FillRectProc_SRC_SRC(GfxThreadWorker *w, Image *image, int _x, int _y,
@@ -1501,6 +1504,85 @@ void *FillRectSlice(GfxThreadWorker *w)
     return nullptr;
 }
 
+void FillRectPixFuncProc(GfxThreadWorker *w, Image *image, int x, int y, int width, int height,
+                  PixOp pixOp, ZOp zOp, bool (*pixFunc)(Image *_this, int x, int y, ARGB &p, float &z, void *param), void *param)
+{
+    int y1 = y + height * w->index / w->of;
+    int y2 = y + height * (w->index+1) / w->of;
+
+    int x2 = x+width;
+
+    for (int _y=y1; _y<y2; _y++)
+    {
+        for (int _x=x; _x<x2; _x++) {
+            ARGB p;
+            float z;
+
+            if (pixFunc(image, _x, _y, p, z, param)) {
+
+                if (pixOp == PixOp_SRC) {
+                    image->pix[_y][_x] = p;
+                } else if (pixOp == PixOp_SRC_ALPHA) {
+                    ARGB dest = image->pix[_y][_x];
+                    dest.r = valValAlpha(dest.r, p.r, p.a);
+                    dest.g = valValAlpha(dest.g, p.g, p.a);
+                    dest.b = valValAlpha(dest.b, p.b, p.a);
+                    dest.a = valValAlpha(dest.a, p.a, p.a);
+                    image->pix[_y][_x] = dest;
+                }
+
+                if (zOp == ZOp_SRC) {
+                    image->z[_y][_x] = z;
+                } else if (zOp == ZOp_SRC_ADD) {
+                    image->z[_y][_x] += z;
+                }
+            }
+        }
+    }
+
+}
+
+void *FillRectPixFuncSlice(GfxThreadWorker *w)
+{
+    FillRect_Params *p = (FillRect_Params *)w->p[17];
+    FillRectPixFuncProc(w, p->image, p->x, p->y, p->width, p->height,
+                 p->pixOp, p->zOp, p->pixFunc, p->param);
+    return nullptr;
+}
+
+
+void Image::FillRect(int x,int y, int w, int h, PixOp pixOp, ZOp zOp, bool (*pixFunc)(Image *_this, int x, int y, ARGB &p, float &z, void *param), void *param)
+{
+    int count = gfxThreadWorkerCount;
+    GfxThreadWorker **workers = gfxThreadWorkers;
+
+    FillRect_Params params;
+
+    params.image = this;
+    params.x = x;
+    params.y = y;
+    params.width = w;
+    params.height = h;
+    params.pixOp = pixOp;
+    params.zOp = zOp;
+    params.pixFunc = pixFunc;
+    params.param = param;
+
+    GfxWorker_ProcType func;
+
+    func = FillRectPixFuncSlice;
+
+    for (int i = 0; i < count; i++) {
+        GfxThreadWorker *w = gfxThreadWorkers[i];
+
+        w->p[17] = &params;
+
+        w->WorkerProc = func;
+    }
+
+    Barrier_wait(gfxThreadWorkerBarrier);
+    Barrier_wait(gfxThreadWorkerBarrier);
+}
 
 void Image::FillRect(int x,int y, int width, int height,
         PixOp pixOp, ARGB p, ZOp zOp, float z)

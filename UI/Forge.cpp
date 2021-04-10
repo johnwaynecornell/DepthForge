@@ -44,6 +44,7 @@ Forge::Forge(UI *parent) : UI(parent)
 
     bkgTile = new Image(32,32);
 
+
     bkgTile->Line(8,8,24,8);
     bkgTile->LineTo(24,24);
     bkgTile->LineTo(8,24);
@@ -271,7 +272,7 @@ void Forge::drawBackground(UI *member, Image *target, QImage *qImage)
             int yy = y % bkgTile->Height;
             for (int x=0; x<bkgImage->Width; x++)
             {
-                int xx = x % bkgTile->Height;
+                int xx = x % bkgTile->Width;
 
                 bkgImage->pix[y][x] = bkgTile->pix[yy][xx];
                 bkgImage->z[y][x] = bkgTile->z[yy][xx];
@@ -358,21 +359,29 @@ void zoomVars(double xo, double yo, double scale,
     scx = sw / 2.0;
     scy = sh / 2.0;
 
+    int sox = scx ,soy = scy;
+
+    sox = (int)(xo * srcW);
+    soy = (int)(yo * srcH);
+
     if (a2<a1)
     {
         sh = srcH / scale;
-        sy = scy - scy / scale;
+        //sy = soy - scy / scale;
 
         sw = destW * sh / destH;
-        sx = scx - sw / 2.0;
+        //sx = sox - sw / 2.0;
     } else
     {
         sw = srcW / scale;
-        sx = scx - scx / scale;
+    //    sx = sox - scx / scale;
 
         sh = destH * sw / destW;
-        sy = scy - sh / 2.0;
+    //    sy = soy - sh / 2.0;
     }
+
+    sx = (int)(xo * (srcW - sw));
+    sy = (int)(yo * (srcH - sh));
 
     int i;
     int d;
@@ -429,6 +438,13 @@ void zoomVars(double xo, double yo, double scale,
     srcH = sh;
 }
 
+bool ForgeDrawPixFunc(Image *image, int x, int y, ARGB &p, float &z, void *arg)
+{
+    p = image->pix[y][x];
+    z = image->z[y][x] * *((double *)arg);
+
+    return false;
+}
 
 void Forge::draw(Image *target, QImage *qImage)
 {
@@ -448,10 +464,9 @@ void Forge::draw(Image *target, QImage *qImage)
     _srcX = 0;
     _srcY = 0;
 
-    double scale = 1.0;
-
-    zoomVars(0.0,0.0,scale, _srcX, _srcY, _srcW, _srcH, _x,_y,_w,_h);
+    zoomVars(scrollX, scrollY, scale, _srcX, _srcY, _srcW, _srcH, _x,_y,_w,_h);
     target->DrawImage(_x,_y,_w,_h, PixOp_SRC, ZOp_SRC, src, _srcX, _srcY, _srcW, _srcH);
+    target->FillRect(_x,_y,_w,_h, PixOp_SRC, ZOp_SRC, ForgeDrawPixFunc, &scale);
 
     target->setBound(_x,_y,_w,_h);
     ((MainUI *)rootElement())->mode_Current->drawForge(this, target, qImage);
@@ -646,16 +661,15 @@ bool Forge::mouseMove(int x, int y)
     //mouseX = (x - (_x-xReal)) / (double) _w;
     //mouseY = (y - (_y-yReal)) / (double) _h;
 
-    setMouseXY(x,y);
-    ((MainUI *)rootElement())->mode_Current->mouseMoveForge(this, x, y);
-
-
-
-
-
     bool rc = UI::mouseMove(x,y);
 
-    return rc;
+    if (!rc)
+    {
+        setMouseXY(x,y);
+        ((MainUI *)rootElement())->mode_Current->mouseMoveForge(this, x, y);
+    }
+
+    return true;
 }
 
 bool Forge::mouseButtonPress(int x, int y, Qt::MouseButton button)
@@ -663,25 +677,27 @@ bool Forge::mouseButtonPress(int x, int y, Qt::MouseButton button)
     //mouseX = (x - (_x-xReal)) / (double) _w;
     //mouseY = (y - (_y-yReal)) / (double) _h;
 
-    setMouseXY(x,y);
-    mouseDown.setFlag(button, true);
-
-    ((MainUI *)rootElement())->mode_Current->mouseButtonPressForge(this, x, y, button);
-
     bool rc = UI::mouseButtonPress(x,y,button);
 
-    return rc;
+    if (!rc) {
+        setMouseXY(x, y);
+        mouseDown.setFlag(button, true);
+    }
+
+    return ((MainUI *)rootElement())->mode_Current->mouseButtonPressForge(this, x, y, button);
 }
 
 bool Forge::mouseButtonRelease(int x, int y, Qt::MouseButton button)
 {
-    mouseDown.setFlag(button, false);
-
-    ((MainUI *)rootElement())->mode_Current->mouseButtonReleaseForge(this, x, y, button);
-
     bool rc = UI::mouseButtonRelease(x,y,button);
 
-    return rc;
+    if (!rc) {
+        mouseDown.setFlag(button, false);
+
+        ((MainUI *) rootElement())->mode_Current->mouseButtonReleaseForge(this, x, y, button);
+    }
+
+    return true;
 }
 
 void Forge::open(QString &fileName)

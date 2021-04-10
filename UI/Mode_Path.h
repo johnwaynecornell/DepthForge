@@ -31,6 +31,7 @@ public:
     Button_Image *button_Select;
 
     Button_Image *button_ShapeToggle;
+    Button_Image *button_ShapeCurveToggle;
 
     Slider *slide_Intensity;
     Slider *slide_Offset;
@@ -42,6 +43,7 @@ public:
     Image *image_Select;
 
     Image *image_ShapeToggle;
+    Image *image_ShapeCurveToggle;
 
     Image *image_Divide_t;
     Image *image_Move_t;
@@ -49,6 +51,7 @@ public:
     Image *image_Connect_t;
     Image *image_Select_t;
     Image *image_ShapeToggle_t;
+    Image *image_ShapeCurveToggle_t;
 
     std::list<dPnt2D> points;
     bool pointsDirty = false;
@@ -72,7 +75,8 @@ public:
         SubMode_Plus,
         SubMode_Connect,
         SubMode_Select,
-        SubMode_Shape_Linear
+        SubMode_Shape_Linear,
+        SubMode_Shape_Curve
     };
 
     SubMode subMode;
@@ -119,6 +123,7 @@ private:
     void BuildConnect();
     void BuildSelect();
     void BuildShapeToggle();
+    void BuildShapeCurveToggle();
 };
 
 #endif //DEPTHFORGE_PATHMODE_H

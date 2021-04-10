@@ -66,6 +66,7 @@ void DepthForgeWin::aboutToBlock()
 void DepthForgeWin::resizeGL(int w,int h)
 {
     QOpenGLWindow::resizeGL(w,h);
+    checkResize();
 }
 
 void DepthForgeWin::checkResize()
@@ -73,38 +74,40 @@ void DepthForgeWin::checkResize()
     Width = width();
     Height = height();
 
-    if (Width != oldWidth || Height != oldHeight)
-    {
+    if (Width != oldWidth || Height != oldHeight) {
         oldWidth = Width;
         oldHeight = Height;
+
+
+        int w = Width;
+        int h = Height;
+
+        if (UI_Image != nullptr) delete UI_Image;
+        if (UI_ImageAnaglyph != nullptr) delete UI_ImageAnaglyph;
+        if (UI_ImageLeft != nullptr) delete UI_ImageLeft;
+        if (UI_ImageRight != nullptr) delete UI_ImageRight;
+        if (rend != nullptr) delete rend;
+
+        UI_Image = new Image(w, h);
+        UI_ImageAnaglyph = new Image(w, h);
+        UI_ImageLeft = new Image(w, h);
+        UI_ImageRight = new Image(w, h);
+
+        rend = new QImage((uchar *) UI_Image->imageMemory, w, h, QImage::Format_ARGB32);
+
+        ui->xReal = 0;
+        ui->yReal = 0;
+        ui->yPos.set(0);
+        ui->yPos.set(0);
+
+        ui->width.set(w);
+        ui->height.set(h);
+
+        if (obuf != nullptr) delete[] obuf;
+        obuf = new BGRA[Width * Height];
+
+        ui->finalLayout();
     }
-
-    int w = Width;
-    int h = Height;
-
-    if (UI_Image != nullptr) delete UI_Image;
-    if (UI_ImageAnaglyph  != nullptr) delete UI_ImageAnaglyph;
-    if (UI_ImageLeft != nullptr) delete UI_ImageLeft;
-    if (UI_ImageRight != nullptr) delete UI_ImageRight;
-    if (rend != nullptr) delete rend;
-
-    UI_Image = new Image(w,h);
-    UI_ImageAnaglyph  = new Image(w,h);
-    UI_ImageLeft = new Image(w,h);
-    UI_ImageRight = new Image(w,h);
-
-    rend = new QImage((uchar *)UI_Image->imageMemory, w, h, QImage::Format_ARGB32);
-
-    ui->xReal = 0; ui->yReal = 0;
-    ui->yPos.set(0);
-    ui->yPos.set(0);
-
-    ui->width.set(w);
-    ui->height.set(h);
-
-    if (obuf != nullptr) delete [] obuf;
-    obuf = new BGRA[Width*Height];
-
 }
 
 void DepthForgeWin::closeEvent(QCloseEvent *event)

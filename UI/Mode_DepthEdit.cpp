@@ -79,7 +79,7 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     bottom->xPos.set(0);
     bottom->yPos.set(0);
 
-    slideA = new Slider(bottom, "Size", false);
+    slideA = new Slider(bottom, "Size", false, false);
     slideA->width.setResp(Resp_Self);
     slideA->height.setResp(Resp_Self);
     slideA->xPos.setResp(Resp_Self);
@@ -91,7 +91,7 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     slideA->yPos.set(0);
 
 
-    slideB = new Slider(bottom, "Intensity", false);
+    slideB = new Slider(bottom, "Intensity", false, false);
     slideB->width.setResp(Resp_Self);
     slideB->height.setResp(Resp_Self);
     slideB->xPos.setResp(Resp_Self);

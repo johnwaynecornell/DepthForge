@@ -40,6 +40,10 @@ public:
     Image *bkgImage;
     Image *bkgTile;
 
+    double scrollX = 0.5;
+    double scrollY = 0.5;
+    float scale = 1.0;
+
     Forge(UI *parent);
     virtual ~Forge();
 

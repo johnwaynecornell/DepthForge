@@ -36,7 +36,7 @@ add_executable(DepthForge version.h main.cpp
         UI/TabCtl.cpp UI/TabCtl.h
         Lense.cpp Lense.h FpsMonitor.cpp FpsMonitor.h
         UI/Slider.cpp UI/Slider.h UI/TestUI.cpp UI/TestUI.h
-        genbuttons.h UI/Mode_Path.cpp UI/Mode_Path.h UI/Mode_DepthEdit.cpp UI/Mode_DepthEdit.h UI/Mode.cpp UI/Mode.h
+        genbuttons.h UI/Mode_Path.cpp UI/Mode_Path.h UI/Mode_DepthEdit.cpp UI/Mode_DepthEdit.h UI/Mode.cpp UI/Mode.h UI/ForgeContainer.h UI/ForgeContainer.cpp
 
         #if (WIN32)
         ${APP_ICON_RESOURCE_WINDOWS}

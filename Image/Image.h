@@ -169,6 +169,7 @@ public:
 
     void Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB, ZOp zOp, float zA, float zB);
     void FillRect(int x,int y, int w, int h, PixOp pixOp, ARGB p, ZOp zOp, float z);
+    void FillRect(int x,int y, int w, int h, PixOp pixOp, ZOp zOp, bool (*pixFunc)(Image *_this, int x, int y, ARGB &p, float &z, void *param), void *param);
     void DrawImage(int dx,int dy, int dw, int dh, PixOp pixOp, ZOp zOp,
                    Image *src, int sx,int sy, int sw, int sh);
 

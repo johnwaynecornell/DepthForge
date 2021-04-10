@@ -12,6 +12,8 @@
 #include "UI.h"
 #include "Slider.h"
 #include "TabCtl.h"
+#include "Forge.h"
+#include "ForgeContainer.h"
 
 #include "../FpsMonitor.h"
 
@@ -19,6 +21,7 @@
 #include "Mode_Path.h"
 
 class Forge;
+class ForgeContainer;
 class DepthForgeWin;
 
 class MainUI : public Fixed
@@ -35,7 +38,7 @@ public:
 
     Image *ArrowCursor;
 
-    Forge *forge;
+    ForgeContainer *forgeContainer;
 
     DepthForgeWin *owner;
 

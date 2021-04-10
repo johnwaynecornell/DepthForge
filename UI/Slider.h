@@ -12,6 +12,7 @@ class Slider : public UI {
 public:
     double v;
     bool _signed;
+    bool horizontal;
 
     class Element;
     Element *element;
@@ -21,7 +22,7 @@ public:
 
     UICallback<void (*)(void *, UI *sender, double, void *)> vCallback;
 
-    Slider(UI *parent, const char *label, bool _signed);
+    Slider(UI *parent, const char *label, bool _signed, bool horizontal);
     virtual ~Slider();
 
     virtual void setV(double val);
@@ -55,8 +56,9 @@ public:
         int mouseY;
 
         bool mouseDown;
+        bool horizontal;
 
-        Element(Slider *slider, int width, int height);
+        Element(Slider *slider, int width, int height, bool horizontal);
         virtual ~Element();
 
         virtual void drawBackground(UI *member, Image *target, QImage *qImage);

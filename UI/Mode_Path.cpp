@@ -33,6 +33,7 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     BuildConnect();
     BuildSelect();
     BuildShapeToggle();
+    BuildShapeCurveToggle();
 
     curSubModeButton = nullptr;
     subMode = SubMode_None;
@@ -120,8 +121,9 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
 
     button_Connect = addButton2(pathTools, _w+6, _h+6, image_Connect, image_Connect_t);
     button_ShapeToggle = addButton(pathOps, 0, 0, image_ShapeToggle, image_ShapeToggle_t);
+    button_ShapeCurveToggle = addButton(pathOps, 0, _h+6, image_ShapeCurveToggle, image_ShapeCurveToggle_t);
 
-    slide_Offset = new Slider(pathOps, "Offset", true);
+    slide_Offset = new Slider(pathOps, "Offset", true, false);
     slide_Offset->width.setResp(Resp_Self);
     slide_Offset->height.setResp(Resp_Self);
     slide_Offset->xPos.setResp(Resp_Self);
@@ -132,7 +134,7 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     slide_Offset->xPos.set(pathOps->width.get() - (slide_Offset->width.get())*2-3);
     slide_Offset->yPos.set(0);
 
-    slide_Intensity = new Slider(pathOps, "Intensity", true);
+    slide_Intensity = new Slider(pathOps, "Intensity", true, false);
     slide_Intensity->width.setResp(Resp_Self);
     slide_Intensity->height.setResp(Resp_Self);
     slide_Intensity->xPos.setResp(Resp_Self);
@@ -145,6 +147,7 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
 
     button_Divide->tag = (void *) SubMode_Divide;
     button_ShapeToggle->tag = (void *) SubMode_Shape_Linear;
+    button_ShapeCurveToggle->tag = (void *) SubMode_Shape_Curve;
     button_Move->tag = (void *) SubMode_Move;
     button_Plus->tag = (void *) SubMode_Plus;
     button_Connect->tag = (void *) SubMode_Connect;
@@ -583,6 +586,7 @@ struct HighlightParams
 {
     double min;
     double max;
+    int mode;
 };
 
 bool highlight(int I, double X, ARGB &P, float &Z, void *arg)
@@ -592,6 +596,8 @@ bool highlight(int I, double X, ARGB &P, float &Z, void *arg)
     if (X>=0)
     {
         double v = X / params->max;
+
+        if (params->mode==1) v = sin(v * M_PI / 2.0);
 
         unsigned char z = (unsigned char) ((v)* 0xFF);
 
@@ -718,6 +724,7 @@ void Mode_Path::BuildShapeToggle()
 
     HighlightParams params;
 
+    params.mode = 0;
     colors_toggled(false);
 
     image_ShapeToggle->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
@@ -734,6 +741,60 @@ void Mode_Path::BuildShapeToggle()
 
 }
 
+void Mode_Path::BuildShapeCurveToggle()
+{
+    PathAdapter a;
+
+    colors_toggled(false);
+
+    image_ShapeCurveToggle = new Image(_w, _h);
+    image_ShapeCurveToggle_t = new Image(_w, _h);
+
+    dPnt2D L = dPnt2D::sinCos(0);
+
+    a.MoveTo(L);
+
+    for (double th = M_PI * 2/8; th < M_PI*2; th += M_PI * 2/8)
+    {
+        dPnt2D c = dPnt2D::sinCos(th);
+        a.LineTo(c);
+    }
+
+    a.LineTo(L);
+
+    dPnt2D A,B;
+
+    a.BoundingBox(A,B);
+
+    A = A - dPnt2D {.05,.05};
+    B = B + dPnt2D {.05,.05};
+
+    a.outputMatrix = dMatrix2D::Translate(A.negate()) *dMatrix2D::Scale(dPnt2D {(double) _w, (double) _h}
+                                                                        / dPnt2D {B-A});
+
+
+    a._preservePath++;
+
+    a.Apply(image_ShapeCurveToggle);
+
+    HighlightParams params;
+    params.mode = 1;
+
+    colors_toggled(false);
+
+    image_ShapeCurveToggle->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
+    image_ShapeCurveToggle->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC, 1.0,
+                                &params.min, &params.max, highlight, &params);
+
+
+    a.Apply(image_ShapeCurveToggle_t);
+
+    colors_toggled(true);
+    image_ShapeCurveToggle_t->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
+    image_ShapeCurveToggle_t->DrawPath(PixOp_SRC_ALPHA, ZOp_SRC, 1.0,
+                                  &params.min, &params.max, highlight, &params);
+
+}
 
 struct outLineFuncArgs
 {
@@ -801,13 +862,17 @@ void Mode_Path::updateSrc(Forge *forge)
                 {
                     if (pathData[i].mv >=0)
                     {
-                        z += slide_Offset->v + slide_Intensity->v * pathData[i].mv / shapeDrawMaxMv;
+                        double v = pathData[i].mv / shapeDrawMaxMv;
+                        if (subMode == SubMode_Shape_Curve) v = sin(acos(1.0-v));
+                        z += slide_Offset->v + slide_Intensity->v * v;
                     }
                 } else
                 {
                     if (pathData[i].mv <=0)
                     {
-                        z += slide_Offset->v +  slide_Intensity->v * pathData[i].mv / shapeDrawMinMv;
+                        double v = pathData[i].mv / shapeDrawMinMv;
+                        if (subMode == SubMode_Shape_Curve) v = sin(acos(1.0-v));
+                        z += slide_Offset->v +  slide_Intensity->v * v;
                     }
                 }
 
@@ -1005,7 +1070,7 @@ void Mode_Path::refreshPth()
 
 void Mode_Path::applyShape(SubMode shape, int x, int y)
 {
-    Image *target = this->mainUI->forge->src;
+    Image *target = this->mainUI->forgeContainer->forge->src;
 
     if (pointsDirty)
     {
@@ -1133,6 +1198,10 @@ bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButto
     } else if (subMode == SubMode_Shape_Linear)
     {
         applyShape(SubMode_Shape_Linear, (int) (forge->mouseX*forge->src->Width), (int) (forge->mouseY*forge->src->Height));
+    }
+    else if (subMode == SubMode_Shape_Curve)
+    {
+        applyShape(SubMode_Shape_Curve, (int) (forge->mouseX*forge->src->Width), (int) (forge->mouseY*forge->src->Height));
     }
 
     return true;

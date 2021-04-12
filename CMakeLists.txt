@@ -34,7 +34,7 @@ add_executable(DepthForge version.h main.cpp
         MainWnd.cpp MainWnd.h DepthForgeWin.cpp DepthForgeWin.h
         UI/UI.cpp UI/UI.h UI/Button.cpp UI/MainUI.cpp UI/MainUI.h UI/Forge.cpp UI/Forge.h
         UI/TabCtl.cpp UI/TabCtl.h
-        Lense.cpp Lense.h FpsMonitor.cpp FpsMonitor.h
+        Lens.cpp Lens.h FpsMonitor.cpp FpsMonitor.h
         UI/Slider.cpp UI/Slider.h UI/TestUI.cpp UI/TestUI.h
         genbuttons.h UI/Mode_Path.cpp UI/Mode_Path.h UI/Mode_DepthEdit.cpp UI/Mode_DepthEdit.h UI/Mode.cpp UI/Mode.h UI/ForgeContainer.h UI/ForgeContainer.cpp
 

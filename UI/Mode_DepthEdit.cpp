@@ -7,7 +7,7 @@
 
 Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
 {
-    previewLense = false;
+    previewLens = false;
 
     basicToolsCtl = new DepthForgeTabCtl(mainUI->tabs, QApplication::tr("Lens"));
 
@@ -51,11 +51,11 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     tools->xPos.setResp(Resp_Self);
     tools->yPos.setResp(Resp_Self);
 
-    int lensesz = 64;
+    int lenssz = 64;
     int border = 6;
     
-    tools->height.set((lensesz+ border)*3);
-    tools->width.set((lensesz+ border)*2);
+    tools->height.set((lenssz+ border)*3);
+    tools->width.set((lenssz+ border)*2);
     tools->xPos.set(0);
     tools->yPos.set(0);
 
@@ -74,8 +74,8 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     bottom->xPos.setResp(Resp_Self);
     bottom->yPos.setResp(Resp_Self);
 
-    bottom->height.set((lensesz+ border)*4);
-    bottom->width.set((lensesz+ border)*2);
+    bottom->height.set((lenssz+ border)*4);
+    bottom->width.set((lenssz+ border)*2);
     bottom->xPos.set(0);
     bottom->yPos.set(0);
 
@@ -85,9 +85,9 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     slideA->xPos.setResp(Resp_Self);
     slideA->yPos.setResp(Resp_Self);
 
-    slideA->height.set((lensesz+ border)*4);
+    slideA->height.set((lenssz+ border)*4);
     slideA->width.set(32);
-    slideA->xPos.set((lensesz+ border)*2-32-6);
+    slideA->xPos.set((lenssz+ border)*2-32-6);
     slideA->yPos.set(0);
 
 
@@ -97,9 +97,9 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     slideB->xPos.setResp(Resp_Self);
     slideB->yPos.setResp(Resp_Self);
 
-    slideB->height.set((lensesz+ border)*4);
+    slideB->height.set((lenssz+ border)*4);
     slideB->width.set(32);
-    slideB->xPos.set((lensesz+ border)*2-32-6-32-3);
+    slideB->xPos.set((lenssz+ border)*2-32-6-32-3);
     slideB->yPos.set(0);
 
     union
@@ -132,29 +132,29 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
 
     slideB->setVCallvack(testb.b, this, nullptr);
 
-    lense = nullptr;
+    lens = nullptr;
 
-    Lense *l = addLenseButton(0,0, LenseButton::Sphere, lensesz)->lense;
-    addLenseButton(0,lensesz+ border, LenseButton::SphereC, lensesz);
-    addLenseButton(0,(lensesz+ border)*2, LenseButton::Circle, lensesz);
+    Lens *l = addLensButton(0,0, LensButton::Sphere, lenssz)->lens;
+    addLensButton(0,lenssz+ border, LensButton::SphereC, lenssz);
+    addLensButton(0,(lenssz+ border)*2, LensButton::Circle, lenssz);
 
-    addLenseButton(lensesz+ border,0, LenseButton::Pyramid, lensesz);
-    addLenseButton(lensesz+ border,lensesz+ border, LenseButton::PyramidC, lensesz);
-    addLenseButton(lensesz+ border,(lensesz+ border)*2, LenseButton::Square, lensesz);
+    addLensButton(lenssz+ border,0, LensButton::Pyramid, lenssz);
+    addLensButton(lenssz+ border,lenssz+ border, LensButton::PyramidC, lenssz);
+    addLensButton(lenssz+ border,(lenssz+ border)*2, LensButton::Square, lenssz);
 
-    setLense(l);
+    setLens(l);
 }
 
-struct LenseData
+struct LensData
 {
     float **map;
-    Image *lenseImage[10];
+    Image *lensImage[10];
 };
 
 
 void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
 {
-    if (forge->hasMouse || previewLense)
+    if (forge->hasMouse || previewLens)
     {
         double time = mainUI->getTimeInSeconds();
         time = time - trunc(time);
@@ -179,66 +179,66 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
             yy = (int) (.5 * forge->_h + forge->_y);
         }
 
-        Lense *lense = this->lense;
+        Lens *lens = this->lens;
 
-        int sz;// = (int)(lense->size * fmax(forge->src->Width,forge->src->Height)*forge->scale);
+        int sz;// = (int)(lens->size * fmax(forge->src->Width,forge->src->Height)*forge->scale);
 
         if (forge->src->Height > forge->src->Width)
         {
-            sz = (int) (lense->size * forge->src->Height * forge->_h / forge->_srcH);
+            sz = (int) (lens->size * forge->src->Height * forge->_h / forge->_srcH);
         } else
         {
-            sz = (int) (lense->size * forge->src->Width * forge->_w / forge->_srcW);
+            sz = (int) (lens->size * forge->src->Width * forge->_w / forge->_srcW);
         }
 
-        //int sz = (int) (lense->size * fmax(forge->_w,forge->_h)*forge->scale);
+        //int sz = (int) (lens->size * fmax(forge->_w,forge->_h)*forge->scale);
 
-        Lense::Cache * dta;
+        Lens::Cache * dta;
 
-        LenseData *d;
+        LensData *d;
 
-        if (!lense->getData(0, sz, &dta))
+        if (!lens->getData(0, sz, &dta))
         {
             if (dta->dta != nullptr)
             {
-                d = (LenseData *)dta->dta;
+                d = (LensData *)dta->dta;
 
-                lense->freeMap(d->map, dta->s);
+                lens->freeMap(d->map, dta->s);
 
                 for (int i =0; i<10; i++) {
-                    if (d->lenseImage[i] != nullptr) {
-                        delete d->lenseImage[i];
-                        d->lenseImage[i] = nullptr;
+                    if (d->lensImage[i] != nullptr) {
+                        delete d->lensImage[i];
+                        d->lensImage[i] = nullptr;
                     }
                 }
             } else
             {
-                dta->dta = d = new LenseData();
+                dta->dta = d = new LensData();
                 for (int i =0; i<10; i++)
                 {
-                    d->lenseImage[i] = nullptr;
+                    d->lensImage[i] = nullptr;
                 }
             }
 
-            d->map = lense->map(sz);
+            d->map = lens->map(sz);
             dta->s = sz;
 
             dta->needUpdate = true;
         }
 
-        d = ((LenseData *)dta->dta);
+        d = ((LensData *)dta->dta);
 
         float **map = d->map;
 
         if (dta->needUpdate)
         {
-            lense->updateMap(map, sz);
+            lens->updateMap(map, sz);
 
             for (int i=0; i<10; i++)
             {
-                if (d->lenseImage[i] != nullptr)
+                if (d->lensImage[i] != nullptr)
                 {
-                    d->lenseImage[i]->needUpdate = true;
+                    d->lensImage[i]->needUpdate = true;
                 }
             }
 
@@ -249,12 +249,12 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
 
         int q = (sz << 1) + 1;
 
-        if (d->lenseImage[i] == nullptr) {
+        if (d->lensImage[i] == nullptr) {
 
-            d->lenseImage[i] = new Image(q, q);
+            d->lensImage[i] = new Image(q, q);
         }
 
-        Image *img = d->lenseImage[i];
+        Image *img = d->lensImage[i];
 
         if (img->needUpdate)
         {
@@ -294,16 +294,16 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
 }
 
 
-void Mode_DepthEdit::applyLense(Forge *forge)
+void Mode_DepthEdit::applyLens(Forge *forge)
 {
     Image *src = forge->src;
 
     int xx = forge->mouseX * forge->src->Width;
     int yy = forge->mouseY * forge->src->Height;
 
-    Lense *lense = this->lense;
+    Lens *lense= this->lens;
 
-    int sz = (int)(lense->size * fmax(src->Width,src->Height));
+    int sz = (int)(lens->size * fmax(src->Width,src->Height));
 
     Qt::MouseButtons l;
     l.setFlag(Qt::MouseButton::LeftButton);
@@ -324,7 +324,7 @@ void Mode_DepthEdit::applyLense(Forge *forge)
                     double lx = (y - yy) / (double) sz;
                     double ly = (x - xx) / (double) sz;
 
-                    float l = lense->get(lx, ly);
+                    float l = lens->get(lx, ly);
 
                     src->z[y][x] += l * .01 * dir;
 
@@ -338,13 +338,13 @@ void Mode_DepthEdit::applyLense(Forge *forge)
 
 bool Mode_DepthEdit::mouseMoveForge(Forge *forge, int x, int y)
 {
-    applyLense(forge);
+    applyLens(forge);
     return true;
 }
 
 bool Mode_DepthEdit::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButton button)
 {
-    applyLense(forge);
+    applyLens(forge);
     return true;
 }
 
@@ -364,29 +364,29 @@ void Mode_DepthEdit::doLayout()
     bottomFrame->yPos.set(basicTools->height.get()-bottomFrame->height.get());
 }
 
-void Mode_DepthEdit::setLense(Lense *lense)
+void Mode_DepthEdit::setLens(Lens *lens)
 {
-    bool retain = this->lense != nullptr;
+    bool retain = this->lens != nullptr;
 
     double v, s;
 
     if (retain)
     {
-        v = this->lense->intensity;
-        s = this->lense->size;
+        v = this->lens->intensity;
+        s = this->lens->size;
     } else { v = .5; s = .1; }
 
-    lense->setIntensity(v);
-    lense->setSize(s);
+    lens->setIntensity(v);
+    lens->setSize(s);
 
-    this->lense = lense;
+    this->lens = lens;
 
     slideA->setV(s*2.0);
     slideB->setV(v/2.0);
 
 }
 
-LenseButton * Mode_DepthEdit::addLenseButton(int x, int y, LenseProc proc, int lensesz)
+LensButton * Mode_DepthEdit::addLensButton(int x, int y, LensProc proc, int lenssz)
 {
     Frame *f = new Frame(tools);
 
@@ -398,37 +398,37 @@ LenseButton * Mode_DepthEdit::addLenseButton(int x, int y, LenseProc proc, int l
 
     f->backgroundResp = Resp_Child;
 
-    LenseButton *bt = new LenseButton(f, proc, lensesz);
+    LensButton *bt = new LensButton(f, proc, lenssz);
     return bt;
 }
 
 void Mode_DepthEdit::sizeEntered(UI *sender, void *arg)
 {
-    previewLense = true;
+    previewLens = true;
 }
 
 void Mode_DepthEdit::sizeLeave(UI *sender, void *arg)
 {
-    previewLense = false;
+    previewLens = false;
 }
 
 void Mode_DepthEdit::sizeChanged(UI *sender, double v, void *arg)
 {
-    lense->setSize(v / 2.0);
+    lens->setSize(v / 2.0);
 }
 
 void Mode_DepthEdit::intensityChanged(UI *sender, double v, void *arg)
 {
-    lense->setIntensity(v * 2.0);
+    lens->setIntensity(v * 2.0);
 }
 
 
-LenseButton::LenseButton(UI *parent, LenseProc proc, int lensesz) : Button_Image(parent)
+LensButton::LensButton(UI *parent, LensProc proc, int lenssz) : Button_Image(parent)
 {
-    this->lense = new Lense();
-    this->lense->proc = proc;
+    this->lens = new Lens();
+    this->lens->proc = proc;
 
-    Image * src = new Image(lensesz,lensesz);
+    Image * src = new Image(lenssz,lenssz);
 
     setSource(src, false);
 
@@ -469,7 +469,7 @@ LenseButton::LenseButton(UI *parent, LenseProc proc, int lensesz) : Button_Image
             xx /= .9;
             yy /= .9;
 
-            double d = lense->get(xx,yy);
+            double d = lens->get(xx,yy);
 
 //d=0;
             unsigned char r;
@@ -492,22 +492,22 @@ LenseButton::LenseButton(UI *parent, LenseProc proc, int lensesz) : Button_Image
     }
 }
 
-LenseButton::~LenseButton()
+LensButton::~LensButton()
 {
-    delete lense;
+    delete lens;
 }
 
-bool LenseButton::mouseButtonPress(int x, int y, Qt::MouseButton button)
+bool LensButton::mouseButtonPress(int x, int y, Qt::MouseButton button)
 {
     bool rc = Button_Image::mouseButtonPress(x,y,button);
 
     MainUI *r = ((MainUI *) rootElement());
-    r->mode_DepthEdit->setLense(lense);
+    r->mode_DepthEdit->setLens(lens);
 
     return rc;
 }
 
-float LenseButton::Sphere(float x, float y)
+float LensButton::Sphere(float x, float y)
 {
     float d = 1 - sqrtf(x*x+y*y);
     if (d<0) d = 0;
@@ -515,7 +515,7 @@ float LenseButton::Sphere(float x, float y)
     return sin(d*M_PI/2);
 }
 
-float LenseButton::SphereC(float x, float y)
+float LensButton::SphereC(float x, float y)
 {
     float d = 1 - sqrtf(x*x+y*y);
     if (d<0) return 0.0f;//d = 0;
@@ -525,13 +525,13 @@ float LenseButton::SphereC(float x, float y)
 
 
 
-float LenseButton::Circle(float x, float y)
+float LensButton::Circle(float x, float y)
 {
     float d = 1 - sqrtf(x*x+y*y);
     return (d>0) ? 1.0 : 0.0;
 }
 
-float LenseButton::Pyramid(float x, float y)
+float LensButton::Pyramid(float x, float y)
 {
     x = 1.0 - abs(x);
     y = 1.0 - abs(y);
@@ -541,7 +541,7 @@ float LenseButton::Pyramid(float x, float y)
     return fmin(x,y);
 }
 
-float LenseButton::PyramidC(float x, float y)
+float LensButton::PyramidC(float x, float y)
 {
     x = 1.0 - abs(x);
     y = 1.0 - abs(y);
@@ -551,7 +551,7 @@ float LenseButton::PyramidC(float x, float y)
     return 1.0-fmin(x,y);
 }
 
-float LenseButton::Square(float x, float y)
+float LensButton::Square(float x, float y)
 {
     if (x>=-1&&x<=1 && y>=-1&&y<=1) return 1;
     return 0;

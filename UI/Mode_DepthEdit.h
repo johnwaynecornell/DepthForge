@@ -5,18 +5,18 @@
 #ifndef DEPTHFORGE_DEPTHEDITMODE_H
 #define DEPTHFORGE_DEPTHEDITMODE_H
 
-#include <Lense.h>
+#include <Lens.h>
 #include "Mode.h"
 #include "Slider.h"
 #include "TabCtl.h"
 
-class LenseButton;
+class LensButton;
 class Forge;
 
 class Mode_DepthEdit : public Mode
 {
 public:
-    bool previewLense;
+    bool previewLens;
 
     DepthForgeTabCtl *basicToolsCtl;
     Fixed *basicTools;
@@ -29,11 +29,11 @@ public:
     Slider *slideA;
     Slider *slideB;
 
-    Lense *lense;
+    Lens *lens;
 
     Mode_DepthEdit(MainUI *mainUI);
 
-    void applyLense(Forge *forge);
+    void applyLens(Forge *forge);
 
     virtual void drawForge(Forge *forge, Image *target, QImage *qImage);
 
@@ -44,9 +44,9 @@ public:
     virtual void selfLayout();
     virtual void doLayout();
 
-    void setLense(Lense *lense);
+    void setLens(Lens *lens);
 
-    LenseButton * addLenseButton(int x, int y, LenseProc lensProc, int lensesz);
+    LensButton * addLensButton(int x, int y, LensProc lensProc, int lenssz);
 
 public:
     void sizeEntered(UI *sender, void *arg);
@@ -56,13 +56,13 @@ public:
 
 };
 
-class LenseButton : public Button_Image
+class LensButton : public Button_Image
 {
 public:
-    Lense *lense;
+    Lens *lens;
 
-    LenseButton(UI *parent, LenseProc proc, int lensesz);
-    virtual ~LenseButton();
+    LensButton(UI *parent, LensProc proc, int lenssz);
+    virtual ~LensButton();
 
     virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
 

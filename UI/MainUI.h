@@ -7,7 +7,7 @@
 
 #include <chrono>
 
-#include "Lense.h"
+#include "Lens.h"
 #include "DepthForgeWin.h"
 #include "UI.h"
 #include "Slider.h"

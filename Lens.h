@@ -2,14 +2,14 @@
 // Created by jwc on 2/16/19.
 //
 
-#ifndef DEPTHFORGE_LENSE_H
-#define DEPTHFORGE_LENSE_H
+#ifndef DEPTHFORGE_Lens_H
+#define DEPTHFORGE_Lens_H
 
 #include <Image/Image.h>
 
-typedef float (*LenseProc)(float x, float y);
+typedef float (*LensProc)(float x, float y);
 
-class Lense {
+class Lens {
 public:
     struct Cache
     {
@@ -22,9 +22,9 @@ public:
 
     float size;
     float intensity;
-    LenseProc proc;
+    LensProc proc;
 
-    Lense();
+    Lens();
 
     virtual float get(float x, float y);
     void setSize(float size);
@@ -39,4 +39,4 @@ public:
 };
 
 
-#endif //DEPTHFORGE_LENSE_H
+#endif //DEPTHFORGE_Lens_H

@@ -2,9 +2,9 @@
 // Created by jwc on 2/16/19.
 //
 
-#include "Lense.h"
+#include "Lens.h"
 
-Lense::Lense()
+Lens::Lens()
 {
     for (int i=0; i<2; i++) {
         cacheData[i].s=-1;
@@ -16,12 +16,12 @@ Lense::Lense()
     intensity = 1.0;
 }
 
-float Lense::get(float x, float y)
+float Lens::get(float x, float y)
 {
     return proc(x,y)*intensity;
 }
 
-void Lense::setSize(float size)
+void Lens::setSize(float size)
 {
     if (size != this->size)
     {
@@ -33,7 +33,7 @@ void Lense::setSize(float size)
     }
 }
 
-void Lense::setIntensity(float intensity) {
+void Lens::setIntensity(float intensity) {
     if (intensity != this->intensity) {
         cacheData[0].needUpdate = true;
         cacheData[1].needUpdate = true;
@@ -42,7 +42,7 @@ void Lense::setIntensity(float intensity) {
     }
 }
 
-bool Lense::getData(int entry, int s, Cache **data)
+bool Lens::getData(int entry, int s, Cache **data)
 {
     bool rc;
     if (s != cacheData[entry].s)
@@ -55,7 +55,7 @@ bool Lense::getData(int entry, int s, Cache **data)
     return rc;
 }
 
-float **Lense::map(int sz)
+float **Lens::map(int sz)
 {
     int q = (sz<<1)+1;
 
@@ -76,7 +76,7 @@ float **Lense::map(int sz)
     return ret;
 }
 
-void Lense::updateMap(float **map, int sz)
+void Lens::updateMap(float **map, int sz)
 {
     float _sz = (float)sz;
 
@@ -94,7 +94,7 @@ void Lense::updateMap(float **map, int sz)
     }
 }
 
-void Lense::freeMap(float **map, int sz)
+void Lens::freeMap(float **map, int sz)
 {
     int q = (sz<<1)+1;
 

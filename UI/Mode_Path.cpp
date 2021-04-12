@@ -21,6 +21,7 @@ extern "C"
 #include "MainWnd.h"
 
 void connect_press(void *_This, Button*element, bool pressed, void *arg);
+void clear_press(void *_This, Button*element, bool pressed, void *arg);
 
 int _w = 48;
 int _h = 48;
@@ -32,6 +33,8 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     BuildPlus();
     BuildConnect();
     BuildSelect();
+    BuildClear();
+
     BuildShapeToggle();
     BuildShapeCurveToggle();
 
@@ -72,6 +75,16 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
 
     pathToolsFrame->xPos.set(0);
     pathToolsFrame->yPos.set(0);
+    
+    pathButtonsFrame = new Frame(pathToolsFixed);
+
+    pathButtonsFrame->width.setResp(Resp_Child);
+    pathButtonsFrame->height.setResp(Resp_Child);
+    pathButtonsFrame->xPos.setResp(Resp_Self);
+    pathButtonsFrame->yPos.setResp(Resp_Self);
+
+    pathButtonsFrame->xPos.set(0);
+    pathButtonsFrame->yPos.set(0);
 
     pathOpsFrame = new Frame(pathToolsFixed);
 
@@ -88,16 +101,27 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
 
     pathTools = new Fixed(pathToolsFrame);
     pathTools->width.setResp(Resp_Child);
-    pathTools->height.setResp(Resp_Self);
+    pathTools->height.setResp(Resp_Child);
     pathTools->xPos.setResp(Resp_Self);
     pathTools->yPos.setResp(Resp_Self);
 
     pathTools->xPos.set(0);
     pathTools->yPos.set(0);
-
-
+    
     pathTools->width.set(_w*3+6);
     pathTools->height.set(256);
+
+    pathButtons = new Fixed(pathButtonsFrame);
+    pathButtons->width.setResp(Resp_Child);
+    pathButtons->height.setResp(Resp_Child);
+    pathButtons->xPos.setResp(Resp_Self);
+    pathButtons->yPos.setResp(Resp_Parent);
+
+    pathButtons->xPos.set(0);
+    pathButtons->yPos.set(0);
+
+    pathButtons->width.set(_w*3+6);
+    pathButtons->height.set(256);
 
     pathOps = new Fixed(pathOpsFrame);
     pathOps->width.setResp(Resp_Child);
@@ -116,10 +140,12 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
 
     button_Divide = addButton(pathTools, 0, 0, image_Divide, image_Divide_t);
     button_Move = addButton(pathTools, _w+6, 0, image_Move, image_Move_t);
+    button_Select = addButton(pathTools, (_w+6)*2, 0, image_Select, image_Select_t);
     button_Plus = addButton(pathTools, 0, _h+6, image_Plus, image_Plus_t);
-    button_Select = addButton(pathTools, 0, (_h+6)*2, image_Select, image_Select_t);
 
-    button_Connect = addButton2(pathTools, _w+6, _h+6, image_Connect, image_Connect_t);
+    button_Connect = addButton2(pathButtons, _w+6, 0, image_Connect, image_Connect_t);
+    button_Clear = addButton2(pathButtons, 0, 0, image_Clear, image_Clear_t);
+
     button_ShapeToggle = addButton(pathOps, 0, 0, image_ShapeToggle, image_ShapeToggle_t);
     button_ShapeCurveToggle = addButton(pathOps, 0, _h+6, image_ShapeCurveToggle, image_ShapeCurveToggle_t);
 
@@ -150,10 +176,14 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     button_ShapeCurveToggle->tag = (void *) SubMode_Shape_Curve;
     button_Move->tag = (void *) SubMode_Move;
     button_Plus->tag = (void *) SubMode_Plus;
-    button_Connect->tag = (void *) SubMode_Connect;
+
+    button_Connect->tag = (void *) SubMode_None;
+    button_Clear->tag = (void *) SubMode_None;
+
     button_Select->tag = (void *) SubMode_Select;
 
     button_Connect->onPress = {this, button_Connect, &connect_press, nullptr};
+    button_Clear->onPress = {this, button_Clear, &clear_press, nullptr};
 
     ARGB _1 = {0xFF,0xFF,0xFF,0x00};
     ARGB _2 = {0xFF,0x00,0xFF,0xFF};
@@ -191,6 +221,17 @@ void connect_press(void *_This, Button*element, bool pressed, void *arg) {
         T->refreshPth();
     }
 }
+
+void clear_press(void *_This, Button*element, bool pressed, void *arg) {
+    Mode_Path *T = (Mode_Path *) _This;
+    element->toggle();
+
+    if (pressed) {
+        T->points.clear();
+        T->refreshPth();
+    }
+}
+
 
 void button_press(void *_This, Button*element, bool pressed, void *arg)
 {
@@ -276,6 +317,9 @@ Button_Image *Mode_Path::addButton2(UI *parent, int x, int y, Image *img, Image 
     r->backColor = {0xFF, 0x40,0x00,0x80, .25};
 
     r->backgroundResp = Resp_Self;
+
+    f->xPos.setResp(Resp_Self);
+    f->yPos.setResp(Resp_Self);
 
     f->xPos.set(x);
     f->yPos.set(y);
@@ -540,6 +584,74 @@ void Mode_Path::BuildConnect() {
     image_Connect_t->DrawPath(PixOp_SRC, ZOp_SRC_ADD,
             2.0 / _w, &line, nullptr);
 }
+
+void textOutMatchWidth(Image *I, int width, char *txt, ARGB color)
+{
+    QImage *i = new QImage(I->Width, I->Height,QImage::Format_ARGB32);
+
+    GfxBlt(PixType_ARGB, I->imageMemory, 0, 0, I->Width, I->Height, I->stride,
+           PixType_BGRA, i->bits(), 0, 0, i->width(), i->height(), i->width());
+
+    QPainter *p = new QPainter(i);
+
+    double osz = 1;
+    double sz;
+
+    int w;
+
+    do {
+        sz = osz;
+
+        QFont f;
+        f = p->font();
+
+        f.setPointSizeF(osz);
+
+        p->setFont(f);
+
+        w = p->fontMetrics().boundingRect(txt).width();
+
+        osz += .1;
+    } while (w < (width - 1));
+
+    QFont f;
+    f = p->font();
+
+    f.setPointSizeF(sz);
+
+    p->setFont(f);
+
+    QRect rect = p->fontMetrics().boundingRect(txt);
+    int __w = rect.width();
+    int __h = rect.height();
+
+    p->setPen(QColor::fromRgb(color.r,color.g,color.b, color.a));
+    p->drawText((I->Width-__w) / 2,  (I->Height+__h/2)/2, QApplication::tr(txt));
+
+    GfxBlt(PixType_BGRA, i->bits(), 0, 0, i->width(), i->height(), i->width(),
+           PixType_ARGB, I->imageMemory, 0, 0, I->Width, I->Height, I->stride);
+
+    p->end();
+    delete p;
+    delete i;
+
+}
+
+void Mode_Path::BuildClear() {
+
+    colors_toggled(false);
+    image_Clear = new Image(_w, _h);
+    image_Clear->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
+
+    textOutMatchWidth(image_Clear, image_Clear->Width-3, "Clear", color);
+
+    colors_toggled(true);
+    image_Clear_t = new Image(_w, _h);
+    image_Clear_t->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
+
+    textOutMatchWidth(image_Clear_t, image_Clear_t->Width-3, "Clear", color);
+}
+
 
 void Mode_Path::BuildSelect() {
     PathAdapter a;
@@ -1232,4 +1344,9 @@ void Mode_Path::doLayout()
     pathToolsFrame->yPos.set(0);
 
     pathToolsFrame->width.set(pathTools->width.get()+6);
+
+    pathButtonsFrame->xPos.set(0);
+    pathButtonsFrame->yPos.set(pathToolsFrame->height.get());
+
+    pathButtonsFrame->width.set(pathTools->width.get()+6);
 }

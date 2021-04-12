@@ -209,7 +209,8 @@ Mode_Path::~Mode_Path()
 void Mode_Path::changeSubMode(SubMode mode)
 {
     subMode = mode;
-    doShapeDraw = false;
+
+    if (mode != SubMode_Shape_Curve && mode != SubMode_Shape_Linear) doShapeDraw = false;
 }
 
 void connect_press(void *_This, Button*element, bool pressed, void *arg) {

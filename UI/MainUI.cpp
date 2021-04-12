@@ -15,21 +15,18 @@ bool drawArrow(int index, double y, ARGB &p, float &z, void *arg)
 {
     z = 0;
 
-    y = abs(y);
+    y = abs(y) / 4.0;
 
-    double q = 1.5;
-
-    if (y>q)
+    if (y<1.0)
     {
-        p = {0,0,0,0};
-    } else
-    {
-        ARGB a{0xFF,0xFF,0xFF,0xFF};
-        ARGB b{0,0,0,0};
-
-        p = a.interpolate(b, y / q);
+        ARGB A = {0xFF,0xFF,0xFF,0xFF};
+        ARGB B = { 0x20,0x00,0x00,0x00};
+        p = A.interpolate(B, y * 0xFF);
+        return true;
     }
-    return true;
+
+    return false;
+
 }
 
 MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)

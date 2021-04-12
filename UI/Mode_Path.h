@@ -19,9 +19,11 @@ public:
     Fixed *pathToolsFixed;
 
     Frame *pathToolsFrame;
+    Frame *pathButtonsFrame;
     Frame *pathOpsFrame;
 
     Fixed *pathTools;
+    Fixed *pathButtons;
     Fixed *pathOps;
 
     Button_Image *button_Divide;
@@ -33,6 +35,8 @@ public:
     Button_Image *button_ShapeToggle;
     Button_Image *button_ShapeCurveToggle;
 
+    Button_Image *button_Clear;
+
     Slider *slide_Intensity;
     Slider *slide_Offset;
 
@@ -40,18 +44,23 @@ public:
     Image *image_Move;
     Image *image_Plus;
     Image *image_Connect;
+
+    Image *image_Clear;
+
     Image *image_Select;
-
     Image *image_ShapeToggle;
-    Image *image_ShapeCurveToggle;
 
+    Image *image_ShapeCurveToggle;
     Image *image_Divide_t;
     Image *image_Move_t;
     Image *image_Plus_t;
     Image *image_Connect_t;
+    Image *image_Clear_t;
     Image *image_Select_t;
     Image *image_ShapeToggle_t;
+
     Image *image_ShapeCurveToggle_t;
+
 
     std::list<dPnt2D> points;
     bool pointsDirty = false;
@@ -122,6 +131,7 @@ private:
     void BuildPlus();
     void BuildConnect();
     void BuildSelect();
+    void BuildClear();
     void BuildShapeToggle();
     void BuildShapeCurveToggle();
 };

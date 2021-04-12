@@ -267,9 +267,16 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
 
                     float l = map[yp][xp];
 
+                    //if (l>1.0) l = 1.0;
+
+                    l *= 0x80;
+
+                    if (l<0) l = 0;
+                    if (l>0xFF) l = 0xFF;
+
                     unsigned char g = (unsigned char) (i * 0xFF / 9);
 
-                    ARGB p = {(unsigned char) (0x80 * l), 0xFF, g, 0xFF};
+                    ARGB p = {(unsigned char) (l), 0xFF, g, 0xFF};
 
                     img->pix[y][x] = p;
                 }
@@ -301,7 +308,7 @@ void Mode_DepthEdit::applyLens(Forge *forge)
     int xx = forge->mouseX * forge->src->Width;
     int yy = forge->mouseY * forge->src->Height;
 
-    Lens *lense= this->lens;
+    Lens *lens= this->lens;
 
     int sz = (int)(lens->size * fmax(src->Width,src->Height));
 

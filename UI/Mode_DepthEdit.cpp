@@ -181,7 +181,17 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
 
         Lense *lense = this->lense;
 
-        int sz = (int) (lense->size * fmax(forge->_w,forge->_h));
+        int sz;// = (int)(lense->size * fmax(forge->src->Width,forge->src->Height)*forge->scale);
+
+        if (forge->src->Height > forge->src->Width)
+        {
+            sz = (int) (lense->size * forge->src->Height * forge->_h / forge->_srcH);
+        } else
+        {
+            sz = (int) (lense->size * forge->src->Width * forge->_w / forge->_srcW);
+        }
+
+        //int sz = (int) (lense->size * fmax(forge->_w,forge->_h)*forge->scale);
 
         Lense::Cache * dta;
 
@@ -293,7 +303,7 @@ void Mode_DepthEdit::applyLense(Forge *forge)
 
     Lense *lense = this->lense;
 
-    int sz = lense->size * fmax(src->Width,src->Height);
+    int sz = (int)(lense->size * fmax(src->Width,src->Height));
 
     Qt::MouseButtons l;
     l.setFlag(Qt::MouseButton::LeftButton);

@@ -8,12 +8,17 @@
 #include <QtGui/QImage>
 #include <Image/Image.h>
 #include <UI/UI.h>
+#include "UI/TabCtl.h"
 
 class MainUI;
 class Forge;
 
+class DepthForgeTabCtl;
+
 class Mode {
 public:
+    DepthForgeTabCtl *tabCtl;
+
     MainUI *mainUI;
     Image *ancillaryImage;
     Frame *ancillaryFrame;

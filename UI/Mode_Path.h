@@ -14,8 +14,6 @@
 class Mode_Path : public Mode
 {
 public:
-    DepthForgeTabCtl *pathToolsCtl;
-
     Fixed *pathToolsFixed;
 
     Frame *pathToolsFrame;

@@ -136,6 +136,8 @@ void MainUI::draw(Image *target, QImage *qImage)
         firstDraw = false;
     }
 
+    forgeContainer->forge->updateGreyMap();
+
     UI::draw(target, qImage);
 
     //target->DrawImage(mouseX-2,mouseY-2, ArrowCursor->Width, ArrowCursor->Height, PixOp_SRC_ALPHA, ZOp_SRC_ADD, ArrowCursor, 0,0, ArrowCursor->Width,ArrowCursor->Height);

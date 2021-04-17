@@ -22,6 +22,9 @@ public:
 
     Image *src;
 
+    bool swapViews = false;
+    Image *greyMap = new Image(1,1);
+
     int _x;
     int _y;
 
@@ -35,7 +38,7 @@ public:
 
     QString lastPath1;
     QString lastPath2;
-    QString fileName = QString::null;
+    QString fileName = QString();
 
     Image *bkgImage;
     Image *bkgTile;
@@ -49,6 +52,7 @@ public:
 
     MainWnd *wnd();
 
+    void updateGreyMap(void);
     void setMouseXY(int x, int y);
 
     void drawInitial();

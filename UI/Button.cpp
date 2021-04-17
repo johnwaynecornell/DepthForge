@@ -132,6 +132,8 @@ Image *Button_Image::getSource()
 
 void Button_Image::draw(Image *target, QImage *qImage)
 {
+    if (onUpdateSrc.function != nullptr) onUpdateSrc.function(onUpdateSrc._This, this, onUpdateSrc.argument);
+
     UI::draw(target, qImage);
 
     target->DrawImage(xReal, yReal, width.get(), height.get(),

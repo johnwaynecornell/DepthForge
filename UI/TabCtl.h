@@ -64,6 +64,8 @@ public:
     virtual void close();
 };
 
+class Mode;
+
 class DepthForgeTabCtl : public TabCtl {
 public:
     Mode *myMode;

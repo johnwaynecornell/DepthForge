@@ -18,7 +18,6 @@ class Mode_DepthEdit : public Mode
 public:
     bool previewLens;
 
-    DepthForgeTabCtl *tabCtl;
     Fixed *basicTools;
 
     Frame *toolFrame;

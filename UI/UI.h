@@ -197,11 +197,12 @@ public:
 
 class Button_Image : public Button
 {
+public:
+
     Image *src_noToggle;
     Image *src_Toggle;
 
-public:
-
+    UICallback<void (*)(void *_This, Button_Image *E, void *arg)> onUpdateSrc= {nullptr,nullptr,nullptr};
     Button_Image(UI *parent);
     virtual ~Button_Image();
 

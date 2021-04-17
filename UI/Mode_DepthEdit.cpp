@@ -5,6 +5,38 @@
 #include "Mode_DepthEdit.h"
 #include "Forge.h"
 
+void ancillary_press(void *_This, Button*element, bool pressed, void *arg) {
+    Mode *T = (Mode *) _This;
+
+    if (pressed) {
+        T->mainUI->forgeContainer->forge->swapViews = ! T->mainUI->forgeContainer->forge->swapViews;
+    }
+}
+
+bool ForgeDrawPixFunc(Image *image, int x, int y, ARGB &p, float &z, void *arg);
+
+void ancillary_update(void *_This, Button_Image *E, void *arg)
+{
+    Mode *T = (Mode *) _This;
+
+    Image *src;
+
+    if (T->mainUI->forgeContainer->forge->swapViews)
+    {
+        src = T->mainUI->forgeContainer->forge->src;
+    } else
+    {
+        src = T->mainUI->forgeContainer->forge->greyMap;
+    }
+
+    float scale = E->src_noToggle->Width / (float) src->Width;
+
+    E->src_noToggle->DrawImage(0,0,E->src_noToggle->Width, E->src_noToggle->Height,0,0,E->src_noToggle->Width, E->src_noToggle->Height,
+                               PixOp_SRC, ZOp_SRC, src, 0,0, src->Width, src->Height);
+
+    E->src_noToggle->FillRect(0, 0, E->src_noToggle->Width, E->src_noToggle->Height, PixOp_SRC, ZOp_SRC, ForgeDrawPixFunc, &scale);
+}
+
 Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
 {
     previewLens = false;
@@ -59,7 +91,7 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     tools->xPos.set(0);
     tools->yPos.set(0);
 
-    ancillaryFrame = new Frame(toolFrame);
+    ancillaryFrame = new Frame(basicTools);
 
     ancillaryFrame->width.setResp(Resp_Child);
     ancillaryFrame->height.setResp(Resp_Child);
@@ -81,6 +113,9 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
 
     ancillaryImage = new Image(1, 1);
     ancillaryView->setSource(ancillaryImage, false);
+
+    ancillaryView->onPress = {this,ancillaryView, &ancillary_press, nullptr};
+    ancillaryView->onUpdateSrc = { this, ancillaryView, &ancillary_update, nullptr};
 
     bottomFrame = new Frame(basicTools);
     bottomFrame->width.setResp(Resp_Child);
@@ -386,7 +421,7 @@ bool Mode_DepthEdit::mouseButtonReleaseForge(Forge *forge, int x, int y, Qt::Mou
 void Mode_DepthEdit::selfLayout()
 {
     tabCtl->height.set(mainUI->height.get());
-    resizeAncillary(basicTools->width.get());
+    resizeAncillary(basicTools->width.get()-6);
 }
 
 void Mode_DepthEdit::doLayout()

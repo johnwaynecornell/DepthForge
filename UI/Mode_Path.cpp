@@ -26,6 +26,9 @@ void clear_press(void *_This, Button*element, bool pressed, void *arg);
 int _w = 48;
 int _h = 48;
 
+void ancillary_press(void *_This, Button*element, bool pressed, void *arg);
+void ancillary_update(void *_This, Button_Image *E, void *arg);
+
 Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
 {
     BuildDivide();
@@ -41,22 +44,22 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     curSubModeButton = nullptr;
     subMode = SubMode_None;
 
-    pathToolsCtl = new DepthForgeTabCtl(mainUI->tabs, QApplication::tr("Path"));
+    tabCtl = new DepthForgeTabCtl(mainUI->tabs, QApplication::tr("Path"));
 
-    pathToolsCtl->width.setResp(Resp_Child);
-    pathToolsCtl->height.setResp(Resp_Parent);
-    pathToolsCtl->xPos.setResp(Resp_Self);
-    pathToolsCtl->yPos.setResp(Resp_Self);
+    tabCtl->width.setResp(Resp_Child);
+    tabCtl->height.setResp(Resp_Parent);
+    tabCtl->xPos.setResp(Resp_Self);
+    tabCtl->yPos.setResp(Resp_Self);
 
-    pathToolsCtl->xPos.set(0);
-    pathToolsCtl->yPos.set(0);
+    tabCtl->xPos.set(0);
+    tabCtl->yPos.set(0);
 
-    pathToolsCtl->tabPosition.set(mainUI->tabs->_tabPosition);
+    tabCtl->tabPosition.set(mainUI->tabs->_tabPosition);
     mainUI->tabs->_tabPosition += 64 + 9;
 
-    pathToolsCtl->myMode = this;
+    tabCtl->myMode = this;
 
-    pathToolsFixed = new Fixed(pathToolsCtl);
+    pathToolsFixed = new Fixed(tabCtl);
 
     pathToolsFixed->width.setResp(Resp_Child);
     pathToolsFixed->height.setResp(Resp_Parent);
@@ -108,6 +111,9 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
 
     ancillaryImage = new Image(1, 1);
     ancillaryView->setSource(ancillaryImage, false);
+
+    ancillaryView->onPress = {this,ancillaryView, &ancillary_press, nullptr};
+    ancillaryView->onUpdateSrc = { this, ancillaryView, &ancillary_update, nullptr};
 
     pathOpsFrame = new Frame(pathToolsFixed);
 
@@ -1354,7 +1360,7 @@ bool Mode_Path::mouseButtonReleaseForge(Forge *forge, int x, int y, Qt::MouseBut
 
 void Mode_Path::selfLayout()
 {
-    pathToolsCtl->height.set(mainUI->height.get());
+    tabCtl->height.set(mainUI->height.get());
     resizeAncillary(pathTools->width.get());
 }
 
@@ -1375,5 +1381,6 @@ void Mode_Path::doLayout()
 
     pathButtonsFrame->width.set(pathTools->width.get()+6);
 
-    ancillaryFrame->yPos.set(pathButtons->yPos.get() + pathButtons->height.get());
+    ancillaryFrame->xPos.set(0);
+    ancillaryFrame->yPos.set(pathButtonsFrame->yPos.get() + pathButtonsFrame->height.get());
 }

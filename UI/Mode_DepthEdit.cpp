@@ -50,6 +50,7 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
 
     tabCtl->xPos.set(0);
     tabCtl->yPos.set(0);
+    tabCtl->width.set(1);
 
     tabCtl->myMode = this;
 
@@ -93,8 +94,15 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
 
     ancillaryFrame = new Frame(basicTools);
 
+    ancillaryFrame->xPos.setResp(Resp_Self);
+    ancillaryFrame->yPos.setResp(Resp_Parent);
+
     ancillaryFrame->width.setResp(Resp_Child);
     ancillaryFrame->height.setResp(Resp_Child);
+
+    ancillaryFrame->xPos.set(0);
+    ancillaryFrame->yPos.set(0);
+
 
     ancillaryFrame->backgroundResp = Resp_Child;
 
@@ -104,14 +112,14 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     ancillaryView->width.setResp(Resp_Self);
     ancillaryView->height.setResp(Resp_Self);
     ancillaryView->xPos.setResp(Resp_Self);
-    ancillaryView->yPos.setResp(Resp_Parent);
+    ancillaryView->yPos.setResp(Resp_Self);
 
     ancillaryView->height.set((lenssz+ border)*2);
     ancillaryView->width.set((lenssz+ border)*2);
     ancillaryView->xPos.set(0);
     ancillaryView->yPos.set(0);
 
-    ancillaryImage = new Image(1, 1);
+    ancillaryImage = new Image(32, 32);
     ancillaryView->setSource(ancillaryImage, false);
 
     ancillaryView->onPress = {this,ancillaryView, &ancillary_press, nullptr};
@@ -421,11 +429,12 @@ bool Mode_DepthEdit::mouseButtonReleaseForge(Forge *forge, int x, int y, Qt::Mou
 void Mode_DepthEdit::selfLayout()
 {
     tabCtl->height.set(mainUI->height.get());
-    resizeAncillary(basicTools->width.get()-6);
 }
 
 void Mode_DepthEdit::doLayout()
 {
+    resizeAncillary(basicTools->width.get()-6);
+
     ancillaryFrame->xPos.set(0);
     ancillaryFrame->yPos.set(toolFrame->height.get());
 

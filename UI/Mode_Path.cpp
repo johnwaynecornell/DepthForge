@@ -109,7 +109,7 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     ancillaryView->xPos.set(0);
     ancillaryView->yPos.set(0);
 
-    ancillaryImage = new Image(1, 1);
+    ancillaryImage = new Image(16, 16);
     ancillaryView->setSource(ancillaryImage, false);
 
     ancillaryView->onPress = {this,ancillaryView, &ancillary_press, nullptr};

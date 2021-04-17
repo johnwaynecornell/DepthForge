@@ -46,6 +46,7 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
     tabs->xPos.setResp(Resp_Self);
     tabs->yPos.setResp(Resp_Self);
 
+    tabs->width.set(1);
     tabs->xPos.set(0);
     tabs->yPos.set(0);
 

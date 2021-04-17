@@ -30,9 +30,9 @@ enum Resp
 template <class T> class UIProp
 {
 public:
-    bool dirty;
-    T val;
-    Resp resp;
+    bool dirty = true;
+    T val = 0;
+    Resp resp = Resp_Self;
 
     void set(T val)
     {
@@ -83,7 +83,7 @@ public:
     int yReal;
 
     //LayoutProc selfLayoutProc;
-    LayoutProc layoutProc;
+    LayoutProc layoutProc = nullptr;
 
     ImgOp backOp;
     Image *backImage;

@@ -284,10 +284,11 @@ void Forge::drawBackground(UI *member, Image *target, QImage *qImage)
             bkgImage, 0, 0, w, h);
 }
 
-void zoomVars(double xo, double yo, double scale,
+bool zoomVars(double xo, double yo, double scale,
               int &srcX, int &srcY, int &srcW, int &srcH,
               int &destX, int &destY, int &destW, int &destH)
 {
+    bool rc;
     double a1 = destW / (double) destH;
     double a2 = srcW / (double) srcH;
 
@@ -308,17 +309,13 @@ void zoomVars(double xo, double yo, double scale,
     if (a2<a1)
     {
         sh = srcH / scale;
-        //sy = soy - scy / scale;
-
         sw = destW * sh / destH;
-        //sx = sox - sw / 2.0;
+        rc = false;
     } else
     {
         sw = srcW / scale;
-    //    sx = sox - scx / scale;
-
         sh = destH * sw / destW;
-    //    sy = soy - sh / 2.0;
+        rc = true;
     }
 
     sx = (int)(xo * (srcW - sw));
@@ -349,8 +346,6 @@ void zoomVars(double xo, double yo, double scale,
         sw -= d;
     }
 
-
-
     if (sy<0)
     {
         i = destH * -sy / (double) sh;
@@ -377,6 +372,8 @@ void zoomVars(double xo, double yo, double scale,
     srcY = sy;
     srcW = sw;
     srcH = sh;
+
+    return rc;
 }
 
 bool ForgeDrawPixFunc(Image *image, int x, int y, ARGB &p, float &z, void *arg)
@@ -385,6 +382,40 @@ bool ForgeDrawPixFunc(Image *image, int x, int y, ARGB &p, float &z, void *arg)
     z = image->z[y][x] * *((double *)arg);
 
     return false;
+}
+
+bool depthPixFunc(Image *I, int x, int y, ARGB &p, float &z, void *arg)
+{
+    Image *src = ((Forge *)arg)->src;
+
+    int xx = x*src->Width/I->Width;
+    int yy = y*src->Height/I->Height;
+
+    float _z = -src->z[yy][xx];
+
+    _z = (_z+1)/2.0;
+    if (_z<0) _z = 0; else if (_z>1) _z = 1;
+
+    unsigned char G = (unsigned char)(_z*0xFF);
+
+    p = {0xFF,G,G,G};
+    z = 0.0;
+
+    return true;
+}
+
+void Forge::updateGreyMap()
+{
+    Image *g = ((MainUI *)rootElement())->forgeContainer->forge->greyMap;
+
+    if (g->Width != src->Width || g->Height != src->Height)
+    {
+        delete g;
+        g = ((MainUI *)rootElement())->forgeContainer->forge->greyMap = new Image(src->Width, src->Height);
+    }
+
+    g->FillRect(0,0,g->Width,g->Height, PixOp_SRC, ZOp_SRC, depthPixFunc, this);
+
 }
 
 void Forge::draw(Image *target, QImage *qImage)
@@ -405,10 +436,21 @@ void Forge::draw(Image *target, QImage *qImage)
     _srcX = 0;
     _srcY = 0;
 
-    zoomVars(scrollX, scrollY, scale, _srcX, _srcY, _srcW, _srcH, _x,_y,_w,_h);
-    target->DrawImage(_x,_y,_w,_h, PixOp_SRC, ZOp_SRC, src, _srcX, _srcY, _srcW, _srcH);
-    target->FillRect(_x,_y,_w,_h, PixOp_SRC, ZOp_SRC, ForgeDrawPixFunc, &scale);
+    Image *g = greyMap;
 
+    bool horz = zoomVars(scrollX, scrollY, scale, _srcX, _srcY, _srcW, _srcH, _x, _y, _w, _h);
+
+
+    if (!swapViews) {
+        target->DrawImage(_x, _y, _w, _h, PixOp_SRC, ZOp_SRC, src, _srcX, _srcY, _srcW, _srcH);
+
+        //a->DrawImage(0, 0, a->Width, a->Height, PixOp_SRC, ZOp_SRC, g, 0, 0,g->Width, g->Height);
+    } else
+    {
+        target->DrawImage(_x, _y, _w, _h, PixOp_SRC, ZOp_SRC, g, _srcX, _srcY, _srcW, _srcH);
+    }
+
+    target->FillRect(_x, _y, _w, _h, PixOp_SRC, ZOp_SRC, ForgeDrawPixFunc, &scale);
     target->setBound(_x,_y,_w,_h);
     ((MainUI *)rootElement())->mode_Current->drawForge(this, target, qImage);
     target->resetBound();

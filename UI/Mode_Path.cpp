@@ -1355,6 +1355,7 @@ bool Mode_Path::mouseButtonReleaseForge(Forge *forge, int x, int y, Qt::MouseBut
 void Mode_Path::selfLayout()
 {
     pathToolsCtl->height.set(mainUI->height.get());
+    resizeAncillary(pathTools->width.get());
 }
 
 void Mode_Path::doLayout()
@@ -1369,10 +1370,10 @@ void Mode_Path::doLayout()
 
     pathToolsFrame->width.set(pathTools->width.get()+6);
 
-    resizeAncillary(pathTools->width.get());
-
     pathButtonsFrame->xPos.set(0);
     pathButtonsFrame->yPos.set(pathToolsFrame->height.get());
 
     pathButtonsFrame->width.set(pathTools->width.get()+6);
+
+    ancillaryFrame->yPos.set(pathButtons->yPos.get() + pathButtons->height.get());
 }

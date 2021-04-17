@@ -86,6 +86,29 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     pathButtonsFrame->xPos.set(0);
     pathButtonsFrame->yPos.set(0);
 
+    ancillaryFrame = new Frame(pathToolsFixed);
+
+    ancillaryFrame->width.setResp(Resp_Child);
+    ancillaryFrame->height.setResp(Resp_Child);
+
+    ancillaryFrame->backgroundResp = Resp_Child;
+
+
+    ancillaryView = new Button_Image(ancillaryFrame);
+
+    ancillaryView->width.setResp(Resp_Self);
+    ancillaryView->height.setResp(Resp_Self);
+    ancillaryView->xPos.setResp(Resp_Self);
+    ancillaryView->yPos.setResp(Resp_Parent);
+
+    //ancillaryView->height.set((lenssz+ border)*2);
+    //ancillaryView->width.set((lenssz+ border)*2);
+    ancillaryView->xPos.set(0);
+    ancillaryView->yPos.set(0);
+
+    ancillaryImage = new Image(1, 1);
+    ancillaryView->setSource(ancillaryImage, false);
+
     pathOpsFrame = new Frame(pathToolsFixed);
 
     pathOpsFrame->width.setResp(Resp_Self);
@@ -1345,6 +1368,8 @@ void Mode_Path::doLayout()
     pathToolsFrame->yPos.set(0);
 
     pathToolsFrame->width.set(pathTools->width.get()+6);
+
+    resizeAncillary(pathTools->width.get());
 
     pathButtonsFrame->xPos.set(0);
     pathButtonsFrame->yPos.set(pathToolsFrame->height.get());

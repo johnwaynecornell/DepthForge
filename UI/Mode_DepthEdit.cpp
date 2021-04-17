@@ -9,24 +9,24 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
 {
     previewLens = false;
 
-    basicToolsCtl = new DepthForgeTabCtl(mainUI->tabs, QApplication::tr("Lens"));
+    tabCtl = new DepthForgeTabCtl(mainUI->tabs, QApplication::tr("Lens"));
 
-    basicToolsCtl->width.setResp(Resp_Child);
-    basicToolsCtl->height.setResp(Resp_Parent);
-    basicToolsCtl->xPos.setResp(Resp_Self);
-    basicToolsCtl->yPos.setResp(Resp_Self);
+    tabCtl->width.setResp(Resp_Child);
+    tabCtl->height.setResp(Resp_Parent);
+    tabCtl->xPos.setResp(Resp_Self);
+    tabCtl->yPos.setResp(Resp_Self);
 
-    basicToolsCtl->xPos.set(0);
-    basicToolsCtl->yPos.set(0);
+    tabCtl->xPos.set(0);
+    tabCtl->yPos.set(0);
 
-    basicToolsCtl->myMode = this;
+    tabCtl->myMode = this;
 
-    basicToolsCtl->tabPosition.set(mainUI->tabs->_tabPosition);
+    tabCtl->tabPosition.set(mainUI->tabs->_tabPosition);
     mainUI->tabs->_tabPosition += 64 + 9;
 
-    //basicToolsCtl->open();
+    //tabCtl->open();
 
-    basicTools = new Fixed(basicToolsCtl);
+    basicTools = new Fixed(tabCtl);
     basicTools->width.setResp(Resp_Child);
     basicTools->height.setResp(Resp_Parent);
     basicTools->xPos.setResp(Resp_Self);
@@ -58,6 +58,29 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     tools->width.set((lenssz+ border)*2);
     tools->xPos.set(0);
     tools->yPos.set(0);
+
+    ancillaryFrame = new Frame(toolFrame);
+
+    ancillaryFrame->width.setResp(Resp_Child);
+    ancillaryFrame->height.setResp(Resp_Child);
+
+    ancillaryFrame->backgroundResp = Resp_Child;
+
+
+    ancillaryView = new Button_Image(ancillaryFrame);
+
+    ancillaryView->width.setResp(Resp_Self);
+    ancillaryView->height.setResp(Resp_Self);
+    ancillaryView->xPos.setResp(Resp_Self);
+    ancillaryView->yPos.setResp(Resp_Parent);
+
+    ancillaryView->height.set((lenssz+ border)*2);
+    ancillaryView->width.set((lenssz+ border)*2);
+    ancillaryView->xPos.set(0);
+    ancillaryView->yPos.set(0);
+
+    ancillaryImage = new Image(1, 1);
+    ancillaryView->setSource(ancillaryImage, false);
 
     bottomFrame = new Frame(basicTools);
     bottomFrame->width.setResp(Resp_Child);
@@ -362,11 +385,15 @@ bool Mode_DepthEdit::mouseButtonReleaseForge(Forge *forge, int x, int y, Qt::Mou
 
 void Mode_DepthEdit::selfLayout()
 {
-    basicToolsCtl->height.set(mainUI->height.get());
+    tabCtl->height.set(mainUI->height.get());
+    resizeAncillary(basicTools->width.get());
 }
 
 void Mode_DepthEdit::doLayout()
 {
+    ancillaryFrame->xPos.set(0);
+    ancillaryFrame->yPos.set(toolFrame->height.get());
+
     bottomFrame->xPos.set(0);
     bottomFrame->yPos.set(basicTools->height.get()-bottomFrame->height.get());
 }

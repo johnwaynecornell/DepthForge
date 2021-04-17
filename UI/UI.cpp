@@ -59,6 +59,8 @@ void UI::drawBackground(UI *member, Image *target, QImage *qImage)
                               PixOp_SRC_ALPHA, ZOp_SRC_ADD, backImage,
                               0, 0, backImage->Width, backImage->Height);
 
+        /* TODO */ //remove sanity check
+        if (!target->Bound(member->xReal, member->yReal)) __asm("int3");
         target->FillRect(member->xReal, member->yReal,
                          member->width.get(), member->height.get(),
                          backOp.pixOp, backColor, backOp.zOp, backColor.z);

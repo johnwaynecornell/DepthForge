@@ -130,7 +130,7 @@ void MainUI::draw(Image *target, QImage *qImage)
 {
     if (firstDraw)
     {
-        mode_DepthEdit->basicToolsCtl->open();
+        mode_DepthEdit->tabCtl->open();
         //mode_Path->pathToolsCtl->open();
         finalLayout();
         firstDraw = false;

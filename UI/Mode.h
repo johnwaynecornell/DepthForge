@@ -15,9 +15,13 @@ class Forge;
 class Mode {
 public:
     MainUI *mainUI;
-    Button * ancillaryView;
+    Image *ancillaryImage;
+    Frame *ancillaryFrame;
+    Button_Image * ancillaryView;
 
     Mode(MainUI *mainUI);
+
+    virtual void resizeAncillary(int width);
 
     virtual void updateSrc(Forge *forge);
     virtual void drawForge(Forge *forge, Image *target, QImage *qImage) = 0;

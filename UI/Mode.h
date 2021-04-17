@@ -7,6 +7,7 @@
 
 #include <QtGui/QImage>
 #include <Image/Image.h>
+#include <UI/UI.h>
 
 class MainUI;
 class Forge;
@@ -14,6 +15,7 @@ class Forge;
 class Mode {
 public:
     MainUI *mainUI;
+    Button * ancillaryView;
 
     Mode(MainUI *mainUI);
 

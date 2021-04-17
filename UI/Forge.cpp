@@ -284,65 +284,6 @@ void Forge::drawBackground(UI *member, Image *target, QImage *qImage)
             bkgImage, 0, 0, w, h);
 }
 
-bool GfxFitRect2(int *toFitX, int *toFitY, int *toFitW, int *toFitH, int toFitDimX, int toFitDimY,
-                 int *x, int *y, int *w, int *h)
-{
-    double a1 = *w / (double) *h;
-    double a2 = *toFitW / (double) *toFitH;
-
-    int _w, _h, _x, _y;
-
-    int tw, th;
-
-    tw = *toFitW;
-    th = *toFitH;
-
-    if (a2 <= a1)
-    {
-        _h = *h;
-        _w = *w;
-
-        tw = (int)(tw * a2);
-
-        if (tw>=toFitDimX)
-        {
-            tw = *toFitW;
-            _w = (int)(_h * a2);
-        }
-
-        //
-
-    }
-    else
-    {
-        _w = *w;
-        _h = *h;
-
-        th = th * a2;
-
-        if (th >= toFitDimY)
-        {
-            th = *toFitH;
-            _h  = (int)(_w / a2);
-
-        }
-    }
-
-    _x = *x + (*w - _w) / 2;// - (toFit.X / toFit.Width * This.Width);
-    _y = *y + (*h - _h) / 2;// - (toFit.Y / toFit.Height * This.Height);
-
-    *x = _x;
-    *y = _y;
-    *w = _w;
-    *h = _h;
-
-    *toFitX = *toFitX + (*toFitW - tw) / 2;// - (toFit.X / toFit.Width * This.Width);
-    *toFitY = *toFitY + (*toFitH - th) / 2;// - (toFit.Y / toFit.Height * This.Height);
-
-    *toFitW = tw;
-    *toFitH = th;
-}
-
 void zoomVars(double xo, double yo, double scale,
               int &srcX, int &srcY, int &srcW, int &srcH,
               int &destX, int &destY, int &destW, int &destH)

@@ -90,6 +90,15 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
 
 }
 
+bool MainUI::mouseCoordNotify(int x, int y)
+{
+    mouseX = x;
+    mouseY = y;
+
+    return UI::mouseCoordNotify(x,y);
+}
+
+
 bool MainUI::mouseMove(int x, int y)
 {
     mouseX = x;

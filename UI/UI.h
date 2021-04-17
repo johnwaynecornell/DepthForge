@@ -123,6 +123,8 @@ public:
     virtual void mouseEnter();
     virtual void mouseLeave();
 
+    virtual bool mouseCoordNotify(int x, int y);
+
     virtual bool mouseMove(int x, int y);
     virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
     virtual bool mouseButtonRelease(int x, int y, Qt::MouseButton button);

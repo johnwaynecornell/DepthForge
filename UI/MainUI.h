@@ -56,6 +56,7 @@ public:
     virtual bool doLayout();
     virtual double getTimeInSeconds();
 
+    virtual bool mouseCoordNotify(int x, int y);
     virtual bool mouseMove(int x, int y);
 
 private:

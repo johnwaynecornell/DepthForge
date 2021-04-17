@@ -139,6 +139,7 @@ void DepthForgeWin::mouseMoveEvent(QMouseEvent *eventMove)
 
     if (mouseCapture != nullptr)
     {
+        ui->mouseCoordNotify(x,y);
         x -= mouseCapture->xReal;
         y -= mouseCapture->yReal;
 

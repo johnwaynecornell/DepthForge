@@ -185,6 +185,19 @@ void UI::mouseLeave()
                                 mouseLeaveProc.element, mouseLeaveProc.argument);
 }
 
+bool UI::mouseCoordNotify(int x, int y)
+{
+    UI *ch = childAt(x,y);
+
+    if (ch != nullptr)
+    {
+        return ch->mouseCoordNotify(x,y);
+    }
+
+    return false;
+}
+
+
 bool UI::mouseMove(int x, int y)
 {
     UI *ch = childAt(x,y);

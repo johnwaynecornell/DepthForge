@@ -16,6 +16,8 @@
 
 extern QApplication *app;
 
+const char VERSION[]="0.0.4";
+
 bool bkgTilePixFunc(int index, double y, ARGB &p, float &z, void *arg)
 {
         y = 1.0 - abs(y);
@@ -248,12 +250,81 @@ void Forge::drawInitial()
             dMatrix2D::Scale({1.25,1.25}) *
             dMatrix2D::Translate(pivot) * dMatrix2D::Translate({200+64,150+90});
 
-
-
     pth.Apply(src);
 
-
     src->DrawPath(PixOp_SRC, ZOp_SRC, 1.0, &letters, nullptr);
+
+    QImage *i = new QImage(100, 100, QImage::Format_ARGB32);
+
+    QPainter *p = new QPainter(i);
+
+    p->fillRect(0,0,i->width(), i->height(), QBrush(QColor(0,0,0)));
+
+    double osz = 1;
+    double sz;
+
+    int w;
+
+    char t[1024];
+
+    sprintf(t,"v%s", VERSION);
+
+    QString txt = QApplication::tr(t);
+
+    do {
+        sz = osz;
+
+        QFont f;
+        f = p->font();
+
+        f.setPointSizeF(osz);
+
+        p->setFont(f);
+
+        w = p->fontMetrics().width(txt);
+
+        osz += .1;
+    } while (w < i->width());
+
+    QFont f;
+    f = p->font();
+
+    f.setPointSizeF(sz);
+
+    p->setFont(f);
+
+    int width = p->fontMetrics().width(txt);
+    int height = p->fontMetrics().height();
+
+    if (width>i->width()) width = i->width();
+
+    p->setPen(QColor(0xFF, 0xFF, 0xFF, 0xFF));
+    p->drawText(0, height, txt);
+
+    p->end();
+    delete p;
+
+    for (int y=0; y<height; y++)
+    {
+        for (int x=0; x<width; x++)
+        {
+            unsigned char V = ((BGRA *)i->bits())[y*i->width()+x].r;
+
+            float d = .15 * V / 0xFF;
+
+            if (V>0)
+            {
+                int xx,yy;
+                xx = src->Width-width+x-16;
+                yy = src->Height-height+y-16;
+
+                src->pix[yy][xx] = {0xFF,V,V,V};
+                src->z[yy][xx] -= d;
+            }
+        }
+    }
+
+    delete i;
 }
 
 void Forge::drawBackground(UI *member, Image *target, QImage *qImage)

@@ -229,6 +229,9 @@ bool DepthForgeWin::checkRelinquishMouse(int x, int y)
 
 void DepthForgeWin::initializeGL()
 {
+    int majorversion = format().majorVersion();
+    int minorversion = format().minorVersion();
+
     glDrawBuffer(GL_BACK_RIGHT);
     real_stereo = format().stereo() && (glGetError() == GL_NO_ERROR);
     anaglyph = !real_stereo;

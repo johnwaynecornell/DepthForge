@@ -18,7 +18,7 @@ MainWnd::MainWnd() : QMainWindow()
 
     QSurfaceFormat format;
 
-    //format.setVersion(3,3);
+    format.setVersion(1,1);
     format.setOption(QSurfaceFormat::FormatOption::StereoBuffers);
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);

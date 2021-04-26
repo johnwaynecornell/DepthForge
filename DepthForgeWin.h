@@ -67,7 +67,7 @@ public:
     int lastMouseX;
     int lastMouseY;
 
-    void initializeGL();
+    virtual void initializeGL();
     virtual void paintGL();
     virtual void resizeGL(int w,int h);
 

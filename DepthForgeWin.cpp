@@ -229,6 +229,9 @@ bool DepthForgeWin::checkRelinquishMouse(int x, int y)
 
 void DepthForgeWin::initializeGL()
 {
+
+    QOpenGLWindow::initializeGL();
+
     int majorversion = format().majorVersion();
     int minorversion = format().minorVersion();
 

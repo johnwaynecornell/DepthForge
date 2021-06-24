@@ -60,7 +60,7 @@ DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLW
 
 void DepthForgeWin::aboutToBlock()
 {
-    OnIdle();
+    //OnIdle();
 }
 
 void DepthForgeWin::resizeGL(int w,int h)
@@ -319,7 +319,9 @@ void DepthForgeWin::paintGL()
         glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
     }
 
-    update();
+    requestUpdate();
+
+    //update();
 }
 
 

@@ -32,7 +32,7 @@ DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLW
     showFPS = false;
 
     dispatcher = QAbstractEventDispatcher::instance();
-    connect(dispatcher, SIGNAL(aboutToBlock()), SLOT(aboutToBlock()));
+    //connect(dispatcher, SIGNAL(aboutToBlock()), SLOT(aboutToBlock()));
 
     UI_Image = UI_ImageAnaglyph  = UI_ImageLeft = UI_ImageRight = nullptr;
     rend = nullptr;
@@ -56,6 +56,15 @@ DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLW
 
     ui = new MainUI(this);
     forceAnaglyph = false;
+
+    idleTimer.setInterval(0);
+    connect(&idleTimer, SIGNAL(timeout()), this, SLOT(idleCallback()));
+    idleTimer.start();
+}
+
+void DepthForgeWin::idleCallback()
+{
+    requestUpdate();
 }
 
 void DepthForgeWin::aboutToBlock()
@@ -318,10 +327,6 @@ void DepthForgeWin::paintGL()
                -Height, Width);
         glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
     }
-
-    requestUpdate();
-
-    //update();
 }
 
 

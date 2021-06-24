@@ -22,4 +22,4 @@ There are currently 4 brushes to chose from with different charachteristics.
 
 Create and Enjoy!
 
-Please e-mail any corespondance to john.wayne.cornell@gmail.com
+Please e-mail any corespondance to depthforge@johncornell.net

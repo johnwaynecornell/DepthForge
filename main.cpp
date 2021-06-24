@@ -10,8 +10,6 @@
 
 #include "version.h"
 
-const char VERSION[] = "0.0.2";
-
 QApplication *app;
 
 extern double sinTab[65536];

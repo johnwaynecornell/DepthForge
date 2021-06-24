@@ -16,7 +16,7 @@
 
 extern QApplication *app;
 
-const char VERSION[]="0.0.4";
+const char VERSION[]="0.0.41";
 
 bool bkgTilePixFunc(int index, double y, ARGB &p, float &z, void *arg)
 {

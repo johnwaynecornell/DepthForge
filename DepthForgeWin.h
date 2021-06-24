@@ -9,6 +9,7 @@
 #include <QAbstractEventDispatcher>
 #include <QtOpenGL/QGLWidget>
 #include <QMainWindow>
+#include <QTimer>
 
 #include "Image/Image.h"
 #include "UI/UI.h"
@@ -67,6 +68,8 @@ public:
     int lastMouseX;
     int lastMouseY;
 
+    QTimer idleTimer;
+
     virtual void initializeGL();
     virtual void paintGL();
     virtual void resizeGL(int w,int h);
@@ -98,6 +101,7 @@ public:
 
 private slots:
     void aboutToBlock();
+    void idleCallback();
 };
 
 

@@ -32,6 +32,9 @@ struct ARGB
     static const int size=4;
 
     ARGB interpolate(ARGB B, unsigned char v);
+
+    float luminance(void);
+    float contrast(ARGB other);
 };
 
 struct RGBA

@@ -35,6 +35,7 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     BuildMove();
     BuildPlus();
     BuildConnect();
+    BuildWand();
     BuildSelect();
     BuildClear();
 
@@ -171,6 +172,7 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     button_Move = addButton(pathTools, _w+6, 0, image_Move, image_Move_t);
     button_Select = addButton(pathTools, (_w+6)*2, 0, image_Select, image_Select_t);
     button_Plus = addButton(pathTools, 0, _h+6, image_Plus, image_Plus_t);
+    button_Wand = nullptr; //addButton(pathTools, _w+6,_h+6, image_Wand, image_Wand_t);
 
     button_Connect = addButton2(pathButtons, _w+6, 0, image_Connect, image_Connect_t);
     button_Clear = addButton2(pathButtons, 0, 0, image_Clear, image_Clear_t);
@@ -207,6 +209,7 @@ Mode_Path::Mode_Path(MainUI *mainUI) : Mode(mainUI)
     button_Plus->tag = (void *) SubMode_Plus;
 
     button_Connect->tag = (void *) SubMode_None;
+    if (button_Wand != nullptr) button_Wand->tag = (void *) SubMode_Wand;
     button_Clear->tag = (void *) SubMode_None;
 
     button_Select->tag = (void *) SubMode_Select;
@@ -240,6 +243,8 @@ void Mode_Path::changeSubMode(SubMode mode)
     subMode = mode;
 
     if (mode != SubMode_Shape_Curve && mode != SubMode_Shape_Linear) doShapeDraw = false;
+
+    if (mode == SubMode_Wand) mainUI->cursor = mainUI->WandCursor; else mainUI->cursor = mainUI->ArrowCursor;
 }
 
 void connect_press(void *_This, Button*element, bool pressed, void *arg) {
@@ -558,7 +563,8 @@ void Mode_Path::BuildPlus()
             2.0 / _w, &line, nullptr);
 }
 
-void Mode_Path::BuildConnect() {
+void Mode_Path::BuildConnect()
+{
     PathAdapter a;
 
     a.outputMatrix = dMatrix2D::Scale({(double) _w, (double) _h});
@@ -613,6 +619,52 @@ void Mode_Path::BuildConnect() {
 
     image_Connect_t->DrawPath(PixOp_SRC, ZOp_SRC_ADD,
             2.0 / _w, &line, nullptr);
+}
+
+void Mode_Path::BuildWand() {
+    PathAdapter a;
+
+    a.outputMatrix = dMatrix2D::Scale({(double) _w, (double) _h});
+
+    a.inputMatrix = dMatrix2D::Translate({-.5,-.5}) * dMatrix2D::Rotate(M_PI*2.0/8+M_PI) * dMatrix2D::Translate({.5,.5});
+
+    a.Line(dPnt2D{0.5,.05}, dPnt2D{0.5, .95*.75});
+
+    dPnt2D starCenter = dPnt2D{.5, .95*(1+.75)/2.0};
+
+    dPnt2D points[5];
+
+    for (int i=0; i<5; i++)
+    {
+        points[i] = dPnt2D{starCenter.x + cosf(M_PI/2.0+M_PI*2*i/5.0) *.95*.25, starCenter.y + sinf(M_PI/2.0+M_PI*2*i/5.0)*.95*.25};
+    }
+
+    a.MoveTo(dPnt2D{0.5, .95*.75});
+    a.LineTo(points[3]);
+    a.LineTo(points[0]);
+    a.LineTo(points[2]);
+    a.LineTo(points[4]);
+    a.LineTo(points[1]);
+    a.LineTo(dPnt2D{0.5, .95*.75});
+
+    a._preservePath++;
+
+    colors_toggled(false);
+    image_Wand = new Image(_w, _h);
+    image_Wand->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
+
+    a.Apply(image_Wand);
+
+    image_Wand->DrawPath(PixOp_SRC, ZOp_SRC_ADD, 2.0 / _w, &line, nullptr);
+
+    colors_toggled(true);
+    image_Wand_t = new Image(_w, _h);
+    image_Wand_t->FillRect(0, 0, _w, _h, PixOp_SRC, bg, ZOp_SRC, 0);
+
+    a.Apply(image_Wand_t);
+
+    image_Wand_t->DrawPath(PixOp_SRC, ZOp_SRC_ADD,
+                              2.0 / _w, &line, nullptr);
 }
 
 void textOutMatchWidth(Image *I, int width, char *txt, ARGB color)
@@ -1259,14 +1311,197 @@ void Mode_Path::applyShape(SubMode shape, int x, int y)
     doShapeDraw = true;
 }
 
-bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButton button)
+ARGB T;
+
+bool contrast(Image *I, int x, int y)
 {
+    ARGB P = I->pix[y][x];
+    if (P.contrast(T)>2) return false;
+    /*
+    const int gs = 3;
+    for (int yy=y-gs; yy<=y+gs; yy++)
+    {
+        for (int xx=x-gs; xx<=x+gs; xx++)
+        {
+            if (!I->Bound(xx,yy)) return false;
+
+            if (P.contrast(I->pix[yy][xx])>=2.8) return false;
+        }
+    }*/
+    return true;
+}
+
+float _map(float val);
+
+struct fRGB
+{
+    float r;
+    float g;
+    float b;
+
+    fRGB(ARGB O)
+    {
+        r = _map(O.r)* 0.2126f;
+        g = _map(O.g)* 0.7152f;
+        b = _map(O.b)* 0.0722f;
+    }
+
+    fRGB(float r, float g, float b)
+    {
+        this->r = r;
+        this->g = g;
+        this->b = b;
+    }
+
+    float luminance()
+    {
+        return r  + g  + b ;
+    }
+
+    float dot(fRGB B)
+    {
+        return r * B.r + g * B.g + b * B.b;
+    }
+
+    fRGB Normal()
+    {
+        float l = sqrtf(r*r+b*b+g*g);
+        if (l == 0) l = 1.0f;
+        return fRGB(r/l,g/l,b/l);
+    }
+
+    float match(fRGB Q)
+    {
+        fRGB A = Normal();
+        fRGB B = Q.Normal();
+
+        float l1 = luminance();
+        float l2 = Q.luminance();
+
+        float V = 1.0f - fabs(l1 - l2);
+        double d = A.dot(B);
+
+        return V + (d-V) * fmin(l1,l2);
+
+        //double low = 1;
+        //double high = d;
+
+        //double q = (luminance() + Q.luminance()) / 2.0;
+
+        //double Mul = low - (high - low) * q;
+
+        //V *= Mul;
+        //return d *
+    }
+};
+
+void FloodFillOp(Image *I, ImageMask *m, ARGB P, iPnt2D C, iPnt2D Q, std::list<iPnt2D> &se, float thresh)
+{
+    int xd = Q.x - C.x;
+    int yd = Q.y - C.y;
+
+    if (I->Bound(Q.x,Q.y) && (!m->pix[Q.y][Q.x]))
+    {
+        int div = 0;
+        int r=0,g=0,b=0;
+
+        for (int i=1; i<=2; i++)
+        //for (int yy=Q.y-1; yy <= Q.y+1; yy++)
+        {
+            int xx = Q.x - xd * i;
+            int yy = Q.y - yd * i;
+
+            //for (int xx=Q.x-1; xx<= Q.x+1; xx++)
+            {
+                if (I->Bound(xx,yy))
+                {
+                    r += I->pix[yy][xx].r;
+                    g += I->pix[yy][xx].g;
+                    b += I->pix[yy][xx].b;
+
+                    div++;
+                }
+            }
+        }
+
+        ARGB O = { 0xFF, (unsigned char)(r / div), (unsigned char)(g/div), (unsigned char)(b/div)};
+
+        fRGB A = fRGB(P);
+        fRGB B = fRGB(O);
+
+        float m = A.match(B);
+
+        if (m>=thresh) se.push_back(Q);
+
+        //if (P.contrast(O) < thresh) se.push_back(Q);
+    }
+}
+
+ImageMask *FloodFill(Image *I, int x1, int y1) {
+    ImageMask *R = new ImageMask(I->Width, I->Height);
+    unsigned char **m = R->pix;
+
+    std::list<iPnt2D> se;
+    se.push_back({x1,y1});
+
+    float thresh = .9938;//(ARGB{0xFF,0xFF,0xFF,0xFF}).contrast(ARGB{0xFF,0x80,0x80,0x80});
+
+
+    while (!se.empty())
+    {
+        iPnt2D c = se.front();
+        se.pop_front();
+
+        if (!m[c.y][c.x]) {
+            m[c.y][c.x] = true;
+            ARGB P = I->pix[c.y][c.x];
+
+            FloodFillOp(I, R, P, c,{c.x - 1, c.y}, se, thresh);
+            FloodFillOp(I, R, P, c,{c.x + 1, c.y}, se, thresh);
+            FloodFillOp(I, R, P, c,{c.x, c.y - 1}, se, thresh);
+            FloodFillOp(I, R, P, c,{c.x, c.y + 1}, se, thresh);
+
+
+            FloodFillOp(I, R, P,c, {c.x - 1, c.y-1}, se, thresh);
+            FloodFillOp(I, R, P,c, {c.x + 1, c.y-1}, se, thresh);
+            FloodFillOp(I, R, P,c, {c.x - 1, c.y+1}, se, thresh);
+            FloodFillOp(I, R, P,c, {c.x + 1, c.y+1}, se, thresh);
+
+
+
+        }
+    }
+
+    return R;
+}
+
+void Mode_Path::applyWand(bool left, int x, int y) {
+    Image *target = this->mainUI->forgeContainer->forge->src;
+    T = target->pix[y][x];
+    ImageMask *mask = FloodFill(target, x,y);
+
+    for (int _y=0; _y<target->Height; _y++)
+    {
+        for (int _x=0; _x<target->Width; _x++)
+        {
+            if (mask->pix[_y][_x]) target->pix[_y][_x] = {0xFF,0xFF,0x00,0x00};
+        }
+    }
+
+    delete mask;
+}
+
+void _applyWand(bool left, int x, int y) {
+    printf("wand @ %i, %i\n",x,y);
+    fflush(stdout);
+}
+
+bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButton button) {
     if (button == Qt::MouseButton::LeftButton) {
         mouseDown = true;
     }
 
-    if (subMode == SubMode_Plus)
-    {
+    if (subMode == SubMode_Plus) {
         dPnt2D c = {forge->mouseX, forge->mouseY};
 
         if (button == Qt::MouseButton::LeftButton) {
@@ -1274,18 +1509,17 @@ bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButto
             std::list<dPnt2D>::iterator it = points.begin();
 
             int i;
-            for (i=0; i<selectedPnt; i++) it++;
+            for (i = 0; i < selectedPnt; i++) it++;
 
             selectedPnt = i;
 
             points.insert(it, c);
             refreshPth();
 
-        } else if (button == Qt::MouseButton::RightButton)
-        {
+        } else if (button == Qt::MouseButton::RightButton) {
             pth.MoveTo(c);
 
-            points.push_back({INFINITY,INFINITY});
+            points.push_back({INFINITY, INFINITY});
 
             selectedPnt = points.size();
 
@@ -1295,8 +1529,7 @@ bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButto
         }
 
 //        pointsCurrent = points.size()-1;
-    } else if (subMode == SubMode_Divide)
-    {
+    } else if (subMode == SubMode_Divide) {
         if (button == Qt::MouseButton::LeftButton) {
             pth.Nearest({forge->mouseX, forge->mouseY}, nearestIndex, nearestX);
 
@@ -1307,9 +1540,9 @@ bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButto
 
                 dPnt2D _c = {nearestX, 0};
 
-                dPnt2D d = pe.B-pe.A;
+                dPnt2D d = pe.B - pe.A;
 
-                double th = atan2(d.y,d.x);
+                double th = atan2(d.y, d.x);
 
                 dMatrix2D Matrix = dMatrix2D::Rotate(-th) * dMatrix2D::Translate(pe.A);
                 _c = Matrix * _c;
@@ -1330,20 +1563,23 @@ bool Mode_Path::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButto
                 //pointsCurrent = points.size()-1;
             }
         }
-    }else if (subMode == SubMode_Select)
-    {
-        if (button == Qt::MouseButton::LeftButton)
-        {
-            selectedPnt = nearest({forge->mouseX,forge->mouseY});
+    } else if (subMode == SubMode_Select) {
+        if (button == Qt::MouseButton::LeftButton) {
+            selectedPnt = nearest({forge->mouseX, forge->mouseY});
 
         }
-    } else if (subMode == SubMode_Shape_Linear)
-    {
-        applyShape(SubMode_Shape_Linear, (int) (forge->mouseX*forge->src->Width), (int) (forge->mouseY*forge->src->Height));
-    }
-    else if (subMode == SubMode_Shape_Curve)
-    {
-        applyShape(SubMode_Shape_Curve, (int) (forge->mouseX*forge->src->Width), (int) (forge->mouseY*forge->src->Height));
+    } else if (subMode == SubMode_Shape_Linear) {
+        applyShape(SubMode_Shape_Linear, (int) (forge->mouseX * forge->src->Width),
+                   (int) (forge->mouseY * forge->src->Height));
+    } else if (subMode == SubMode_Shape_Curve) {
+        applyShape(SubMode_Shape_Curve, (int) (forge->mouseX * forge->src->Width),
+                   (int) (forge->mouseY * forge->src->Height));
+    } else if (subMode == SubMode_Wand) {
+        if (button == Qt::MouseButton::LeftButton) {
+            applyWand(true, (int) (forge->mouseX * forge->src->Width), (int) (forge->mouseY * forge->src->Height));
+        } else if (button == Qt::MouseButton::RightButton) {
+            applyWand(false, (int) (forge->mouseX * forge->src->Width), (int) (forge->mouseY * forge->src->Height));
+        }
     }
 
     return true;

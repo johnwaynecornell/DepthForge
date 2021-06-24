@@ -29,8 +29,7 @@ bool drawArrow(int index, double y, ARGB &p, float &z, void *arg)
 
 }
 
-MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
-{
+MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr) {
     timeUp = clk.now();
 
     owner = main;
@@ -65,10 +64,25 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
     mode_DepthEdit = new Mode_DepthEdit(this);
     mode_Path = new Mode_Path(this);
 
+    BuildArrowCursor();
+    BuildWandCursor();
+
+    cursor = ArrowCursor;
+
     setMouseEnterProc(MainUIMouseEnter, this, nullptr);
     setMouseLeaveProc(MainUIMouseLeave, this, nullptr);
+}
 
-    ArrowCursor = new Image(16, 32);
+MainUI::~MainUI()
+{
+
+}
+
+void MainUI::BuildArrowCursor()
+{
+    ArrowCursor = new Cursor();
+
+    ArrowCursor->src = new Image(16, 32);
 
     PathAdapter *pa = new PathAdapter();
 
@@ -83,13 +97,54 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr)
     pa->LineTo(dPnt2D{-1.11022302462516E-16, 1.41421356237309});
     pa->LineTo(dPnt2D{0, 0});
 
-    pa->Apply(ArrowCursor);
+    pa->Apply(ArrowCursor->src);
 
-    ArrowCursor->DrawPath(PixOp_SRC, ZOp_SRC, 1, drawArrow, nullptr);
-
+    ArrowCursor->src->DrawPath(PixOp_SRC, ZOp_SRC, 1, drawArrow, nullptr);
     delete pa;
-
 }
+
+void MainUI::BuildWandCursor()
+{
+
+    WandCursor = new Cursor();
+
+    WandCursor->src = new Image(24, 48);
+
+    PathAdapter a;
+
+    a.outputMatrix = dMatrix2D::Scale({(double) 24, (double) 24});
+
+    a.inputMatrix = dMatrix2D::Translate({-.5, -1}) * dMatrix2D::Rotate(M_PI * 2.0 / 16 + M_PI) *
+                    dMatrix2D::Translate({.5, 1});
+
+    a.Line(dPnt2D{0.5, .05}, dPnt2D{0.5, .95 * .75});
+
+    dPnt2D starCenter = dPnt2D{.5, .95 * (1 + .75) / 2.0};
+
+    dPnt2D points[5];
+
+    for (int i = 0; i < 5; i++) {
+        points[i] = dPnt2D{starCenter.x + cosf(M_PI / 2.0 + M_PI * 2 * i / 5.0) * .95 * .25,
+                           starCenter.y + sinf(M_PI / 2.0 + M_PI * 2 * i / 5.0) * .95 * .25};
+    }
+
+    a.MoveTo(dPnt2D{0.5, .95 * .75});
+    a.LineTo(points[3]);
+    a.LineTo(points[0]);
+    a.LineTo(points[2]);
+    a.LineTo(points[4]);
+    a.LineTo(points[1]);
+    a.LineTo(dPnt2D{0.5, .95 * .75});
+
+    a.Apply(WandCursor->src);
+
+    WandCursor->src->DrawPath(PixOp_SRC, ZOp_SRC, 1, drawArrow, nullptr);
+
+    WandCursor->Hotspot = a.inputMatrix * a.outputMatrix * points[0];
+}
+
+
+
 
 bool MainUI::mouseCoordNotify(int x, int y)
 {
@@ -159,16 +214,16 @@ void MainUI::drawOverlay(Image *target, QImage *qImage)
 
     if (this->owner->showMouse) {
 
-        for (int y = 0; y < ArrowCursor->Height; y++) {
-            int yy = mouseY - 2 + y;
+        for (int y = 0; y < cursor->src->Height; y++) {
+            int yy = mouseY - cursor->Hotspot.y + y;
 
-            for (int x = 0; x < ArrowCursor->Width; x++) {
-                int xx = mouseX - 2 + x;
+            for (int x = 0; x < cursor->src->Width; x++) {
+                int xx = mouseX - cursor->Hotspot.x + x;
 
                 if (target->Bound(xx, yy)) {
                     //int o = yy * target->Width + xx;
-                    target->pix[yy][xx] = target->pix[yy][xx].interpolate(ArrowCursor->pix[y][x],
-                                                                          ArrowCursor->pix[y][x].a);
+                    target->pix[yy][xx] = target->pix[yy][xx].interpolate(cursor->src->pix[y][x],
+                                                                          cursor->src->pix[y][x].a);
                 }
             }
         }

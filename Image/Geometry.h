@@ -5,6 +5,11 @@
 #ifndef DEPTHFORGE_GEOMETRY_H
 #define DEPTHFORGE_GEOMETRY_H
 
+struct iPnt2D {
+    int x;
+    int y;
+};
+
 struct dPnt2D
 {
     double x;

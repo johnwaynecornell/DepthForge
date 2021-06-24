@@ -270,6 +270,7 @@ struct scanEntry {
     int low;
     int high;
     bool up = true;
+    ARGB q;
 
     int y;
 };
@@ -1388,6 +1389,91 @@ void Image::Line(int xA,int yA, int xB, int yB, PixOp pixOp, ARGB pA, ARGB pB,
         }
     }
 }
+
+ImageMask *Image::FloodFill(int x1, int y1, bool (*pred)(Image *I, int x, int y))
+{
+    ImageMask *R = new ImageMask(Width, Height);
+    unsigned char **m = R->pix;
+
+    std::list<scanEntry> se;
+
+    int _x = x1;
+    int _y = y1;
+
+    //ARGB Q = pix[_y][_x];
+
+    do {
+        int sx = _x;
+        int sy = _y;
+
+        bool f;
+
+        f = true;
+
+        while ((_x >= 0) && f && (!m[_y][_x]) && (pred(this, _x, _y))) {
+            m[_y][_x] = 1;
+            //Q = pix[_y][_x];
+            _x--;
+        }
+
+        int lx = _x;
+
+        _x = sx + 1;
+        f = true;
+
+        while ((_x < Width) && f && (!m[_y][_x]) && pred(this, _x, _y)) {
+            m[_y][_x] = 1;
+            //Q = pix[_y][_x];
+            _x++;
+        }
+
+        int hx = _x;
+
+        if (lx + 1 < hx) {
+            scanEntry s;
+            memset(&s,0,sizeof(s));
+            s.low = lx;
+            s.high = hx;
+            s.cur = lx;
+            s.y = _y;
+            s.up = true;
+
+            se.push_back(s);
+        }
+
+        bool r = false;
+        while ((!r) && (se.empty() == false)) {
+
+            scanEntry *s = &se.front();
+
+            s->cur++;
+            _x = s->cur;
+            _y = s->y + (s->up ? -1 : 1);
+
+            r = (_y >= 0 && _y < Height) && _x < s->high;
+
+            if (!r) {
+                if (!se.front().up) se.pop_front();
+                else {
+                    s->up = false;
+                    s->cur = s->low;
+                }
+            } else
+            {
+                r = (Bound(_x, _y) && (!m[_y][_x]) && pred(this, _x, _y));
+                if (r)
+                {
+                    //m[_y][_x] = true;
+                    //Q = pix[_y][_x];
+                }
+            }
+        }
+
+    } while (se.empty() == false);
+
+    return R;
+}
+
 
 struct FillRect_Params
 {

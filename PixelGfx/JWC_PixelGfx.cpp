@@ -31,6 +31,31 @@ ARGB ARGB::interpolate(ARGB B, unsigned char v)
     return dest;
 }
 
+float _map(float val)
+{
+    val /= 0xFF;
+
+    return val <= 0.03928
+           ? val / 12.92f
+           : powf( (val + 0.055f) / 1.055f, 2.4f );
+}
+
+float ARGB::luminance(void)
+{
+    return _map(r) * 0.2126f + _map(g) * 0.7152f + _map(b) * 0.0722f;
+}
+
+float ARGB::contrast(ARGB other)
+{
+    float l1 = luminance();
+    float l2 = other.luminance();
+
+    float brightest = (l1 > l2) ? l1 : l2;
+    float darkest = (l1<l2) ? l1 : l2;
+
+    return (brightest+.05f) / (darkest + .05f);
+}
+
 
 void Init_JWC_PixelGfx()
 {

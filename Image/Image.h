@@ -133,6 +133,7 @@ public:
     void LineTo(int x2, int y2);
     void Line(int x1, int y1, int x2, int y2);
 
+    ImageMask *FloodFill(int x1, int y1, bool (*pred)(Image *I, int x, int y));
 
     Image(int Width, int Height);
     virtual ~Image();

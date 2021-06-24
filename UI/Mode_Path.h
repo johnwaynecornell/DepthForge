@@ -34,6 +34,7 @@ public:
     Button_Image *button_ShapeCurveToggle;
 
     Button_Image *button_Clear;
+    Button_Image *button_Wand;
 
     Slider *slide_Intensity;
     Slider *slide_Offset;
@@ -44,6 +45,7 @@ public:
     Image *image_Connect;
 
     Image *image_Clear;
+    Image *image_Wand;
 
     Image *image_Select;
     Image *image_ShapeToggle;
@@ -54,6 +56,7 @@ public:
     Image *image_Plus_t;
     Image *image_Connect_t;
     Image *image_Clear_t;
+    Image *image_Wand_t;
     Image *image_Select_t;
     Image *image_ShapeToggle_t;
 
@@ -81,6 +84,7 @@ public:
         SubMode_Move,
         SubMode_Plus,
         SubMode_Connect,
+        SubMode_Wand,
         SubMode_Select,
         SubMode_Shape_Linear,
         SubMode_Shape_Curve
@@ -108,6 +112,7 @@ public:
     void changeSubMode(SubMode mode);
 
     void applyShape(SubMode shape, int x, int y);
+    void applyWand(bool left, int x, int y);
     Button_Image *addButton(UI *parent, int x, int y, Image *img, Image *img_t);
     Button_Image *addButton2(UI *parent, int x, int y, Image *img, Image *img_t);
     void refreshPth();
@@ -128,6 +133,7 @@ private:
     void BuildMove();
     void BuildPlus();
     void BuildConnect();
+    void BuildWand();
     void BuildSelect();
     void BuildClear();
     void BuildShapeToggle();

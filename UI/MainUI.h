@@ -10,6 +10,7 @@
 #include "Lens.h"
 #include "DepthForgeWin.h"
 #include "UI.h"
+#include "Cursor.h"
 #include "Slider.h"
 #include "TabCtl.h"
 #include "Forge.h"
@@ -36,7 +37,10 @@ public:
 
     TabFolder *tabs;
 
-    Image *ArrowCursor;
+    Cursor *ArrowCursor;
+    Cursor *WandCursor;
+
+    Cursor *cursor;
 
     ForgeContainer *forgeContainer;
 
@@ -48,6 +52,7 @@ public:
     int mouseY;
 
     MainUI(DepthForgeWin *win);
+    virtual ~MainUI();
 
     virtual void draw(Image *target, QImage *qImage);
     virtual void drawOverlay(Image *target, QImage *qImage);
@@ -58,6 +63,9 @@ public:
 
     virtual bool mouseCoordNotify(int x, int y);
     virtual bool mouseMove(int x, int y);
+
+    void BuildArrowCursor();
+    void BuildWandCursor();
 
 private:
     virtual void giveMouse(UI *element);

@@ -232,4 +232,5 @@ public:
 
 extern void save_jps(QString fileName, Image *ImageLeft, Image *ImageRight);
 extern void save_ana(QString fileName, Image *ImageLeft, Image *ImageRight);
+extern void save_parallel(QString fileName, Image *ImageLeft, Image *ImageRight, bool half);
 extern void save_sample(QString fileName, Image *ImageLeft, Image *ImageRight);

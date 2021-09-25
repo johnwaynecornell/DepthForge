@@ -79,7 +79,10 @@ public:
     void import(UI *sender, void *arg);
     void export_anaglyph(UI *sender, void *arg);
     void export_jps(UI *sender, void *arg);
-
+    void export_SBS_Parallel(UI *sender, void *arg);
+    void export_SBS_ParallelHalf(UI *sender, void *arg);
+    void export_SBS_Cross(UI *sender, void *arg);
+    void export_SBS_CrossHalf(UI *sender, void *arg);
 };
 
 #endif //DEPTHFORGE_FORGE_H

@@ -672,6 +672,48 @@ void save_jps(QString fileName, Image *ImageLeft, Image *ImageRight)
     delete tmp;
 }
 
+void save_parallel(QString fileName, Image *ImageLeft, Image *ImageRight, bool half)
+{
+    Image *ImageOut;
+
+    int w = ImageLeft->Width;
+    int h = ImageLeft->Height;
+
+    const bool SideBySide = true;
+
+    QImage *tmp;
+
+    int ww;
+
+    if (!half) {
+
+        ww = w << 1;
+        ImageOut = new Image(ww, h);
+
+        GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0, 0, w, h, w,
+               PixType_RGBA, ImageOut->imageMemory, 0, 0, w, h, ww);
+        GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
+               PixType_RGBA, ImageOut->imageMemory, w, 0, w, h, ww);
+
+    } else
+    {
+        ww = w;
+        ImageOut = new Image(ww, h);
+
+        GfxBlt(PixType_ARGB, ImageLeft->imageMemory, 0, 0, w, h, w,
+               PixType_RGBA, ImageOut->imageMemory, 0, 0, w/2, h, ww);
+        GfxBlt(PixType_ARGB, ImageRight->imageMemory, 0, 0, w, h, w,
+               PixType_RGBA, ImageOut->imageMemory, w/2, 0, w/2, h, ww);
+    }
+
+    tmp = new QImage((uchar *) ImageOut->imageMemory, ww, h, QImage::Format_RGBA8888);
+    tmp->save(fileName);
+
+    cleanup:
+    delete ImageOut;
+    delete tmp;
+}
+
 void save_ana(QString fileName, Image *ImageLeft, Image *ImageRight)
 {
     //save_sample(fileName, ImageLeft, ImageRight);

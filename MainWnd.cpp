@@ -79,6 +79,21 @@ void MainWnd::createActions() {
     action_export_jps->setStatusTip(tr("Export Jpeg stereo image file"));
     connect(action_export_jps, &QAction::triggered, this, &MainWnd::export_jps);
 
+    action_export_SBS_Parallel = new QAction(tr("Export Side by Side &Parallel"), this);
+    action_export_SBS_ParallelHalf = new QAction(tr("Export Side by Side Parallel Half"), this);
+    action_export_SBS_Cross = new QAction(tr("Export Side by Side &Cross view"), this);
+    action_export_SBS_CrossHalf = new QAction(tr("Export Side by Side Cross view Half"), this);
+
+    action_export_SBS_Parallel->setStatusTip(tr("Export side by side stereo"));
+    action_export_SBS_ParallelHalf->setStatusTip(tr("Export half width side by side stereo"));
+    action_export_SBS_Cross->setStatusTip(tr("Export side by side cross view stereo"));
+    action_export_SBS_CrossHalf->setStatusTip(tr("Export side by side cross view half width stereo"));
+
+    connect(action_export_SBS_Parallel, &QAction::triggered, this, &MainWnd::export_SBS_Parallel);
+    connect(action_export_SBS_ParallelHalf, &QAction::triggered, this, &MainWnd::export_SBS_ParallelHalf);
+    connect(action_export_SBS_Cross, &QAction::triggered, this, &MainWnd::export_SBS_Cross);
+    connect(action_export_SBS_CrossHalf, &QAction::triggered, this, &MainWnd::export_SBS_CrossHalf);
+
     action_file_new = new QAction(tr("&New"), this);
     action_file_new->setStatusTip(tr("Create new"));
     connect(action_file_new, &QAction::triggered, this, &MainWnd::file_new);
@@ -132,6 +147,15 @@ void MainWnd::createMenus()
 
     Export->addAction(action_export_anaglyph);
     Export->addAction(action_export_jps);
+    
+    QMenu *Export_SBS = Export->addMenu("&Side by side");
+
+    Export_SBS->addAction(action_export_SBS_Parallel);
+    Export_SBS->addAction(action_export_SBS_ParallelHalf);
+    Export_SBS->addAction(action_export_SBS_Cross);
+    Export_SBS->addAction(action_export_SBS_CrossHalf);
+
+
 
     QMenu *Settings = mb->addMenu("&Settings");
     Settings->addAction(action_toggle_fps);
@@ -191,6 +215,38 @@ void MainWnd::export_jps()
     if (export_jps_proc.function != nullptr) export_jps_proc.function(
             export_jps_proc._This, export_jps_proc.element, export_jps_proc.argument);
 }
+
+void MainWnd::export_SBS_Parallel()
+{
+    if (export_SBS_Parallel_proc.function != nullptr) export_SBS_Parallel_proc.function(
+                export_SBS_Parallel_proc._This, export_SBS_Parallel_proc.element, export_SBS_Parallel_proc.argument);
+}
+
+void MainWnd::export_SBS_ParallelHalf()
+{
+    if (export_SBS_ParallelHalf_proc.function != nullptr) export_SBS_ParallelHalf_proc.function(
+                export_SBS_ParallelHalf_proc._This, export_SBS_ParallelHalf_proc.element, export_jps_proc.argument);
+}
+
+void MainWnd::export_SBS_Cross()
+{
+    if (export_SBS_Cross_proc.function != nullptr) export_SBS_Cross_proc.function(
+                export_SBS_Cross_proc._This, export_SBS_Cross_proc.element, export_SBS_Cross_proc.argument);
+}
+
+void MainWnd::export_SBS_CrossHalf()
+{
+    if (export_SBS_CrossHalf_proc.function != nullptr) export_SBS_CrossHalf_proc.function(
+                export_SBS_CrossHalf_proc._This, export_SBS_CrossHalf_proc.element, export_SBS_CrossHalf_proc.argument);
+}
+
+
+/*
+export_SBS_Parallel;
+export_SBS_ParallelHalf;
+export_SBS_Cross;
+export_SBS_CrossHalf;
+*/
 
 void MainWnd::toggle_fps()
 {

@@ -16,7 +16,7 @@
 
 extern QApplication *app;
 
-const char VERSION[]="0.0.42";
+const char VERSION[]="0.0.43";
 
 bool bkgTilePixFunc(int index, double y, ARGB &p, float &z, void *arg)
 {
@@ -89,6 +89,27 @@ Forge::Forge(UI *parent) : UI(parent)
 
     get_member_pointer(void (Forge::*a)(UI *, void *), &Forge::export_jps, tmp);
     w->export_jps_proc = {this, nullptr, (void (*)(void *, UI *,void *))tmp, nullptr};
+
+    get_member_pointer(void (Forge::*a)(UI *, void *), &Forge::export_SBS_Parallel, tmp);
+    w->export_SBS_Parallel_proc = {this, nullptr, (void (*)(void *, UI *,void *))tmp, nullptr};
+
+    get_member_pointer(void (Forge::*a)(UI *, void *), &Forge::export_SBS_ParallelHalf, tmp);
+    w->export_SBS_ParallelHalf_proc = {this, nullptr, (void (*)(void *, UI *,void *))tmp, nullptr};
+
+    get_member_pointer(void (Forge::*a)(UI *, void *), &Forge::export_SBS_Cross, tmp);
+    w->export_SBS_Cross_proc = {this, nullptr, (void (*)(void *, UI *,void *))tmp, nullptr};
+
+    get_member_pointer(void (Forge::*a)(UI *, void *), &Forge::export_SBS_CrossHalf, tmp);
+    w->export_SBS_CrossHalf_proc = {this, nullptr, (void (*)(void *, UI *,void *))tmp, nullptr};
+
+
+    /*
+export_SBS_Parallel;
+export_SBS_ParallelHalf;
+export_SBS_Cross;
+export_SBS_CrossHalf;
+
+     */
 
     get_member_pointer(void (Forge::*a)(UI *, void *), &Forge::export_anaglyph, tmp);
     w->export_anaglyph_proc = {this, nullptr, (void (*)(void *,UI *, void *))tmp, nullptr};
@@ -1130,4 +1151,129 @@ void Forge::export_jps(UI *sender, void *arg)
     cleanup:
     delete ImageLeft;
     delete ImageRight;
+}
+
+void Forge::export_SBS_Parallel(UI *sender, void *arg) {
+    Image *ImageLeft;
+    Image *ImageRight;
+
+    int w = src->Width;
+    int h = src->Height;
+
+    ImageLeft = new Image(w, h);
+    ImageRight = new Image(w, h);
+
+    src->Artif3d(src->Width / 30, ImageLeft, ImageRight);
+
+    QString fileName = QFileDialog::getSaveFileName(
+            ((MainUI *) rootElement())->owner->parent, ("Save Image File"),
+            lastPath2,
+            ("Images (*.png *.jpg)"));
+
+    if (fileName.isNull()) {
+        goto cleanup;
+    } else
+    {
+        lastPath2 = QFileInfo(fileName).filePath();
+
+        save_parallel(fileName, ImageLeft, ImageRight, false);
+    }
+
+    cleanup:
+    delete ImageLeft;
+    delete ImageRight;
+}
+
+void Forge::export_SBS_ParallelHalf(UI *sender, void *arg) {
+    Image *ImageLeft;
+    Image *ImageRight;
+
+    int w = src->Width;
+    int h = src->Height;
+
+    ImageLeft = new Image(w, h);
+    ImageRight = new Image(w, h);
+
+    src->Artif3d(src->Width / 30, ImageLeft, ImageRight);
+
+    QString fileName = QFileDialog::getSaveFileName(
+            ((MainUI *) rootElement())->owner->parent, ("Save Image File"),
+            lastPath2,
+            ("Images (*.png *.jpg)"));
+
+    if (fileName.isNull()) {
+        goto cleanup;
+    } else
+    {
+        lastPath2 = QFileInfo(fileName).filePath();
+
+        save_parallel(fileName, ImageLeft, ImageRight, true);
+    }
+
+    cleanup:
+    delete ImageLeft;
+    delete ImageRight;
+}
+
+void Forge::export_SBS_Cross(UI *sender, void *arg) {
+    Image *ImageLeft;
+    Image *ImageRight;
+
+    int w = src->Width;
+    int h = src->Height;
+
+    ImageLeft = new Image(w, h);
+    ImageRight = new Image(w, h);
+
+    src->Artif3d(src->Width / 30, ImageLeft, ImageRight);
+
+    QString fileName = QFileDialog::getSaveFileName(
+            ((MainUI *) rootElement())->owner->parent, ("Save Image File"),
+            lastPath2,
+            ("Images (*.png *.jpg)"));
+
+    if (fileName.isNull()) {
+        goto cleanup;
+    } else
+    {
+        lastPath2 = QFileInfo(fileName).filePath();
+
+        save_parallel(fileName, ImageRight, ImageLeft, false);
+    }
+
+    cleanup:
+    delete ImageLeft;
+    delete ImageRight;
+}
+
+void Forge::export_SBS_CrossHalf(UI *sender, void *arg) {
+    Image *ImageLeft;
+    Image *ImageRight;
+
+    int w = src->Width;
+    int h = src->Height;
+
+    ImageLeft = new Image(w, h);
+    ImageRight = new Image(w, h);
+
+    src->Artif3d(src->Width / 30, ImageLeft, ImageRight);
+
+    QString fileName = QFileDialog::getSaveFileName(
+            ((MainUI *) rootElement())->owner->parent, ("Save Image File"),
+            lastPath2,
+            ("Images (*.png *.jpg)"));
+
+    if (fileName.isNull()) {
+        goto cleanup;
+    } else
+    {
+        lastPath2 = QFileInfo(fileName).filePath();
+
+        save_parallel(fileName, ImageRight, ImageLeft, true);
+    }
+
+    cleanup:
+    delete ImageLeft;
+    delete ImageRight;
+
 }

@@ -16,6 +16,10 @@ public:
     QAction *action_import;
     QAction *action_export_anaglyph;
     QAction *action_export_jps;
+    QAction *action_export_SBS_Parallel;
+    QAction *action_export_SBS_ParallelHalf;
+    QAction *action_export_SBS_Cross;
+    QAction *action_export_SBS_CrossHalf;
 
     QAction *action_file_new;
     QAction *action_file_open;
@@ -46,6 +50,10 @@ public:
     UICallback<void (*)(void *elem, UI *sender, void *arg)> import_proc = {};
     UICallback<void (*)(void *elem, UI *sender, void *arg)> export_anaglyph_proc = {};
     UICallback<void (*)(void *elem, UI *sender, void *arg)> export_jps_proc = {};
+    UICallback<void (*)(void *elem, UI *sender, void *arg)> export_SBS_Parallel_proc = {};
+    UICallback<void (*)(void *elem, UI *sender, void *arg)> export_SBS_ParallelHalf_proc = {};
+    UICallback<void (*)(void *elem, UI *sender, void *arg)> export_SBS_Cross_proc = {};
+    UICallback<void (*)(void *elem, UI *sender, void *arg)> export_SBS_CrossHalf_proc{};
 
     void setFileName(QString &file);
 
@@ -53,6 +61,10 @@ private slots:
     void import();
     void export_anaglyph();
     void export_jps();
+    void export_SBS_Parallel();
+    void export_SBS_ParallelHalf();
+    void export_SBS_Cross();
+    void export_SBS_CrossHalf();
 
     void file_new();
     void file_open();

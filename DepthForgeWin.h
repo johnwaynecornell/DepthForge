@@ -45,10 +45,13 @@ public:
     Image *UI_Image;
 
     bool anaglyph;
+
     bool forceAnaglyph;
+    bool SBSHalf;
+
     bool real_stereo;
 
-    Image *UI_ImageAnaglyph;
+    Image *UI_ImageMono;
     Image *UI_ImageLeft;
     Image *UI_ImageRight;
 

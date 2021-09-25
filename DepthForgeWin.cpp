@@ -34,7 +34,7 @@ DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLW
     dispatcher = QAbstractEventDispatcher::instance();
     //connect(dispatcher, SIGNAL(aboutToBlock()), SLOT(aboutToBlock()));
 
-    UI_Image = UI_ImageAnaglyph  = UI_ImageLeft = UI_ImageRight = nullptr;
+    UI_Image = UI_ImageMono  = UI_ImageLeft = UI_ImageRight = nullptr;
     rend = nullptr;
 
     this->parent = appWindow;
@@ -56,6 +56,7 @@ DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLW
 
     ui = new MainUI(this);
     forceAnaglyph = false;
+    SBSHalf = false;
 
     idleTimer.setInterval(0);
     connect(&idleTimer, SIGNAL(timeout()), this, SLOT(idleCallback()));
@@ -92,13 +93,13 @@ void DepthForgeWin::checkResize()
         int h = Height;
 
         if (UI_Image != nullptr) delete UI_Image;
-        if (UI_ImageAnaglyph != nullptr) delete UI_ImageAnaglyph;
+        if (UI_ImageMono != nullptr) delete UI_ImageMono;
         if (UI_ImageLeft != nullptr) delete UI_ImageLeft;
         if (UI_ImageRight != nullptr) delete UI_ImageRight;
         if (rend != nullptr) delete rend;
 
         UI_Image = new Image(w, h);
-        UI_ImageAnaglyph = new Image(w, h);
+        UI_ImageMono = new Image(w, h);
         UI_ImageLeft = new Image(w, h);
         UI_ImageRight = new Image(w, h);
 
@@ -123,7 +124,7 @@ void DepthForgeWin::closeEvent(QCloseEvent *event)
 {
 
     if (UI_Image != nullptr) delete UI_Image;
-    if (UI_ImageAnaglyph  != nullptr) delete UI_ImageAnaglyph;
+    if (UI_ImageMono != nullptr) delete UI_ImageMono;
     if (UI_ImageLeft != nullptr) delete UI_ImageLeft;
     if (UI_ImageRight != nullptr) delete UI_ImageRight;
     if (rend != nullptr) delete rend;
@@ -292,17 +293,31 @@ void DepthForgeWin::paintGL()
 
     }
 
+    bool MONO = false;
 
     UI_Image->Artif3d(UI_Image->Width/30, UI_ImageLeft, UI_ImageRight);
-    if (anaglyph || forceAnaglyph)
-        UI_ImageAnaglyph->AnaglyphFrom(UI_ImageLeft, UI_ImageRight);
+    if ((anaglyph&&!SBSHalf) || forceAnaglyph) {
+        UI_ImageMono->AnaglyphFrom(UI_ImageLeft, UI_ImageRight);
+        MONO = true;
+    } else if (SBSHalf)
+    {
+        GfxBlt(PixType_ARGB, UI_ImageLeft->imageMemory,0, 0, Width, Height, Width,
+               PixType_ARGB, UI_ImageMono->imageMemory,
+               0, 0, Width / 2, Height, Width);
+
+        GfxBlt(PixType_ARGB, UI_ImageRight->imageMemory,0, 0, Width, Height, Width,
+               PixType_ARGB, UI_ImageMono->imageMemory,
+               Width / 2, 0, Width / 2, Height, Width);
+
+        MONO = true;
+    }
 
     if (real_stereo)
     {
         glDrawBuffer(GL_BACK_LEFT);
 
-        GfxBlt(PixType_ARGB, (anaglyph || forceAnaglyph) ?
-                             UI_ImageAnaglyph->imageMemory : UI_ImageLeft->imageMemory,
+        GfxBlt(PixType_ARGB, (MONO) ?
+                             UI_ImageMono->imageMemory : UI_ImageLeft->imageMemory,
                0, 0, Width, Height, Width, PixType_ABGR, obuf,
                0, 0, Width, -Height, Width);
 
@@ -311,8 +326,8 @@ void DepthForgeWin::paintGL()
 
         glDrawBuffer(GL_BACK_RIGHT);
 
-        GfxBlt(PixType_ARGB, (anaglyph || forceAnaglyph)
-                             ? UI_ImageAnaglyph->imageMemory : UI_ImageRight->imageMemory,
+        GfxBlt(PixType_ARGB, (MONO)
+                             ? UI_ImageMono->imageMemory : UI_ImageRight->imageMemory,
                0, 0, Width, Height, Width, PixType_ABGR, obuf,
                0, 0, Width, -Height, Width);
 
@@ -323,7 +338,7 @@ void DepthForgeWin::paintGL()
 
         glDrawBuffer(GL_BACK);
 
-        GfxBlt(PixType_ARGB, UI_ImageAnaglyph->imageMemory, 0, 0, Width, Height, Width, PixType_ABGR, obuf, 0, 0, Width,
+        GfxBlt(PixType_ARGB, UI_ImageMono->imageMemory, 0, 0, Width, Height, Width, PixType_ABGR, obuf, 0, 0, Width,
                -Height, Width);
         glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, obuf);
     }

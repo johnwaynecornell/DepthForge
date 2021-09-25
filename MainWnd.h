@@ -30,6 +30,7 @@ public:
 
     QAction *action_toggle_fps;
     QAction *action_toggle_forceAnaglyph;
+    QAction *action_toggle_SBSHalf;
 
     DepthForgeWin *depthForge;
 
@@ -75,6 +76,7 @@ private slots:
 
     void toggle_fps();
     void toggle_forceAnaglyph();
+    void toggle_SBSHalf();
 
 };
 

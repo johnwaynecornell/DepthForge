@@ -124,6 +124,11 @@ void MainWnd::createActions() {
     action_toggle_forceAnaglyph->setStatusTip(tr("force to anaglyph mode"));
     action_toggle_forceAnaglyph->setCheckable(true);
     connect(action_toggle_forceAnaglyph, &QAction::triggered, this, &MainWnd::toggle_forceAnaglyph);
+
+    action_toggle_SBSHalf = new QAction(tr("Toggle &SBS half width (TV Mode)"), this);
+    action_toggle_SBSHalf->setStatusTip(tr("Toggle &SBS half width (TV Mode)"));
+    action_toggle_SBSHalf->setCheckable(true);
+    connect(action_toggle_SBSHalf, &QAction::triggered, this, &MainWnd::toggle_SBSHalf);
 }
 
 void MainWnd::createMenus()
@@ -155,11 +160,10 @@ void MainWnd::createMenus()
     Export_SBS->addAction(action_export_SBS_Cross);
     Export_SBS->addAction(action_export_SBS_CrossHalf);
 
-
-
     QMenu *Settings = mb->addMenu("&Settings");
     Settings->addAction(action_toggle_fps);
     Settings->addAction(action_toggle_forceAnaglyph);
+    Settings->addAction(action_toggle_SBSHalf);
 }
 
 void MainWnd::setFileName(QString &fileName)
@@ -256,4 +260,19 @@ void MainWnd::toggle_fps()
 void MainWnd::toggle_forceAnaglyph()
 {
     depthForge->forceAnaglyph = action_toggle_forceAnaglyph->isChecked();
+    if (depthForge->forceAnaglyph)
+    {
+        action_toggle_SBSHalf->setChecked(false);
+        depthForge->SBSHalf = false;
+    }
+}
+
+void MainWnd::toggle_SBSHalf()
+{
+    depthForge->SBSHalf = action_toggle_SBSHalf->isChecked();
+    if (depthForge->SBSHalf)
+    {
+        action_toggle_forceAnaglyph->setChecked(false);
+        depthForge->forceAnaglyph = false;
+    }
 }

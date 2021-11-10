@@ -8,6 +8,7 @@
 #include <chrono>
 
 #include "Lens.h"
+#include "Brush.h"
 #include "DepthForgeWin.h"
 #include "UI.h"
 #include "Cursor.h"
@@ -20,6 +21,7 @@
 
 #include "Mode_DepthEdit.h"
 #include "Mode_Path.h"
+#include "Mode_Draw.h"
 
 class Forge;
 class ForgeContainer;
@@ -34,6 +36,7 @@ public:
     Mode *mode_Current;
     Mode_DepthEdit *mode_DepthEdit;
     Mode_Path *mode_Path;
+    Mode_Draw *mode_Draw;
 
     TabFolder *tabs;
 

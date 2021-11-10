@@ -63,6 +63,7 @@ MainUI::MainUI(DepthForgeWin *main) : Fixed(nullptr) {
     mode_Current = nullptr;
     mode_DepthEdit = new Mode_DepthEdit(this);
     mode_Path = new Mode_Path(this);
+    mode_Draw = new Mode_Draw(this);
 
     BuildArrowCursor();
     BuildWandCursor();

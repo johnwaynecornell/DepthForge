@@ -65,7 +65,7 @@ DepthForgeWin::DepthForgeWin(QMainWindow *appWindow, QWindow *parent) : QOpenGLW
 
 void DepthForgeWin::idleCallback()
 {
-    requestUpdate();
+    if (this->isVisible()) requestUpdate();
 }
 
 void DepthForgeWin::aboutToBlock()

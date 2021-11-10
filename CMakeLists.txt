@@ -18,7 +18,7 @@ include_directories(QtOpengl5_INCLUDE_DIRS)
 
 if (WIN32)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
-set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/AppIcon.rc")
+set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/AppIcon.rc" Brush.cpp Brush.h UI/common.cpp UI/common.h)
 endif()
 
 # executable
@@ -34,9 +34,9 @@ add_executable(DepthForge version.h main.cpp
         MainWnd.cpp MainWnd.h DepthForgeWin.cpp DepthForgeWin.h
         UI/UI.cpp UI/UI.h UI/Button.cpp UI/MainUI.cpp UI/MainUI.h UI/Forge.cpp UI/Forge.h
         UI/TabCtl.cpp UI/TabCtl.h
-        Lens.cpp Lens.h FpsMonitor.cpp FpsMonitor.h
+        Lens.cpp Lens.h Brush.cpp Brush.h FpsMonitor.cpp FpsMonitor.h
         UI/Slider.cpp UI/Slider.h UI/TestUI.cpp UI/TestUI.h
-        genbuttons.h UI/Mode_Path.cpp UI/Mode_Path.h UI/Mode_DepthEdit.cpp UI/Mode_DepthEdit.h UI/Mode.cpp UI/Mode.h UI/ForgeContainer.h UI/ForgeContainer.cpp
+        genbuttons.h UI/common.cpp UI/common.h UI/Mode_Path.cpp UI/Mode_Path.h UI/Mode_Draw.cpp UI/Mode_Draw.h UI/Mode_DepthEdit.cpp UI/Mode_DepthEdit.h UI/Mode.cpp UI/Mode.h UI/ForgeContainer.h UI/ForgeContainer.cpp
 
         #if (WIN32)
         ${APP_ICON_RESOURCE_WINDOWS}

@@ -48,7 +48,7 @@ void Slider::setV(double val)
 
     updateElementPosition();
 
-    if (c && vCallback.function != nullptr)
+    if (c && (vCallback.function != nullptr))
     {
         vCallback.function(vCallback._This, vCallback.element, v, vCallback.argument);
     }

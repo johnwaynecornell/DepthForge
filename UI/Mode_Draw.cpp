@@ -2,14 +2,14 @@
 // Created by jwc on 4/2/19.
 //
 
-#include "Mode_DepthEdit.h"
+#include "Mode_Draw.h"
 #include "Forge.h"
 
-Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
+Mode_Draw::Mode_Draw(MainUI *mainUI) : Mode(mainUI)
 {
-    previewLens = false;
+    previewBrush = false;
 
-    tabCtl = new DepthForgeTabCtl(mainUI->tabs, QApplication::tr("Lens"));
+    tabCtl = new DepthForgeTabCtl(mainUI->tabs, QApplication::tr("Brush"));
 
     tabCtl->width.setResp(Resp_Child);
     tabCtl->height.setResp(Resp_Parent);
@@ -54,7 +54,7 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
 
     int lenssz = 64;
     int border = 6;
-    
+
     tools->height.set((lenssz+ border)*3);
     tools->width.set((lenssz+ border)*2);
     tools->xPos.set(0);
@@ -125,7 +125,7 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
     slideA->yPos.set(0);
 
 
-    slideB = new Slider(bottom, "Intensity", false, false);
+    slideB = new Slider(bottom, "Depth", false, false);
     slideB->width.setResp(Resp_Self);
     slideB->height.setResp(Resp_Self);
     slideB->xPos.setResp(Resp_Self);
@@ -138,57 +138,57 @@ Mode_DepthEdit::Mode_DepthEdit(MainUI *mainUI) : Mode(mainUI)
 
     union
     {
-        void (Mode_DepthEdit::*a)(UI *, void *);
+        void (Mode_Draw::*a)(UI *, void *);
         void (*b)(void *, UI *, void *);
     } test;
 
-    test.a = &Mode_DepthEdit::sizeEntered;
+    test.a = &Mode_Draw::sizeEntered;
 
     slideA->setMouseEnterProc(test.b, this, nullptr);
     slideB->setMouseEnterProc(test.b, this, nullptr);
 
-    test.a = &Mode_DepthEdit::sizeLeave;
+    test.a = &Mode_Draw::sizeLeave;
 
     slideA->setMouseLeaveProc(test.b, this, nullptr);
     slideB->setMouseLeaveProc(test.b, this, nullptr);
 
     union
     {
-        void (Mode_DepthEdit::*a)(UI *, double, void *);
+        void (Mode_Draw::*a)(UI *, double, void *);
         void (*b)(void *, UI *, double, void *);
     } testb;
 
-    testb.a = &Mode_DepthEdit::sizeChanged;
+    testb.a = &Mode_Draw::sizeChanged;
 
     slideA->setVCallvack(testb.b, this, nullptr);
 
-    testb.a = &Mode_DepthEdit::intensityChanged;
+    testb.a = &Mode_Draw::intensityChanged;
 
     slideB->setVCallvack(testb.b, this, nullptr);
 
     lens = nullptr;
 
-    Lens *l = addLensButton(0,0, LensButton::Sphere, lenssz)->lens;
-    addLensButton(0,lenssz+ border, LensButton::SphereC, lenssz);
-    addLensButton(0,(lenssz+ border)*2, LensButton::Circle, lenssz);
+    Brush *l = addBrushButton(0,0, BrushButton::Sphere, lenssz)->lens;
+    addBrushButton(0,lenssz+ border, BrushButton::SphereC, lenssz);
+    addBrushButton(0,(lenssz+ border)*2, BrushButton::Circle, lenssz);
 
-    addLensButton(lenssz+ border,0, LensButton::Pyramid, lenssz);
-    addLensButton(lenssz+ border,lenssz+ border, LensButton::PyramidC, lenssz);
-    addLensButton(lenssz+ border,(lenssz+ border)*2, LensButton::Square, lenssz);
+    addBrushButton(lenssz+ border,0, BrushButton::Pyramid, lenssz);
+    addBrushButton(lenssz+ border,lenssz+ border, BrushButton::PyramidC, lenssz);
+    addBrushButton(lenssz+ border,(lenssz+ border)*2, BrushButton::Square, lenssz);
 
-    setLens(l);
+    setBrush(l);
 }
 
-struct LensData
+struct BrushData
 {
     float **map;
     Image *lensImage[10];
 };
 
 
-void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
+void Mode_Draw::drawForge(Forge *forge, Image *target, QImage *qImage)
 {
-    if (forge->hasMouse || previewLens)
+    if (forge->hasMouse || previewBrush)
     {
         double time = mainUI->getTimeInSeconds();
         time = time - trunc(time);
@@ -213,7 +213,7 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
             yy = (int) (.5 * forge->_h + forge->_y);
         }
 
-        Lens *lens = this->lens;
+        Brush *lens = this->lens;
 
         int sz;// = (int)(lens->size * fmax(forge->src->Width,forge->src->Height)*forge->scale);
 
@@ -227,15 +227,15 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
 
         //int sz = (int) (lens->size * fmax(forge->_w,forge->_h)*forge->scale);
 
-        Lens::Cache * dta;
+        Brush::Cache * dta;
 
-        LensData *d;
+        BrushData *d;
 
         if (!lens->getData(0, sz, &dta))
         {
             if (dta->dta != nullptr)
             {
-                d = (LensData *)dta->dta;
+                d = (BrushData *)dta->dta;
 
                 lens->freeMap(d->map, dta->s);
 
@@ -247,7 +247,7 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
                 }
             } else
             {
-                dta->dta = d = new LensData();
+                dta->dta = d = new BrushData();
                 for (int i =0; i<10; i++)
                 {
                     d->lensImage[i] = nullptr;
@@ -260,7 +260,7 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
             dta->needUpdate = true;
         }
 
-        d = ((LensData *)dta->dta);
+        d = ((BrushData *)dta->dta);
 
         float **map = d->map;
 
@@ -276,7 +276,7 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
                 }
             }
 
-            dta->needUpdate = false;
+            //dta->needUpdate = false;
         }
 
         int i = (int) (abs(time-.5)*2*9);
@@ -290,7 +290,13 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
 
         Image *img = d->lensImage[i];
 
-        if (img->needUpdate)
+        int _x1 = forge->xReal;
+        int _y1 = forge->yReal;
+
+        int _w1 = forge->width.get();
+        int _h1 = forge->height.get();
+
+        //if (img->needUpdate)
         {
 
             for (int yp = -sz; yp <= sz; yp++) {
@@ -305,44 +311,60 @@ void Mode_DepthEdit::drawForge(Forge *forge, Image *target, QImage *qImage)
 
                     l *= 0x80;
 
-                    if (l<0) l = 0;
-                    if (l>0xFF) l = 0xFF;
+                    if (l < 0) l = 0;
+                    if (l > 0xFF) l = 0xFF;
 
                     unsigned char g = (unsigned char) (i * 0xFF / 9);
 
                     ARGB p = {(unsigned char) (l), 0xFF, g, 0xFF};
 
                     img->pix[y][x] = p;
+
+                    l = lens->proc(xp / (double) sz, yp / (double) sz);
+
+                    if (l != 0) {
+                        //l = lens->get(xp / (double) sz, yp / (double) sz);
+                        img->z[y][x] = (l*.05+lens->intensity-.5f)*2.0f;
+
+                        int _x = xx + xp;
+                        int _y = yy + yp;
+
+                        if (_y - _y1 >=0 && _y - _y1 < _h1 && _x - _x1 >=0 && _x - _x1 < _w1)
+                        {
+                            ARGB p2 = target->pix[_y][_x];
+                            p = p2.interpolate(p, p.a);
+                            p.a = p2.a;
+
+                            target->pix[_y][_x] = p;
+                            target->z[_y][_x] = (l*.05+lens->intensity-.5f)*2.0f;
+
+                        }
+                    }
+
                 }
             }
             img->needUpdate = false;
         }
 
-
-        int _x1 = forge->xReal;
-        int _y1 = forge->yReal;
-
-        int _w1 = forge->width.get();
-        int _h1 = forge->height.get();
+/*
 
         target->DrawImage(_x1, _y1, _w1, _h1,
-                          xx-sz, yy-sz, q, q, PixOp_SRC_ALPHA, ZOp_SRC_ADD,
+                          xx-sz, yy-sz, q, q, PixOp_SRC_ALPHA, ZOp_SRC,
                           img, 0,0, q, q);
-
-
+*/
     }
 
 }
 
 
-void Mode_DepthEdit::applyLens(Forge *forge)
+void Mode_Draw::applyBrush(Forge *forge)
 {
     Image *src = forge->src;
 
     int xx = forge->mouseX * forge->src->Width;
     int yy = forge->mouseY * forge->src->Height;
 
-    Lens *lens= this->lens;
+    Brush *lens= this->lens;
 
     int sz = (int)(lens->size * fmax(src->Width,src->Height));
 
@@ -365,9 +387,12 @@ void Mode_DepthEdit::applyLens(Forge *forge)
                     double lx = (y - yy) / (double) sz;
                     double ly = (x - xx) / (double) sz;
 
-                    float l = lens->get(lx, ly);
+                    float l = lens->proc(lx,ly);
+                    if (l != 0) {
+                        l = (l*.05+lens->intensity-.5f)*2.0f;
 
-                    src->z[y][x] += l * .01 * dir;
+                        src->z[y][x] = l;
+                    }
 
                 }
             }
@@ -377,29 +402,29 @@ void Mode_DepthEdit::applyLens(Forge *forge)
 
 }
 
-bool Mode_DepthEdit::mouseMoveForge(Forge *forge, int x, int y)
+bool Mode_Draw::mouseMoveForge(Forge *forge, int x, int y)
 {
-    applyLens(forge);
+    applyBrush(forge);
     return true;
 }
 
-bool Mode_DepthEdit::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButton button)
+bool Mode_Draw::mouseButtonPressForge(Forge *forge, int x, int y, Qt::MouseButton button)
 {
-    applyLens(forge);
+    applyBrush(forge);
     return true;
 }
 
-bool Mode_DepthEdit::mouseButtonReleaseForge(Forge *forge, int x, int y, Qt::MouseButton button)
+bool Mode_Draw::mouseButtonReleaseForge(Forge *forge, int x, int y, Qt::MouseButton button)
 {
     return true;
 }
 
-void Mode_DepthEdit::selfLayout()
+void Mode_Draw::selfLayout()
 {
     tabCtl->height.set(mainUI->height.get());
 }
 
-void Mode_DepthEdit::doLayout()
+void Mode_Draw::doLayout()
 {
     resizeAncillary(basicTools->width.get()-6);
 
@@ -410,7 +435,7 @@ void Mode_DepthEdit::doLayout()
     bottomFrame->yPos.set(basicTools->height.get()-bottomFrame->height.get());
 }
 
-void Mode_DepthEdit::setLens(Lens *lens)
+void Mode_Draw::setBrush(Brush *lens)
 {
     bool retain = this->lens != nullptr;
 
@@ -432,7 +457,7 @@ void Mode_DepthEdit::setLens(Lens *lens)
 
 }
 
-LensButton * Mode_DepthEdit::addLensButton(int x, int y, LensProc proc, int lenssz)
+BrushButton * Mode_Draw::addBrushButton(int x, int y, BrushProc proc, int lenssz)
 {
     Frame *f = new Frame(tools);
 
@@ -444,34 +469,34 @@ LensButton * Mode_DepthEdit::addLensButton(int x, int y, LensProc proc, int lens
 
     f->backgroundResp = Resp_Child;
 
-    LensButton *bt = new LensButton(f, proc, lenssz);
+    BrushButton *bt = new BrushButton(f, proc, lenssz);
     return bt;
 }
 
-void Mode_DepthEdit::sizeEntered(UI *sender, void *arg)
+void Mode_Draw::sizeEntered(UI *sender, void *arg)
 {
-    previewLens = true;
+    previewBrush = true;
 }
 
-void Mode_DepthEdit::sizeLeave(UI *sender, void *arg)
+void Mode_Draw::sizeLeave(UI *sender, void *arg)
 {
-    previewLens = false;
+    previewBrush = false;
 }
 
-void Mode_DepthEdit::sizeChanged(UI *sender, double v, void *arg)
+void Mode_Draw::sizeChanged(UI *sender, double v, void *arg)
 {
     lens->setSize(v / 2.0);
 }
 
-void Mode_DepthEdit::intensityChanged(UI *sender, double v, void *arg)
+void Mode_Draw::intensityChanged(UI *sender, double v, void *arg)
 {
-    lens->setIntensity(v * 2.0);
+    lens->setIntensity(v);
 }
 
 
-LensButton::LensButton(UI *parent, LensProc proc, int lenssz) : Button_Image(parent)
+BrushButton::BrushButton(UI *parent, BrushProc proc, int lenssz) : Button_Image(parent)
 {
-    this->lens = new Lens();
+    this->lens = new Brush();
     this->lens->proc = proc;
 
     Image * src = new Image(lenssz,lenssz);
@@ -515,7 +540,7 @@ LensButton::LensButton(UI *parent, LensProc proc, int lenssz) : Button_Image(par
             xx /= .9;
             yy /= .9;
 
-            double d = lens->get(xx,yy);
+            double d = lens->proc(xx,yy);
 
 //d=0;
             unsigned char r;
@@ -538,22 +563,22 @@ LensButton::LensButton(UI *parent, LensProc proc, int lenssz) : Button_Image(par
     }
 }
 
-LensButton::~LensButton()
+BrushButton::~BrushButton()
 {
     delete lens;
 }
 
-bool LensButton::mouseButtonPress(int x, int y, Qt::MouseButton button)
+bool BrushButton::mouseButtonPress(int x, int y, Qt::MouseButton button)
 {
     bool rc = Button_Image::mouseButtonPress(x,y,button);
 
     MainUI *r = ((MainUI *) rootElement());
-    r->mode_DepthEdit->setLens(lens);
+    r->mode_Draw->setBrush(lens);
 
     return rc;
 }
 
-float LensButton::Sphere(float x, float y)
+float BrushButton::Sphere(float x, float y)
 {
     float d = 1 - sqrtf(x*x+y*y);
     if (d<0) d = 0;
@@ -561,7 +586,7 @@ float LensButton::Sphere(float x, float y)
     return sin(d*M_PI/2);
 }
 
-float LensButton::SphereC(float x, float y)
+float BrushButton::SphereC(float x, float y)
 {
     float d = 1 - sqrtf(x*x+y*y);
     if (d<0) return 0.0f;//d = 0;
@@ -571,13 +596,13 @@ float LensButton::SphereC(float x, float y)
 
 
 
-float LensButton::Circle(float x, float y)
+float BrushButton::Circle(float x, float y)
 {
     float d = 1 - sqrtf(x*x+y*y);
     return (d>0) ? 1.0 : 0.0;
 }
 
-float LensButton::Pyramid(float x, float y)
+float BrushButton::Pyramid(float x, float y)
 {
     x = 1.0 - abs(x);
     y = 1.0 - abs(y);
@@ -587,7 +612,7 @@ float LensButton::Pyramid(float x, float y)
     return fmin(x,y);
 }
 
-float LensButton::PyramidC(float x, float y)
+float BrushButton::PyramidC(float x, float y)
 {
     x = 1.0 - abs(x);
     y = 1.0 - abs(y);
@@ -597,7 +622,7 @@ float LensButton::PyramidC(float x, float y)
     return 1.0-fmin(x,y);
 }
 
-float LensButton::Square(float x, float y)
+float BrushButton::Square(float x, float y)
 {
     if (x>=-1&&x<=1 && y>=-1&&y<=1) return 1;
     return 0;

@@ -2,22 +2,24 @@
 // Created by jwc on 4/2/19.
 //
 
-#ifndef DEPTHFORGE_DEPTHEDITMODE_H
-#define DEPTHFORGE_DEPTHEDITMODE_H
+#ifndef DEPTHFORGE_DRAWMODE_H
+#define DEPTHFORGE_DRAWMODE_H
 
-#include "Lens.h"
+#include <Image/PathAdapter.h>
+#include "Brush.h"
 #include "Mode.h"
-#include "Slider.h"
+#include "UI.h"
 #include "TabCtl.h"
+#include "Slider.h"
 #include "common.h"
 
-class LensButton;
+class BrushButton;
 class Forge;
 
-class Mode_DepthEdit : public Mode
+class Mode_Draw : public Mode
 {
 public:
-    bool previewLens;
+    bool previewBrush;
 
     Fixed *basicTools;
 
@@ -29,11 +31,11 @@ public:
     Slider *slideA;
     Slider *slideB;
 
-    Lens *lens;
+    Brush *lens;
 
-    Mode_DepthEdit(MainUI *mainUI);
+    Mode_Draw(MainUI *mainUI);
 
-    void applyLens(Forge *forge);
+    void applyBrush(Forge *forge);
 
     virtual void drawForge(Forge *forge, Image *target, QImage *qImage);
 
@@ -44,9 +46,9 @@ public:
     virtual void selfLayout();
     virtual void doLayout();
 
-    void setLens(Lens *lens);
+    void setBrush(Brush *lens);
 
-    LensButton * addLensButton(int x, int y, LensProc lensProc, int lenssz);
+    BrushButton * addBrushButton(int x, int y, BrushProc lensProc, int lenssz);
 
 public:
     void sizeEntered(UI *sender, void *arg);
@@ -56,13 +58,13 @@ public:
 
 };
 
-class LensButton : public Button_Image
+class BrushButton : public Button_Image
 {
 public:
-    Lens *lens;
+    Brush *lens;
 
-    LensButton(UI *parent, LensProc proc, int lenssz);
-    virtual ~LensButton();
+    BrushButton(UI *parent, BrushProc proc, int lenssz);
+    virtual ~BrushButton();
 
     virtual bool mouseButtonPress(int x, int y, Qt::MouseButton button);
 
@@ -76,4 +78,4 @@ public:
 };
 
 
-#endif //DEPTHFORGE_DEPTHEDITMODE_H
+#endif //DEPTHFORGE_PATHMODE_H

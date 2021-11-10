@@ -47,7 +47,7 @@ bool Barrier_wait(void *event) {
     {
         ev->mutex->lock();
 
-        while (ev->received != ev->count)
+        while (ev->received < ev->count)
             while (!ev->cond->wait(ev->mutex));
 
 
@@ -60,9 +60,10 @@ bool Barrier_wait(void *event) {
 
         rc = ev->current == 0;
 
-        if (rc) ev->received = 0;
-
-        ev->cond->notify_all();
+        if (rc) {
+            ev->received = 0;
+            ev->cond->wakeAll();
+        }
         //pthread_mutex_unlock(&ev->mutex);
     }
 
@@ -80,14 +81,12 @@ bool Barrier_wait(void *event) {
     {
         //while (pthread_mutex_lock(&ev->mutex) != 0);
         ev->received++;
-
-
         rc2 = ev->received == ev->count;
 
-        if (rc2)
+        if (rc2) {
             ev->current = ev->count;
-
-        ev->cond->notify_all();
+            ev->cond->wakeAll();
+        }
         ev->mutex->unlock();
     }
 
